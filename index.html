@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metronome & Tone Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Prevents unwanted scrolling on touch devices when interacting with elements */
+            touch-action: manipulation;
+        }
+        /* Custom styling for the range input thumb (slider handle) for Webkit browsers */
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #3b82f6; /* blue-500 */
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -8px; /* Adjusts thumb position vertically */
+        }
+        /* Custom styling for the range input thumb (slider handle) for Mozilla browsers */
+        .slider-thumb::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #3b82f6; /* blue-500 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+        /* Styling for control panels and tab content, adding a frosted glass effect */
+        .main-content-panel, .control-panel {
+            background-color: rgba(255, 255, 255, 0.05); /* Slightly less opaque white */
+            backdrop-filter: blur(12px); /* Blurs the background behind the element */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
+            border-radius: 0.75rem; /* Consistent rounded corners */
+        }
+        /* Styling for the individual beat indicators in the metronome */
+        .beat-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%; /* Makes it a circle */
+            background-color: #6b7280; /* gray-500 */
+            transition: background-color 0.1s ease-in-out; /* Smooth transition for color change */
+        }
+        /* Active state for beat indicators */
+        .beat-indicator.active {
+            background-color: #22c55e; /* green-500 */
+        }
+        /* Styling for frequency selection buttons */
+        .freq-button {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s; /* Smooth transitions for hover effects */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+            min-width: 80px; /* Ensures consistent button width */
+            text-align: center;
+        }
+        /* Hover effect for frequency buttons */
+        .freq-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px); /* Slight lift effect on hover */
+        }
+        /* Selected state for frequency buttons */
+        .freq-button.selected {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+            border-color: #22c55e;
+        }
+        /* Chakra frequency specific colors */
+        .chakra-red { background-color: #ef4444 !important; color: white !important; border-color: #ef4444 !important; } /* red-500 */
+        .chakra-orange { background-color: #f97316 !important; color: white !important; border-color: #f97316 !important; } /* orange-500 */
+        .chakra-yellow { background-color: #eab308 !important; color: white !important; border-color: #eab308 !important; } /* yellow-500 */
+        .chakra-green { background-color: #22c55e !important; color: white !important; border-color: #22c55e !important; } /* green-500 */
+        .chakra-blue { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; } /* blue-500 */
+        .chakra-indigo { background-color: #6366f1 !important; color: white !important; border-color: #6366f1 !important; } /* indigo-500 */
+        .chakra-violet { background-color: #8b5cf6 !important; color: white !important; border-color: #8b5cf6 !important; } /* violet-500 */
+
+        /* Piano Keyboard Styling */
+        .piano-keyboard {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            height: 200px; /* Fixed height for the keyboard */
+            background-color: #1f2937; /* slate-800 */
+            border-radius: 0.5rem;
+            padding: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            max-width: 100%;
+            overflow-x: auto; /* Allow horizontal scrolling if keys overflow */
+        }
+
+        .key {
+            position: relative;
+            border: 1px solid #333;
+            border-radius: 0 0 5px 5px;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+            flex-shrink: 0; /* Prevent keys from shrinking */
+        }
+
+        .white-key {
+            width: 50px; /* Width of white keys */
+            height: 100%;
+            background-color: #f9fafb; /* white */
+            border-color: #6b7280; /* gray-500 */
+            margin-right: -1px; /* Overlap borders slightly */
+            z-index: 1;
+        }
+
+        .white-key.active {
+            background-color: #a7f3d0; /* emerald-200 */
+            box-shadow: inset 0 0 10px rgba(0,255,0,0.5);
+        }
+
+        .black-key {
+            width: 30px; /* Width of black keys */
+            height: 60%; /* Shorter than white keys */
+            background-color: #1f2937; /* slate-800 */
+            border-color: #000;
+            margin-left: -15px; /* Position over white keys */
+            margin-right: -15px; /* Position over white keys */
+            z-index: 2;
+            position: absolute; /* Absolute positioning for black keys */
+            top: 10px; /* Adjust vertical position */
+        }
+
+        .black-key.active {
+            background-color: #6ee7b7; /* emerald-400 */
+            box-shadow: inset 0 0 10px rgba(0,255,0,0.5);
+        }
+
+        /* Specific positioning for black keys relative to their white key groups */
+        .white-key[data-note="C4"] ~ .black-key[data-note="C#4"] { left: 40px; }
+        .white-key[data-note="D4"] ~ .black-key[data-note="D#4"] { left: 90px; }
+        .white-key[data-note="F4"] ~ .black-key[data-note="F#4"] { left: 190px; }
+        .white-key[data-note="G4"] ~ .black-key[data-note="G#4"] { left: 240px; }
+        .white-key[data-note="A4"] ~ .black-key[data-note="A#4"] { left: 290px; }
+
+        /* General positioning for black keys in a repeating pattern */
+        .key-group {
+            position: relative;
+            display: flex;
+        }
+
+        .key-group .black-key:nth-child(1) { left: 35px; } /* C# */
+        .key-group .black-key:nth-child(2) { left: 85px; } /* D# */
+        .key-group .black-key:nth-child(3) { left: 185px; } /* F# */
+        .key-group .black-key:nth-child(4) { left: 235px; } /* G# */
+        .key-group .black-key:nth-child(5) { left: 285px; } /* A# */
+
+        /* Adjustments for mobile view */
+        @media (max-width: 640px) {
+            .piano-keyboard {
+                height: 150px; /* Slightly shorter for mobile */
+            }
+            .white-key {
+                width: 40px; /* Smaller white keys */
+            }
+            .black-key {
+                width: 24px; /* Smaller black keys */
+                height: 55%;
+                margin-left: -12px;
+                margin-right: -12px;
+            }
+            .key-group .black-key:nth-child(1) { left: 28px; }
+            .key-group .black-key:nth-child(2) { left: 68px; }
+            .key-group .black-key:nth-child(3) { left: 148px; }
+            .key-group .black-key:nth-child(4) { left: 188px; }
+            .key-group .black-key:nth-child(5) { left: 228px; }
+        }
+
+        /* Guitar Fretboard Styling */
+        .guitar-fretboard, .ukulele-fretboard {
+            display: flex;
+            flex-direction: column;
+            background-color: #333; /* Dark background for fretboard */
+            border-radius: 0.5rem;
+            padding: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            max-width: 100%;
+            overflow-x: auto; /* Allow horizontal scrolling */
+            align-items: center;
+        }
+
+        .guitar-string-row, .ukulele-string-row {
+            display: flex;
+            width: 100%;
+            height: 25px; /* Height of each string row */
+            align-items: center;
+            border-bottom: 1px solid #555; /* Visual separation of strings */
+            position: relative;
+        }
+        .guitar-string-row:last-child, .ukulele-string-row:last-child {
+            border-bottom: none; /* No border on the last string */
+        }
+
+        .string-label {
+            width: 40px; /* Space for string label */
+            color: #ccc;
+            font-size: 0.75rem;
+            text-align: center;
+            flex-shrink: 0;
+            padding-right: 5px;
+        }
+
+        .fret {
+            flex-grow: 1; /* Frets expand to fill space */
+            height: 100%;
+            border-left: 1px solid #666; /* Fret lines */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+            position: relative;
+            min-width: 40px; /* Minimum width for frets */
+        }
+        .fret:first-child {
+            border-left: none; /* No left border on the open string (fret 0) */
+        }
+
+        .fret-marker {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #777;
+            border-radius: 50%;
+            opacity: 0.7;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        /* Specific positioning for fret markers */
+        .fret:nth-child(4) .fret-marker, /* 3rd fret */
+        .fret:nth-child(6) .fret-marker, /* 5th fret */
+        .fret:nth-child(8) .fret-marker, /* 7th fret */
+        .fret:nth-child(10) .fret-marker, /* 9th fret */
+        .fret:nth-child(13) .fret-marker, /* 12th fret */
+        .fret:nth-child(15) .fret-marker, /* 14th fret */
+        .fret:nth-child(17) .fret-marker, /* 16th fret */
+        .fret:nth-child(19) .fret-marker, /* 18th fret */
+        .fret:nth-child(22) .fret-marker /* 21st fret */
+        {
+            /* Apply to these specific frets */
+        }
+
+        /* Double dot for the 12th fret (index 12) - can be simplified to one dot for this visual */
+        .fret:nth-child(13) .fret-marker { /* 12th fret is index 12 (13th child) */
+            background-color: #aaa;
+            width: 10px;
+            height: 10px;
+        }
+
+
+        .fret.active {
+            background-color: rgba(34, 197, 94, 0.3); /* green-500 with transparency */
+            box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white flex flex-col items-center justify-center min-h-screen p-4 selection:bg-blue-500 selection:text-white">
+
+    <div class="w-full max-w-xl mx-auto">
+        <div class="main-content-panel p-6 sm:p-8 space-y-8">
+            <section class="space-y-8 pb-8 border-b border-slate-700">
+                <header class="text-center">
+                    <h1 class="text-4xl font-bold tracking-tight">Metronome</h1>
+                    <p class="text-slate-400 mt-1">Keep your rhythm steady</p>
+                </header>
+                <div class="text-center">
+                    <div id="bpmDisplay" class="text-7xl font-bold text-blue-400">120</div>
+                    <div class="text-sm text-slate-400">BPM</div>
+                </div>
+                <div class="flex justify-center items-center space-x-2">
+                    <div id="beatIndicator1" class="beat-indicator"></div>
+                    <div id="beatIndicator2" class="beat-indicator"></div>
+                    <div id="beatIndicator3" class="beat-indicator"></div>
+                    <div id="beatIndicator4" class="beat-indicator"></div>
+                </div>
+                <div class="space-y-2">
+                    <label for="bpmSlider" class="block text-sm font-medium text-slate-300">Tempo</label>
+                    <input type="range" id="bpmSlider" min="40" max="240" value="120" class="w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb accent-blue-500">
+                    <div class="flex justify-between text-xs text-slate-400"><span>40</span><span>240</span></div>
+                </div>
+                <button id="startStopButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">Start Metronome</button>
+            </section>
+
+            <section class="space-y-8 pt-8">
+                <header class="text-center">
+                    <h1 class="text-4xl font-bold tracking-tight">Tone Player</h1>
+                    <p class="text-slate-400 mt-1">Explore Frequencies (Universal Tuning A=432Hz)</p>
+                </header>
+
+                <div id="currentToneInfo" class="text-center p-4 bg-slate-700 rounded-lg min-h-[6rem]">
+                    <div id="selectedFrequencyDisplay" class="text-3xl font-bold text-green-400">- Hz</div>
+                    <div id="selectedFrequencyDescription" class="text-sm text-slate-300 mt-1">Select a frequency to play.</div>
+                </div>
+                
+                <button id="playStopToneButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">Play Tone</button>
+
+                <div class="space-y-6 pt-4">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-slate-200">Musical Notes (A4 = 432Hz)</h3>
+                        <div id="musicalNotesContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-slate-200">Healing Frequencies (Solfeggio)</h3>
+                        <div id="healingFrequenciesContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-slate-200">Chakra Frequencies</h3>
+                        <div id="chakraFrequenciesContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 pt-4">
+                    <h3 class="text-xl font-semibold mb-3 text-slate-200">Piano Keyboard</h3>
+                    <div class="piano-keyboard">
+                        <div class="key-group">
+                            <div class="key white-key" data-note="C3"></div>
+                            <div class="key black-key" data-note="C#3"></div>
+                            <div class="key white-key" data-note="D3"></div>
+                            <div class="key black-key" data-note="D#3"></div>
+                            <div class="key white-key" data-note="E3"></div>
+                            <div class="key white-key" data-note="F3"></div>
+                            <div class="key black-key" data-note="F#3"></div>
+                            <div class="key white-key" data-note="G3"></div>
+                            <div class="key black-key" data-note="G#3"></div>
+                            <div class="key white-key" data-note="A3"></div>
+                            <div class="key black-key" data-note="A#3"></div>
+                            <div class="key white-key" data-note="B3"></div>
+                        </div>
+                        <div class="key-group">
+                            <div class="key white-key" data-note="C4"></div>
+                            <div class="key black-key" data-note="C#4"></div>
+                            <div class="key white-key" data-note="D4"></div>
+                            <div class="key black-key" data-note="D#4"></div>
+                            <div class="key white-key" data-note="E4"></div>
+                            <div class="key white-key" data-note="F4"></div>
+                            <div class="key black-key" data-note="F#4"></div>
+                            <div class="key white-key" data-note="G4"></div>
+                            <div class="key black-key" data-note="G#4"></div>
+                            <div class="key white-key" data-note="A4"></div>
+                            <div class="key black-key" data-note="A#4"></div>
+                            <div class="key white-key" data-note="B4"></div>
+                        </div>
+                        <div class="key-group">
+                            <div class="key white-key" data-note="C5"></div>
+                            <div class="key black-key" data-note="C#5"></div>
+                            <div class="key white-key" data-note="D5"></div>
+                            <div class="key black-key" data-note="D#5"></div>
+                            <div class="key white-key" data-note="E5"></div>
+                            <div class="key white-key" data-note="F5"></div>
+                            <div class="key black-key" data-note="F#5"></div>
+                            <div class="key white-key" data-note="G5"></div>
+                            <div class="key black-key" data-note="G#5"></div>
+                            <div class="key white-key" data-note="A5"></div>
+                            <div class="key black-key" data-note="A#5"></div>
+                            <div class="key white-key" data-note="B5"></div>
+                        </div>
+                        <div class="key-group">
+                            <div class="key white-key" data-note="C6"></div>
+                            <div class="key black-key" data-note="C#6"></div>
+                            <div class="key white-key" data-note="D6"></div>
+                            <div class="key black-key" data-note="D#6"></div>
+                            <div class="key white-key" data-note="E6"></div>
+                            <div class="key white-key" data-note="F6"></div>
+                            <div class="key black-key" data-note="F#6"></div>
+                            <div class="key white-key" data-note="G6"></div>
+                            <div class="key black-key" data-note="G#6"></div>
+                            <div class="key white-key" data-note="A6"></div>
+                            <div class="key black-key" data-note="A#6"></div>
+                            <div class="key white-key" data-note="B6"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 pt-4">
+                    <h3 class="text-xl font-semibold mb-3 text-slate-200">Guitar Fretboard (Standard Tuning)</h3>
+                    <div id="guitarFretboard" class="guitar-fretboard">
+                        <div class="flex w-full justify-around text-xs text-slate-400 mb-2 pl-[40px] pr-[10px]">
+                            <span>Open</span>
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                            <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                            <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span>
+                            <span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
+                            <span>21</span><span>22</span><span>23</span><span>24</span>
+                        </div>
+                        </div>
+                </div>
+
+                <div class="space-y-6 pt-4">
+                    <h3 class="text-xl font-semibold mb-3 text-slate-200">Ukulele Fretboard (Standard GCEA Tuning)</h3>
+                    <div id="ukuleleFretboard" class="ukulele-fretboard">
+                        <div class="flex w-full justify-around text-xs text-slate-400 mb-2 pl-[40px] pr-[10px]">
+                            <span>Open</span>
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                            <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                            <span>11</span><span>12</span>
+                        </div>
+                        </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="control-panel p-6 sm:p-8 mt-6 space-y-2">
+            <label for="volumeSlider" class="block text-sm font-medium text-slate-300">Master Volume</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="80" class="w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb accent-blue-500">
+            <div class="flex justify-between text-xs text-slate-400"><span>Min</span><span>Max</span></div>
+        </div>
+        
+        <footer class="text-center mt-8 text-sm text-slate-500">
+            <p>Powered by Tone.js</p>
+        </footer>
+    </div>
+
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-slate-800 p-6 rounded-lg shadow-xl max-w-sm w-full border border-slate-700">
+            <h3 id="messageTitle" class="text-lg font-semibold mb-2 text-white">Message</h3>
+            <p id="messageText" class="text-sm text-slate-300 mb-4">This is a message.</p>
+            <button id="closeModalButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const bpmSlider = document.getElementById('bpmSlider');
+        const startStopButton = document.getElementById('startStopButton');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const beatIndicators = [
+            document.getElementById('beatIndicator1'), document.getElementById('beatIndicator2'),
+            document.getElementById('beatIndicator3'), document.getElementById('beatIndicator4'),
+        ];
+        const messageModal = document.getElementById('messageModal');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const closeModalButton = document.getElementById('closeModalButton');
+
+        const selectedFrequencyDisplay = document.getElementById('selectedFrequencyDisplay');
+        const selectedFrequencyDescription = document.getElementById('selectedFrequencyDescription');
+        const playStopToneButton = document.getElementById('playStopToneButton');
+        const musicalNotesContainer = document.getElementById('musicalNotesContainer');
+        const healingFrequenciesContainer = document.getElementById('healingFrequenciesContainer');
+        const chakraFrequenciesContainer = document.getElementById('chakraFrequenciesContainer');
+
+        // Piano Keyboard DOM elements
+        const pianoKeys = document.querySelectorAll('.piano-keyboard .key');
+        // Guitar Fretboard DOM elements
+        const guitarFretboardContainer = document.getElementById('guitarFretboard');
+        // Ukulele Fretboard DOM elements
+        const ukuleleFretboardContainer = document.getElementById('ukuleleFretboard');
+
+
+        // --- Metronome State ---
+        let isMetronomePlaying = false;
+        let currentBpm = 120;
+        let metronomeClickEventId = null;
+        let metronomeBeatCount = 0;
+        const beatsPerMeasure = 4;
+
+        // --- Tone Player State ---
+        let isTonePlaying = false;
+        let currentSelectedFrequency = null;
+        let currentSelectedFrequencyLabel = "- Hz";
+        let currentSelectedFrequencyDescText = "Select a frequency to play.";
+        let activeFreqButton = null;
+
+        // --- Tone.js Setup ---
+        // These will be initialized once the audio context is running
+        let metronomeSynth; 
+        let tonePlayerSynth; 
+        let pianoSynth; 
+        let guitarSynth; 
+        let ukuleleSynth; // New synth for the ukulele
+        let masterVolume; 
+        let audioInitialized = false; // Flag to ensure audio components are initialized only once
+
+        // Set A4 reference for Tone.js to 432Hz for all calculations
+        Tone.Frequency.A4 = 432;
+
+        // --- Frequency Data ---
+        const musicalNotes = [
+            { label: "A2", freq: 108.00, desc: "A (A4=432Hz)" },
+            { label: "Bb2", freq: 114.33, desc: "Bb (A4=432Hz)" },
+            { label: "B2", freq: 121.33, desc: "B (A4=432Hz)" },
+            { label: "C3", freq: 128.33, desc: "C (A4=432Hz)" },
+            { label: "C#3", freq: 136.00, desc: "C# (A4=432Hz)" },
+            { label: "D3", freq: 144.00, desc: "D (A4=432Hz)" },
+            { label: "Eb3", freq: 152.66, desc: "Eb (A4=432Hz)" },
+            { label: "E3", freq: 161.66, desc: "E (A4=432Hz)" },
+            { label: "F3", freq: 171.66, desc: "F (A4=432Hz)" },
+            { label: "F#3", freq: 181.66, desc: "F# (A4=432Hz)" },
+            { label: "G3", freq: 192.66, desc: "G (A4=432Hz)" },
+            { label: "G#3", freq: 203.66, desc: "G# (A4=432Hz)" },
+            { label: "A3", freq: 216.00, desc: "A (A4=432Hz)" },
+            { label: "Bb3", freq: 229.00, desc: "Bb (A4=432Hz)" },
+            { label: "B3", freq: 242.33, desc: "B (A4=432Hz)" },
+            { label: "C4", freq: 257.00, desc: "C (A4=432Hz)" },
+            { label: "C#4", freq: 272.00, desc: "C# (A4=432Hz)" },
+            { label: "D4", freq: 288.33, desc: "D (A4=432Hz)" },
+            { label: "Eb4", freq: 305.33, desc: "Eb (A4=432Hz)" },
+            { label: "E4", freq: 323.33, desc: "E (A4=432Hz)" },
+            { label: "F4", freq: 342.66, desc: "F (A4=432Hz)" },
+            { label: "F#4", freq: 363.66, desc: "F# (A4=432Hz)" },
+            { label: "G4", freq: 384.66, desc: "G (A4=432Hz)" },
+            { label: "G#4", freq: 407.66, desc: "G# (A4=432Hz)" },
+            { label: "A4", freq: 432.00, desc: "A (Reference 432Hz)" },
+            { label: "Bb4", freq: 457.33, desc: "Bb (A4=432Hz)" },
+            { label: "B4", freq: 484.66, desc: "B (A4=432Hz)" },
+            { label: "C5", freq: 514.00, desc: "C (A4=432Hz)" },
+            { label: "C#5", freq: 544.00, desc: "C# (A4=432Hz)" },
+            { label: "D5", freq: 576.00, desc: "D (A4=432Hz)" },
+            { label: "Eb5", freq: 611.33, desc: "Eb (A4=432Hz)" },
+            { label: "E5", freq: 648.00, desc: "E (A4=432Hz)" },
+            { label: "F5", freq: 686.00, desc: "F (A4=432Hz)" },
+            { label: "F#5", freq: 726.66, desc: "F# (A4=432Hz)" },
+            { label: "G5", freq: 768.99, desc: "G (A4=432Hz)" },
+            { label: "G#5", freq: 815.33, desc: "G# (A4=432Hz)" },
+            { label: "A5", freq: 863.33, desc: "A (A4=432Hz)" },
+            { label: "Bb5", freq: 915.00, desc: "Bb (A4=432Hz)" },
+            { label: "B5", freq: 968.66, desc: "B (A4=432Hz)" },
+            { label: "C6", freq: 1028.00, desc: "C (A4=432Hz)" },
+            { label: "C#6", freq: 1088.00, desc: "C# (A4=432Hz)" },
+            { label: "D6", freq: 1155.00, desc: "D (A4=432Hz)" },
+            { label: "Eb6", freq: 1221.00, desc: "Eb (A4=432Hz)" },
+            { label: "E6", freq: 1293.00, desc: "E (A4=432Hz)" },
+            { label: "F6", freq: 1370.00, desc: "F (A4=432Hz)" },
+            { label: "F#6", freq: 1452.00, desc: "F# (A4=432Hz)" },
+            { label: "G6", freq: 1540.00, desc: "G (A4=432Hz)" },
+            { label: "G#6", freq: 1630.00, desc: "G# (A4=432Hz)" },
+        ];
+        const healingFrequencies = [
+            { label: "396 Hz", freq: 396, desc: "Liberating Guilt and Fear (Energy, Stability, Comfort, Safety)" },
+            { label: "417 Hz", freq: 417, desc: "Facilitating Change, Undoing Situations (Sociality, Sensuality, Sexuality, Pleasure)" },
+            { label: "528 Hz", freq: 528, desc: "Transformation and Miracles (DNA Repair, Strength, Personality, Power, Determination)" },
+            { label: "639 Hz", freq: 639, desc: "Connecting, Relationships (Sincerity, Acceptance, Love, Compassion)" },
+            { label: "741 Hz", freq: 741, desc: "Awakening Intuition, Expression/Solutions (Communication, Expression, Creativity, Inspiration)" },
+            { label: "852 Hz", freq: 852, desc: "Returning to Spiritual Order (Intuition, Lucidity, Meditation, Trust)" },
+            { label: "963 Hz", freq: 963, desc: "Awakening Perfect State, Oneness (Knowledge, Consciousness, Fulfillment, Spirituality)" },
+        ];
+        const chakraFrequencies = [
+            { label: "Root (228 Hz)", freq: 228, chakra: "Muladhara", colorClass: "chakra-red", desc: "Stability, Grounding" },
+            { label: "Root (456 Hz)", freq: 456, chakra: "Muladhara", colorClass: "chakra-red", desc: "Stability, Grounding" },
+            { label: "Root (912 Hz)", freq: 912, chakra: "Muladhara", colorClass: "chakra-red", desc: "Stability, Grounding" },
+
+            { label: "Sacral (303 Hz)", freq: 303, chakra: "Svadhisthana", colorClass: "chakra-orange", desc: "Creativity, Emotions" },
+            { label: "Sacral (606 Hz)", freq: 606, chakra: "Svadhisthana", colorClass: "chakra-orange", desc: "Creativity, Emotions" },
+            { label: "Sacral (1212 Hz)", freq: 1212, chakra: "Svadhisthana", colorClass: "chakra-orange", desc: "Creativity, Emotions" },
+
+            { label: "Solar Plexus (182 Hz)", freq: 182, chakra: "Manipura", colorClass: "chakra-yellow", desc: "Personal Power, Will" },
+            { label: "Solar Plexus (364 Hz)", freq: 364, chakra: "Manipura", colorClass: "chakra-yellow", desc: "Personal Power, Will" },
+            { label: "Solar Plexus (728 Hz)", freq: 728, chakra: "Manipura", colorClass: "chakra-yellow", desc: "Personal Power, Will" },
+
+            { label: "Heart (128 Hz)", freq: 128, chakra: "Anahata", colorClass: "chakra-green", desc: "Love, Compassion" },
+            { label: "Heart (256 Hz)", freq: 256, chakra: "Anahata", colorClass: "chakra-green", desc: "Love, Compassion" },
+            { label: "Heart (512 Hz)", freq: 512, chakra: "Anahata", colorClass: "chakra-green", desc: "Love, Compassion" },
+
+            { label: "Throat (192 Hz)", freq: 192, chakra: "Vishuddha", colorClass: "chakra-blue", desc: "Communication, Expression" },
+            { label: "Throat (384 Hz)", freq: 384, chakra: "Vishuddha", colorClass: "chakra-blue", desc: "Communication, Expression" },
+            { label: "Throat (768 Hz)", freq: 768, chakra: "Vishuddha", colorClass: "chakra-blue", desc: "Communication, Expression" },
+
+            { label: "Third Eye (144 Hz)", freq: 144, chakra: "Ajna", colorClass: "chakra-indigo", desc: "Intuition, Insight" },
+            { label: "Third Eye (288 Hz)", freq: 288, chakra: "Ajna", colorClass: "chakra-indigo", desc: "Intuition, Insight" },
+            { label: "Third Eye (576 Hz)", freq: 576, chakra: "Ajna", colorClass: "chakra-indigo", desc: "Intuition, Insight" },
+
+            { label: "Crown (216 Hz)", freq: 216, chakra: "Sahasrara", colorClass: "chakra-violet", desc: "Spirituality, Connection" },
+            { label: "Crown (432 Hz)", freq: 432, chakra: "Sahasrara", colorClass: "chakra-violet", desc: "Spirituality, Connection" },
+            { label: "Crown (864 Hz)", freq: 864, chakra: "Sahasrara", colorClass: "chakra-violet", desc: "Spirituality, Connection" },
+        ];
+
+        // Guitar Fretboard Data (Standard Tuning E A D G B E)
+        const guitarStringsData = [
+            { label: "E (low)", openNote: "E2" },
+            { label: "A", openNote: "A2" },
+            { label: "D", openNote: "D3" },
+            { label: "G", openNote: "G3" },
+            { label: "B", openNote: "B3" },
+            { label: "E (high)", openNote: "E4" }
+        ];
+        const numGuitarFrets = 24; // Number of frets to display for guitar
+
+        // Ukulele Fretboard Data (Standard GCEA Tuning)
+        const ukuleleStringsData = [
+            { label: "G", openNote: "G4" },
+            { label: "C", openNote: "C4" },
+            { label: "E", openNote: "E4" },
+            { label: "A", openNote: "A4" }
+        ];
+        const numUkuleleFrets = 12; // Number of frets to display for ukulele
+
+        // --- Utility Functions ---
+        /**
+         * Displays a custom modal message to the user.
+         * @param {string} title - The title of the message.
+         * @param {string} text - The content text of the message.
+         */
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageModal.classList.remove('hidden');
+        }
+        // Event listener to close the modal
+        closeModalButton.addEventListener('click', () => messageModal.classList.add('hidden'));
+
+        /**
+         * Initializes the Tone.js audio context and creates the necessary synths.
+         * This function ensures that the audio context is running and synths are
+         * created only once upon the first user interaction.
+         * @returns {Promise<boolean>} True if audio is initialized and running, false otherwise.
+         */
+        async function initializeAudio() {
+            // Start the audio context if it's suspended
+            if (Tone.context.state !== 'running') {
+                try {
+                    await Tone.start();
+                    console.log("AudioContext started (Tone.start())");
+                } catch (e) {
+                    console.error("Error Tone.start():", e);
+                    showMessage("Audio Error", "Could not initialize audio. Please interact with the page (e.g. click) and try again.");
+                    return false;
+                }
+            }
+
+            // Initialize synths and master volume only once after audio context is running
+            if (!audioInitialized && Tone.context.state === 'running') {
+                try {
+                    masterVolume = new Tone.Volume(-6); // Master volume control, initialized here
+                    masterVolume.toDestination(); // Connect master volume to speakers
+
+                    metronomeSynth = new Tone.MembraneSynth({
+                        pitchDecay: 0.01, octaves: 6, oscillator: { type: "sine" },
+                        envelope: { attack: 0.001, decay: 0.15, sustain: 0.01, release: 0.05, attackCurve: "exponential" }
+                    }).connect(masterVolume); // Connect metronome synth to master volume
+
+                    tonePlayerSynth = new Tone.Synth({
+                        oscillator: { type: 'sine' }, // Simple sine wave for pure tones
+                        envelope: { attack: 0.1, decay: 0.2, sustain: 0.8, release: 0.5 }
+                    }).connect(masterVolume); // Connect tone player synth to master volume
+
+                    // Initialize a PolySynth for the piano keyboard to handle multiple notes
+                    pianoSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'triangle' }, // A slightly softer tone for piano
+                        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
+                    }).connect(masterVolume);
+
+                    // Initialize a PolySynth for the guitar fretboard
+                    guitarSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'triangle' }, // A plucky sound for guitar
+                        envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
+                    }).connect(masterVolume);
+
+                    // Initialize a PolySynth for the ukulele fretboard
+                    ukuleleSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'triangle' }, // A slightly softer, plucky sound for ukulele
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.4 }
+                    }).connect(masterVolume);
+                    
+                    console.log("Synths created and connected.");
+                    audioInitialized = true; // Set flag to true
+                } catch (e) {
+                    console.error("Error creating synths:", e);
+                    showMessage("Synth Error", "Could not create sound generators.");
+                    return false;
+                }
+            }
+            return Tone.context.state === 'running';
+        }
+
+        // --- Metronome Logic ---
+        /**
+         * Updates the displayed BPM value.
+         * @param {number} bpm - The current beats per minute.
+         */
+        function updateBpmDisplay(bpm) { 
+            bpmDisplay.textContent = bpm; 
+        }
+
+        /**
+         * Updates the visual beat indicators to show the current beat.
+         */
+        function updateBeatIndicators() {
+            beatIndicators.forEach((indicator, index) => {
+                // Highlight the current beat indicator
+                indicator.classList.toggle('active', index === metronomeBeatCount % beatsPerMeasure);
+            });
+        }
+
+        /**
+         * Function called on each metronome beat to play a sound and update indicators.
+         * @param {number} time - The scheduled time of the beat in Tone.js's transport.
+         */
+        function metronomeClick(time) {
+            // Ensure synths are initialized and audio context is running before playing
+            if (metronomeSynth && Tone.context.state === 'running') {
+                // Play a higher pitch on the first beat of the measure
+                const pitch = (metronomeBeatCount % beatsPerMeasure === 0) ? "C4" : "C3";
+                metronomeSynth.triggerAttackRelease(pitch, "32n", time);
+            }
+            // Schedule visual update to happen exactly when the sound plays
+            Tone.Draw.schedule(() => {
+                updateBeatIndicators();
+                metronomeBeatCount++; // Increment beat counter
+            }, time);
+        }
+
+        /**
+         * Starts the metronome playback.
+         */
+        async function startMetronome() {
+            // Ensure audio is initialized before starting metronome
+            if (!await initializeAudio()) return;
+            if (isMetronomePlaying) return; // Prevent starting if already playing
+
+            isMetronomePlaying = true;
+            startStopButton.textContent = 'Stop Metronome'; // Change button text
+            startStopButton.classList.replace('bg-blue-500', 'bg-red-500'); // Change button color
+            startStopButton.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+            
+            currentBpm = parseInt(bpmSlider.value); // Get current BPM from slider
+            Tone.Transport.bpm.value = currentBpm; // Set Tone.js transport BPM
+
+            // Schedule the metronome click event if not already scheduled
+            if (metronomeClickEventId === null) {
+                Tone.Transport.scheduleRepeat(metronomeClick, "4n"); // Schedule a click every quarter note
+            }
+            metronomeBeatCount = 0; // Reset beat counter
+            updateBeatIndicators(); // Update indicators immediately
+            Tone.Transport.start(); // Start Tone.js transport
+        }
+
+        /**
+         * Stops the metronome playback.
+         */
+        function stopMetronome() {
+            if (!isMetronomePlaying) return; // Prevent stopping if not playing
+
+            isMetronomePlaying = false;
+            startStopButton.textContent = 'Start Metronome'; // Change button text
+            startStopButton.classList.replace('bg-red-500', 'bg-blue-500'); // Change button color
+            startStopButton.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
+            
+            Tone.Transport.stop(); // Stop Tone.js transport
+            // Clear the scheduled metronome event
+            if (metronomeClickEventId !== null) {
+                Tone.Transport.clear(metronomeClickEventId);
+                metronomeClickEventId = null;
+            }
+            metronomeBeatCount = 0; // Reset beat counter
+            // Deactivate all beat indicators
+            beatIndicators.forEach(indicator => indicator.classList.remove('active'));
+        }
+
+        // --- Tone Player Logic ---
+        /**
+         * Updates the display for the currently selected tone frequency and description.
+         */
+        function updateTonePlayerDisplay() {
+            selectedFrequencyDisplay.textContent = currentSelectedFrequencyLabel;
+            selectedFrequencyDescription.textContent = currentSelectedFrequencyDescText;
+        }
+
+        /**
+         * Plays the currently selected tone frequency.
+         */
+        async function playSelectedTone() {
+            if (!currentSelectedFrequency) {
+                showMessage("No Selection", "Please select a frequency first.");
+                return;
+            }
+            // Ensure audio is initialized before playing tone
+            if (!await initializeAudio()) return;
+
+            if (tonePlayerSynth && Tone.context.state === 'running') {
+                tonePlayerSynth.triggerAttack(currentSelectedFrequency); // Start playing the tone
+                isTonePlaying = true;
+                playStopToneButton.textContent = "Stop Tone"; // Change button text
+                playStopToneButton.classList.replace('bg-green-500', 'bg-orange-500'); // Change button color
+                playStopToneButton.classList.replace('hover:bg-green-600', 'hover:bg-orange-600');
+            }
+        }
+
+        /**
+         * Stops the currently playing tone.
+         */
+        function stopSelectedTone() {
+            if (tonePlayerSynth) {
+                tonePlayerSynth.triggerRelease(); // Stop the tone
+            }
+            isTonePlaying = false;
+            playStopToneButton.textContent = "Play Tone"; // Change button text
+            playStopToneButton.classList.replace('bg-orange-500', 'bg-green-500'); // Change button color
+            playStopToneButton.classList.replace('hover:bg-orange-600', 'hover:bg-green-600');
+        }
+        
+        /**
+         * Creates a frequency selection button.
+         * @param {object} item - The frequency data object (label, freq, desc, colorClass).
+         * @param {string} type - The type of frequency (e.g., 'note', 'healing', 'chakra').
+         * @returns {HTMLButtonElement} The created button element.
+         */
+        function createFrequencyButton(item, type) {
+            const button = document.createElement('button');
+            button.classList.add('freq-button');
+            button.textContent = item.label;
+            if (item.colorClass) button.classList.add(item.colorClass); // Add specific color class if available
+
+            button.addEventListener('click', async () => {
+                // Ensure audio is initialized before processing click
+                if (!await initializeAudio()) return;
+
+                currentSelectedFrequency = item.freq; // Set the selected frequency
+                currentSelectedFrequencyLabel = `${item.label} (${item.freq} Hz)`; // Update display label
+                currentSelectedFrequencyDescText = item.desc; // Update display description
+                updateTonePlayerDisplay(); // Update the tone player display
+
+                // Remove 'selected' class from previously active button
+                if(activeFreqButton) activeFreqButton.classList.remove('selected');
+                button.classList.add('selected'); // Add 'selected' class to the clicked button
+                activeFreqButton = button; // Set the current active button
+
+                // If a tone is already playing, stop it and play the new one
+                if (isTonePlaying) { 
+                    stopSelectedTone(); 
+                    playSelectedTone(); 
+                }
+            });
+            return button;
+        }
+
+        /**
+         * Populates the frequency button containers with buttons based on predefined data.
+         */
+        function populateFrequencyButtons() {
+            musicalNotes.forEach(item => musicalNotesContainer.appendChild(createFrequencyButton(item, 'note')));
+            healingFrequencies.forEach(item => healingFrequenciesContainer.appendChild(createFrequencyButton(item, 'healing')));
+            chakraFrequencies.forEach(item => chakraFrequenciesContainer.appendChild(createFrequencyButton(item, 'chakra')));
+        }
+
+        // --- Piano Keyboard Logic ---
+        /**
+         * Plays a piano note.
+         * @param {string} note - The musical note (e.g., "C4", "G#3").
+         * @param {HTMLElement} keyElement - The DOM element of the key being pressed.
+         */
+        async function playPianoNote(note, keyElement) {
+            if (!await initializeAudio()) return;
+            if (pianoSynth && Tone.context.state === 'running') {
+                pianoSynth.triggerAttack(note);
+                keyElement.classList.add('active'); // Add active class for visual feedback
+            }
+        }
+
+        /**
+         * Stops a piano note.
+         * @param {string} note - The musical note to stop.
+         * @param {HTMLElement} keyElement - The DOM element of the key being released.
+         */
+        function stopPianoNote(note, keyElement) {
+            if (pianoSynth) {
+                pianoSynth.triggerRelease(note);
+                keyElement.classList.remove('active'); // Remove active class
+            }
+        }
+
+        // --- Guitar Fretboard Logic ---
+        /**
+         * Plays a guitar note.
+         * @param {string} note - The musical note (e.g., "E2", "A3").
+         * @param {HTMLElement} fretElement - The DOM element of the fret being pressed.
+         */
+        async function playGuitarNote(note, fretElement) {
+            if (!await initializeAudio()) return;
+            if (guitarSynth && Tone.context.state === 'running') {
+                guitarSynth.triggerAttack(note);
+                fretElement.classList.add('active'); // Add active class for visual feedback
+            }
+        }
+
+        /**
+         * Stops a guitar note.
+         * @param {string} note - The musical note to stop.
+         * @param {HTMLElement} fretElement - The DOM element of the fret being released.
+         */
+        function stopGuitarNote(note, fretElement) {
+            if (guitarSynth) {
+                guitarSynth.triggerRelease(note);
+                fretElement.classList.remove('active'); // Remove active class
+            }
+        }
+
+        /**
+         * Populates the guitar fretboard with strings and frets.
+         */
+        function populateGuitarFretboard() {
+            guitarFretboardContainer.innerHTML = ''; // Clear existing content
+
+            // Create fret numbers row
+            const fretNumbersRow = document.createElement('div');
+            fretNumbersRow.classList.add('flex', 'w-full', 'justify-around', 'text-xs', 'text-slate-400', 'mb-2', 'pl-[40px]', 'pr-[10px]');
+            fretNumbersRow.innerHTML = '<span>Open</span>';
+            for (let i = 1; i <= numGuitarFrets; i++) {
+                fretNumbersRow.innerHTML += `<span>${i}</span>`;
+            }
+            guitarFretboardContainer.prepend(fretNumbersRow); // Add to the top of the fretboard
+
+            guitarStringsData.forEach((stringData, stringIndex) => {
+                const stringRow = document.createElement('div');
+                stringRow.classList.add('guitar-string-row');
+
+                const stringLabel = document.createElement('div');
+                stringLabel.classList.add('string-label');
+                stringLabel.textContent = stringData.label;
+                stringRow.appendChild(stringLabel);
+
+                for (let fretIndex = 0; fretIndex <= numGuitarFrets; fretIndex++) {
+                    const fret = document.createElement('div');
+                    fret.classList.add('fret');
+                    
+                    // Calculate the note for this fret
+                    const note = Tone.Frequency(stringData.openNote).transpose(fretIndex).toNote();
+                    fret.dataset.note = note; // Store the note in data attribute
+
+                    // Add fret markers for common positions (3, 5, 7, 9, 12, 15, 17, 19, 21, 24)
+                    if ([3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(fretIndex)) {
+                        const marker = document.createElement('div');
+                        marker.classList.add('fret-marker');
+                        fret.appendChild(marker);
+                    }
+
+                    // Event listeners for playing guitar notes
+                    fret.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        playGuitarNote(note, fret);
+                    });
+                    fret.addEventListener('mouseup', () => stopGuitarNote(note, fret));
+                    fret.addEventListener('mouseleave', () => {
+                        if (fret.classList.contains('active')) {
+                            stopGuitarNote(note, fret);
+                        }
+                    });
+
+                    fret.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        playGuitarNote(note, fret);
+                    }, { passive: false });
+                    fret.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        stopGuitarNote(note, fret);
+                    }, { passive: false });
+                    fret.addEventListener('touchcancel', (e) => {
+                        e.preventDefault();
+                        stopGuitarNote(note, fret);
+                    }, { passive: false });
+
+                    stringRow.appendChild(fret);
+                }
+                guitarFretboardContainer.appendChild(stringRow);
+            });
+        }
+
+        // --- Ukulele Fretboard Logic ---
+        /**
+         * Plays a ukulele note.
+         * @param {string} note - The musical note (e.g., "G4", "A4").
+         * @param {HTMLElement} fretElement - The DOM element of the fret being pressed.
+         */
+        async function playUkuleleNote(note, fretElement) {
+            if (!await initializeAudio()) return;
+            if (ukuleleSynth && Tone.context.state === 'running') {
+                ukuleleSynth.triggerAttack(note);
+                fretElement.classList.add('active'); // Add active class for visual feedback
+            }
+        }
+
+        /**
+         * Stops a ukulele note.
+         * @param {string} note - The musical note to stop.
+         * @param {HTMLElement} fretElement - The DOM element of the fret being released.
+         */
+        function stopUkuleleNote(note, fretElement) {
+            if (ukuleleSynth) {
+                ukuleleSynth.triggerRelease(note);
+                fretElement.classList.remove('active'); // Remove active class
+            }
+        }
+
+        /**
+         * Populates the ukulele fretboard with strings and frets.
+         */
+        function populateUkuleleFretboard() {
+            ukuleleFretboardContainer.innerHTML = ''; // Clear existing content
+
+            // Create fret numbers row
+            const fretNumbersRow = document.createElement('div');
+            fretNumbersRow.classList.add('flex', 'w-full', 'justify-around', 'text-xs', 'text-slate-400', 'mb-2', 'pl-[40px]', 'pr-[10px]');
+            fretNumbersRow.innerHTML = '<span>Open</span>';
+            for (let i = 1; i <= numUkuleleFrets; i++) {
+                fretNumbersRow.innerHTML += `<span>${i}</span>`;
+            }
+            ukuleleFretboardContainer.prepend(fretNumbersRow); // Add to the top of the fretboard
+
+            ukuleleStringsData.forEach((stringData, stringIndex) => {
+                const stringRow = document.createElement('div');
+                stringRow.classList.add('ukulele-string-row');
+
+                const stringLabel = document.createElement('div');
+                stringLabel.classList.add('string-label');
+                stringLabel.textContent = stringData.label;
+                stringRow.appendChild(stringLabel);
+
+                for (let fretIndex = 0; fretIndex <= numUkuleleFrets; fretIndex++) {
+                    const fret = document.createElement('div');
+                    fret.classList.add('fret');
+                    
+                    // Calculate the note for this fret
+                    const note = Tone.Frequency(stringData.openNote).transpose(fretIndex).toNote();
+                    fret.dataset.note = note; // Store the note in data attribute
+
+                    // Add fret markers for common positions (3, 5, 7, 9, 12)
+                    if ([3, 5, 7, 9, 12].includes(fretIndex)) {
+                        const marker = document.createElement('div');
+                        marker.classList.add('fret-marker');
+                        fret.appendChild(marker);
+                    }
+
+                    // Event listeners for playing ukulele notes
+                    fret.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        playUkuleleNote(note, fret);
+                    });
+                    fret.addEventListener('mouseup', () => stopUkuleleNote(note, fret));
+                    fret.addEventListener('mouseleave', () => {
+                        if (fret.classList.contains('active')) {
+                            stopUkuleleNote(note, fret);
+                        }
+                    });
+
+                    fret.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        playUkuleleNote(note, fret);
+                    }, { passive: false });
+                    fret.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        stopUkuleleNote(note, fret);
+                    }, { passive: false });
+                    fret.addEventListener('touchcancel', (e) => {
+                        e.preventDefault();
+                        stopUkuleleNote(note, fret);
+                    }, { passive: false });
+
+                    stringRow.appendChild(fret);
+                }
+                ukuleleFretboardContainer.appendChild(stringRow);
+            });
+        }
+
+
+        // --- Event Listeners ---
+        // Metronome BPM slider input handler
+        bpmSlider.addEventListener('input', (e) => {
+            currentBpm = parseInt(e.target.value);
+            updateBpmDisplay(currentBpm);
+            if (isMetronomePlaying) Tone.Transport.bpm.value = currentBpm; // Update BPM in Tone.js if playing
+        });
+
+        // Metronome Start/Stop button handler (for both click and touch)
+        const metronomeStartStopHandler = async (event) => {
+            if (event.type === 'touchstart') event.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
+            if (!await initializeAudio()) return; // Ensure audio is ready
+            isMetronomePlaying ? stopMetronome() : startMetronome(); // Toggle metronome state
+        };
+        startStopButton.addEventListener('click', metronomeStartStopHandler);
+        startStopButton.addEventListener('touchstart', metronomeStartStopHandler, { passive: false });
+
+
+        // Tone Player Play/Stop button handler (for both click and touch)
+        playStopToneButton.addEventListener('click', async () => {
+            if (!await initializeAudio()) return; // Ensure audio is ready
+            isTonePlaying ? stopSelectedTone() : playSelectedTone(); // Toggle tone state
+        });
+        playStopToneButton.addEventListener('touchstart', async (event) => {
+            event.preventDefault(); // Prevent default touch behavior
+            if (!await initializeAudio()) return; // Ensure audio is ready
+            isTonePlaying ? stopSelectedTone() : playSelectedTone(); // Toggle tone state
+        }, { passive: false });
+
+
+        // Master Volume slider input handler
+        volumeSlider.addEventListener('input', (e) => {
+            const volumeValue = parseInt(e.target.value);
+            if (masterVolume) { // Ensure masterVolume is initialized
+                if (volumeValue === 0) {
+                    masterVolume.volume.value = -Infinity; // Mute if slider is at 0
+                } else {
+                    const minDb = -40; const maxDb = 0; // Define min/max decibel range
+                    // Map slider value (0-100) to decibel range
+                    masterVolume.volume.value = minDb + (volumeValue / 100) * (maxDb - minDb);
+                }
+            }
+        });
+
+        // Page visibility change handler to stop audio when tab is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (isMetronomePlaying) stopMetronome();
+                if (isTonePlaying) stopSelectedTone();
+                // Stop all piano notes if any are playing
+                pianoKeys.forEach(key => {
+                    if (key.classList.contains('active')) {
+                        stopPianoNote(key.dataset.note, key);
+                    }
+                });
+                // Stop all guitar notes if any are playing
+                document.querySelectorAll('.guitar-fretboard .fret').forEach(fret => {
+                    if (fret.classList.contains('active')) {
+                        stopGuitarNote(fret.dataset.note, fret);
+                    }
+                });
+                // Stop all ukulele notes if any are playing
+                document.querySelectorAll('.ukulele-fretboard .fret').forEach(fret => {
+                    if (fret.classList.contains('active')) {
+                        stopUkuleleNote(fret.dataset.note, fret);
+                    }
+                });
+            }
+        });
+        
+        // General Audio Resume on Interaction (fallback for suspended AudioContext)
+        const resumeAudioEvents = ['click', 'touchstart', 'mousedown'];
+        resumeAudioEvents.forEach(eventName => {
+            document.body.addEventListener(eventName, async () => {
+                if (Tone.context.state === 'suspended') {
+                    try {
+                        await Tone.context.resume();
+                        console.log("AudioContext resumed by general interaction.");
+                        // Re-initialize synths if they weren't created yet (e.g., if first interaction was a resume)
+                        if (!audioInitialized) { 
+                           await initializeAudio();
+                        }
+                    } catch (e) { 
+                        console.error("Error resuming AudioContext:", e); 
+                    }
+                }
+            }, { once: true }); // Use { once: true } to only run this listener once
+        });
+
+        // Piano Keyboard Event Listeners
+        pianoKeys.forEach(key => {
+            const note = key.dataset.note;
+            key.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Prevent text selection
+                playPianoNote(note, key);
+            });
+            key.addEventListener('mouseup', () => stopPianoNote(note, key));
+            key.addEventListener('mouseleave', () => { // Stop note if mouse leaves key while pressed
+                if (key.classList.contains('active')) {
+                    stopPianoNote(note, key);
+                }
+            });
+
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Prevent default touch behavior (e.g., scrolling, zooming)
+                playPianoNote(note, key);
+            }, { passive: false });
+            key.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent default touch behavior
+                stopPianoNote(note, key);
+            }, { passive: false });
+            key.addEventListener('touchcancel', (e) => { // Handle touch being interrupted
+                e.preventDefault();
+                stopPianoNote(note, key);
+            }, { passive: false });
+        });
+
+
+        // --- Initial Setup ---
+        // Set initial BPM display
+        updateBpmDisplay(bpmSlider.value);
+        
+        // Set initial master volume based on slider value
+        const initialVolumePercent = parseInt(volumeSlider.value);
+        // Note: masterVolume is only initialized after the first user interaction
+        // The volume will be set correctly when initializeAudio is called on the first play.
+        // For now, we can only log the initial value or assume it will be handled.
+
+        // Populate the frequency buttons
+        populateFrequencyButtons();
+        // Initialize tone player display with default text
+        updateTonePlayerDisplay(); 
+        // Populate the guitar fretboard
+        populateGuitarFretboard();
+        // Populate the ukulele fretboard
+        populateUkuleleFretboard();
+
+    </script>
+</body>
+</html>
