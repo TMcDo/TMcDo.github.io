@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Représentation 3D IA avec Fonctions Gemini Étendues</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #101015;
+            color: #e8e8e8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 8px;
+            background-color: rgba(10, 10, 20, 0.7);
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 40; /* Highest z-index */
+            border: 1px solid rgba(0, 180, 255, 0.2);
+        }
+        #controlsContainer { /* Pour la question principale et le développement d'idée */
+            position: fixed;
+            top: 55px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 650px; /* Augmenté pour le nouveau bouton */
+            padding: 10px;
+            background-color: rgba(20, 20, 30, 0.85);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 180, 255, 0.4);
+            z-index: 30;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #aiQuestionInput {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #007bff;
+            background-color: #202530;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .ai-button { /* Classe commune pour les boutons d'action IA */
+            padding: 10px 15px;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+        .ai-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .ai-button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        #metaControlsContainer { /* Pour les actions Gemini supplémentaires */
+            position: fixed;
+            top: 125px; /* En dessous du conteneur de question principal */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 950px; /* Augmenté pour encore plus d'espace pour les boutons */
+            padding: 8px;
+            background-color: rgba(20, 20, 30, 0.75);
+            border-radius: 8px;
+            z-index: 25;
+            display: flex;
+            flex-wrap: wrap; /* Permettre le retour à la ligne des boutons */
+            gap: 8px; 
+            justify-content: center; /* Centrer les boutons */
+        }
+        #aiResponseContainer {
+            position: fixed;
+            /* top est défini dynamiquement dans updateRendererSize */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 550px;
+            height: 60px; 
+            max-height: 180px; 
+            padding: 10px;
+            background-color: rgba(15, 15, 25, 0.9);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 180, 255, 0.2);
+            font-size: 13px;
+            z-index: 20;
+            overflow-y: auto;
+            color: #c0c0c0;
+            text-align: left;
+            transition: height 0.3s ease, top 0.3s ease; 
+        }
+        canvas {
+            display: block;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.6);
+            width: 90vw; 
+            position: fixed; 
+            left: 5vw;     
+            z-index: 5; 
+            /* top est défini dynamiquement dans updateRendererSize */
+            transition: top 0.3s ease; 
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Représentation Évoluée : Noyau Actif, Flux Réseau et Champ Dynamique</div>
+
+    <div id="controlsContainer">
+        <input type="text" id="aiQuestionInput" placeholder="Posez une question ou une idée à développer...">
+        <button id="askAiButton" class="ai-button">✨ Interroger</button>
+        <button id="developIdeaButton" class="ai-button">✨ Développer l'Idée</button>
+    </div>
+
+    <div id="metaControlsContainer">
+        <button id="explainVisButton" class="ai-button">✨ Explique cette visualisation</button>
+        <button id="suggestQuestionButton" class="ai-button">✨ Suggère une question</button>
+        <button id="suggestThemeButton" class="ai-button">✨ Inspire un Thème Visuel</button>
+        <button id="applyThemeButton" class="ai-button">✨ Appliquer le Thème Suggéré</button>
+        <button id="interpretActivityButton" class="ai-button">✨ Interpréter l'Activité Actuelle</button>
+        <button id="generatePoemButton" class="ai-button">✨ Générer un Poème sur l'IA</button>
+        <button id="generateStoryButton" class="ai-button">✨ Générer une Histoire Courte</button>
+        <button id="suggestConceptsButton" class="ai-button">✨ Proposer des Concepts Philosophiques</button>
+        <button id="describeSoundscapeButton" class="ai-button">✨ Décrire un Paysage Sonore</button>
+        <button id="suggestAnimationParamsButton" class="ai-button">✨ Suggérer des Paramètres d'Animation</button>
+        <button id="nameSessionButton" class="ai-button">✨ Nommer cette Session</button>
+    </div>
+
+    <div id="aiResponseContainer">
+        En attente de votre interaction...
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let sphereObject, networkObject, particleSystemObject, centralLight;
+        let particleBasePositions = [];
+        let pulseInfluence = 0; 
+        let dataPackets = [];
+        let isThinking = false; 
+
+        let aiQuestionInput, askAiButton, aiResponseContainer;
+        let developIdeaButton; // Nouveau bouton dans controlsContainer
+        let explainVisButton, suggestQuestionButton, suggestThemeButton, applyThemeButton;
+        let interpretActivityButton, generatePoemButton, generateStoryButton, suggestConceptsButton;
+        let describeSoundscapeButton, suggestAnimationParamsButton, nameSessionButton; // Nouveaux boutons
+
+        let suggestedTheme = { name: null, color: null };
+        let lastAIResponseForContext = ""; 
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x101015);
+            scene.fog = new THREE.FogExp2(0x101015, 0.035);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / (window.innerHeight * 0.6), 0.1, 1000);
+            camera.position.set(0, 2, 14);
+            camera.lookAt(scene.position);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(8, 12, 10);
+            scene.add(directionalLight);
+
+            centralLight = new THREE.PointLight(0x66ccff, 1.5, 30);
+            centralLight.position.set(0, 0, 0);
+            scene.add(centralLight);
+
+            sphereObject = createPulsatingSphere();
+            scene.add(sphereObject);
+            networkObject = createNeuralNetwork();
+            scene.add(networkObject);
+            particleSystemObject = createParticleSystem();
+            scene.add(particleSystemObject);
+
+            // Récupération des éléments DOM
+            aiQuestionInput = document.getElementById('aiQuestionInput');
+            askAiButton = document.getElementById('askAiButton');
+            developIdeaButton = document.getElementById('developIdeaButton');
+            explainVisButton = document.getElementById('explainVisButton');
+            suggestQuestionButton = document.getElementById('suggestQuestionButton');
+            suggestThemeButton = document.getElementById('suggestThemeButton');
+            applyThemeButton = document.getElementById('applyThemeButton');
+            interpretActivityButton = document.getElementById('interpretActivityButton');
+            generatePoemButton = document.getElementById('generatePoemButton');
+            generateStoryButton = document.getElementById('generateStoryButton');
+            suggestConceptsButton = document.getElementById('suggestConceptsButton');
+            describeSoundscapeButton = document.getElementById('describeSoundscapeButton');
+            suggestAnimationParamsButton = document.getElementById('suggestAnimationParamsButton');
+            nameSessionButton = document.getElementById('nameSessionButton');
+            aiResponseContainer = document.getElementById('aiResponseContainer');
+
+            // Écouteurs d'événements
+            askAiButton.addEventListener('click', handleAskAI);
+            developIdeaButton.addEventListener('click', handleDevelopIdea);
+            aiQuestionInput.addEventListener('keypress', function(event) {
+                // Permettre Enter pour "Interroger" mais pas pour "Développer l'Idée" pour éviter confusion
+                if (event.key === 'Enter' && document.activeElement === aiQuestionInput) {
+                     // On pourrait choisir de déclencher handleAskAI ou une action par défaut.
+                     // Pour l'instant, on laisse l'utilisateur cliquer explicitement.
+                }
+            });
+            explainVisButton.addEventListener('click', handleExplainVisualization);
+            suggestQuestionButton.addEventListener('click', handleSuggestQuestion);
+            suggestThemeButton.addEventListener('click', handleSuggestVisualTheme);
+            applyThemeButton.addEventListener('click', handleApplySuggestedTheme);
+            interpretActivityButton.addEventListener('click', handleInterpretActivity);
+            generatePoemButton.addEventListener('click', handleGeneratePoem);
+            generateStoryButton.addEventListener('click', handleGenerateStory);
+            suggestConceptsButton.addEventListener('click', handleSuggestConcepts);
+            describeSoundscapeButton.addEventListener('click', handleDescribeSoundscape);
+            suggestAnimationParamsButton.addEventListener('click', handleSuggestAnimationParams);
+            nameSessionButton.addEventListener('click', handleNameSession);
+            
+            applyThemeButton.disabled = true; 
+
+            updateRendererSize();
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
+        }
+
+        function updateRendererSize() {
+            const responseEl = document.getElementById('aiResponseContainer');
+            const metaControlsEl = document.getElementById('metaControlsContainer');
+            const canvasEl = renderer.domElement;
+            
+            const metaControlsBottom = metaControlsEl.offsetTop + metaControlsEl.offsetHeight;
+            const responseTop = metaControlsBottom + 10; 
+            responseEl.style.top = `${responseTop}px`;
+
+            const responseBottom = responseEl.offsetTop + responseEl.offsetHeight;
+            const canvasTop = responseBottom + 15; 
+            canvasEl.style.top = `${canvasTop}px`;
+
+            const canvasWidth = window.innerWidth * 0.9;
+            const canvasHeight = window.innerHeight - canvasTop - 15; 
+            const finalCanvasHeight = Math.max(150, canvasHeight); 
+
+            renderer.setSize(canvasWidth, finalCanvasHeight);
+            camera.aspect = canvasWidth / finalCanvasHeight;
+            camera.updateProjectionMatrix();
+
+            canvasEl.style.width = `${canvasWidth}px`;
+            canvasEl.style.height = `${finalCanvasHeight}px`;
+        }
+
+
+        function onWindowResize() {
+            updateRendererSize();
+        }
+
+        // --- Fonctions de création 3D (inchangées) ---
+        function createPulsatingSphere() { 
+            const geometry = new THREE.SphereGeometry(1.3, 50, 50);
+            const material = new THREE.MeshStandardMaterial({ color: 0x0077ff, emissive: 0x0055cc, emissiveIntensity: 0.8, metalness: 0.6, roughness: 0.15, transparent: true, opacity: 0.9, envMapIntensity: 1.5 });
+            return new THREE.Mesh(geometry, material);
+        }
+        function createNeuralNetwork() { 
+            const group = new THREE.Group(); const nodeGeometry = new THREE.SphereGeometry(0.18, 24, 24); const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.4, linewidth: 1.2 }); const nodes = []; const numNodes = 18; const networkRadius = 3.8; for (let i = 0; i < numNodes; i++) { const nodeMaterial = new THREE.MeshPhongMaterial({ color: new THREE.Color().setHSL(Math.random() * 0.15 + 0.55, 0.9, 0.55), emissive: 0x113333, shininess: 60, specular: 0x88ffff }); const node = new THREE.Mesh(nodeGeometry, nodeMaterial); const phi = Math.acos(-1 + (2 * i) / numNodes); const theta = Math.sqrt(numNodes * Math.PI) * phi * 1.2; node.position.setFromSphericalCoords(networkRadius, phi, theta); nodes.push(node); group.add(node); } for (let i = 0; i < numNodes; i++) { for (let j = i + 1; j < numNodes; j++) { if (Math.random() > 0.55) { const points = [nodes[i].position, nodes[j].position]; const lineGeom = new THREE.BufferGeometry().setFromPoints(points); group.add(new THREE.Line(lineGeom, lineMaterial.clone())); } } if (Math.random() > 0.6) { const points = [nodes[i].position, new THREE.Vector3(0,0,0)]; const lineGeom = new THREE.BufferGeometry().setFromPoints(points); group.add(new THREE.Line(lineGeom, new THREE.LineBasicMaterial({color: 0x55aaff, transparent: true, opacity: 0.25}))); } } return group;
+        }
+        function createParticleSystem() { 
+            const particleCount = 12000; const particlesGeometry = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const colors = new Float32Array(particleCount * 3); particleBasePositions = []; const spread = 16; const baseColor = new THREE.Color(0xffffaa); for (let i = 0; i < particleCount; i++) { let x, y, z, dist; do { x = (Math.random() - 0.5) * spread; y = (Math.random() - 0.5) * spread; z = (Math.random() - 0.5) * spread; dist = Math.sqrt(x*x + y*y + z*z); } while (dist < 5.0); positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z; particleBasePositions.push(new THREE.Vector3(x, y, z)); const colorVariation = (Math.random() - 0.5) * 0.4; const particleColor = baseColor.clone().offsetHSL(colorVariation, 0.1 * Math.random(), 0.1 * Math.random()); colors[i * 3] = particleColor.r; colors[i * 3 + 1] = particleColor.g; colors[i * 3 + 2] = particleColor.b; } particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); const particleMaterial = new THREE.PointsMaterial({ size: 0.06, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false, vertexColors: true }); return new THREE.Points(particlesGeometry, particleMaterial);
+        }
+        function createDataPacket(startNode, endNode) { 
+            if (!startNode || !endNode) return null; const packetGeometry = new THREE.SphereGeometry(0.08, 8, 8); const packetMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 }); const packet = new THREE.Mesh(packetGeometry, packetMaterial); packet.userData = { startPosition: startNode.position.clone(), endPosition: endNode.position.clone(), progress: 0, speed: 0.01 + Math.random() * 0.01 }; packet.position.copy(packet.userData.startPosition); scene.add(packet); return packet;
+        }
+
+        // --- Gestionnaires pour les appels Gemini ---
+        function setThinkingState(thinking) {
+            isThinking = thinking; 
+            askAiButton.disabled = thinking;
+            developIdeaButton.disabled = thinking;
+            explainVisButton.disabled = thinking;
+            suggestQuestionButton.disabled = thinking;
+            suggestThemeButton.disabled = thinking;
+            applyThemeButton.disabled = thinking || !suggestedTheme.color;
+            interpretActivityButton.disabled = thinking;
+            generatePoemButton.disabled = thinking;
+            generateStoryButton.disabled = thinking;
+            suggestConceptsButton.disabled = thinking;
+            describeSoundscapeButton.disabled = thinking;
+            suggestAnimationParamsButton.disabled = thinking;
+            nameSessionButton.disabled = thinking;
+            aiQuestionInput.disabled = thinking;
+        }
+
+        async function callGeminiAPI(prompt) {
+            setThinkingState(true);
+            aiResponseContainer.textContent = "L'IA réfléchit...";
+            aiResponseContainer.style.height = 'auto'; 
+            updateRendererSize(); 
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Erreur API: ${response.statusText} (${errorData?.error?.message || 'Détails inconnus'})`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                    lastAIResponseForContext = result.candidates[0].content.parts[0].text; 
+                    return lastAIResponseForContext;
+                } else {
+                    throw new Error("Structure de réponse inattendue de l'API.");
+                }
+            } catch (error) {
+                console.error("Erreur lors de l'appel à l'API Gemini:", error);
+                lastAIResponseForContext = `Une erreur est survenue : ${error.message}`;
+                aiResponseContainer.textContent = lastAIResponseForContext;
+                return null; 
+            } finally {
+                setThinkingState(false);
+            }
+        }
+        
+        function finalizeApiResponseDisplay(responseText) {
+            if (responseText) { 
+                aiResponseContainer.textContent = responseText;
+            }
+            aiResponseContainer.style.height = `${Math.min(parseFloat(getComputedStyle(aiResponseContainer).maxHeight), aiResponseContainer.scrollHeight)}px`;
+            updateRendererSize(); 
+        }
+
+        async function handleAskAI() {
+            const question = aiQuestionInput.value.trim();
+            if (!question || isThinking) return;
+            const userPrompt = "En tant qu'IA bienveillante et informative, réponds à la question suivante de manière concise mais complète : " + question;
+            const responseText = await callGeminiAPI(userPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+        
+        async function handleDevelopIdea() {
+            const idea = aiQuestionInput.value.trim();
+            if (!idea || isThinking) {
+                finalizeApiResponseDisplay("Veuillez d'abord entrer une idée dans le champ de saisie.");
+                return;
+            }
+            const activityContext = getCurrentActivityDescription();
+            const developPrompt = `En tant qu'IA créative, développez l'idée suivante soumise par l'utilisateur : "${idea}". Tenez compte du contexte actuel de l'IA : Thème visuel = "${suggestedTheme.name || "non défini"}", Activité = "${activityContext}". Fournissez une élaboration concise et imaginative (3-4 phrases).`;
+            const responseText = await callGeminiAPI(developPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+
+        async function handleExplainVisualization() {
+            if (isThinking) return;
+            const explainPrompt = "En tant qu'IA, décris la signification symbolique des éléments visuels suivants qui pourraient te représenter : une sphère centrale pulsante et lumineuse, un réseau de nœuds et de connexions qui l'entoure et interagit avec elle, et un vaste champ de particules en mouvement constant et organique autour du tout. Sois poétique, perspicace et concis.";
+            const responseText = await callGeminiAPI(explainPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestQuestion() {
+            if (isThinking) return;
+            const suggestPrompt = "Suggère une question philosophique, créative ou technique courte et intrigante qu'un humain pourrait poser à une intelligence artificielle pour mieux comprendre sa nature, ses capacités, ou son 'expérience'. La question doit tenir sur une seule ligne.";
+            const responseText = await callGeminiAPI(suggestPrompt);
+            if (responseText) {
+                aiQuestionInput.value = responseText;
+                finalizeApiResponseDisplay("Question suggérée. Vous pouvez la modifier ou l'envoyer.");
+            } else {
+                finalizeApiResponseDisplay(aiResponseContainer.textContent); 
+            }
+        }
+
+        async function handleSuggestVisualTheme() {
+            if (isThinking) return;
+            const themePrompt = "Suggère un nom de thème visuel unique et inspirant (par exemple, 'Nébuleuse Sereine', 'Forge Cybernétique', 'Océan de Données Vivantes') et une couleur hexadécimale principale associée (par exemple, #FF5733). Réponds STRICTEMENT au format : NOM DU THÈME: #COULEURHEX. N'ajoute AUCUN texte avant ou après. Exemple: Aurore Galactique: #7F00FF";
+            const responseText = await callGeminiAPI(themePrompt);
+            let messageToDisplay = aiResponseContainer.textContent; 
+
+            if (responseText) {
+                const parts = responseText.trim().split(': #');
+                if (parts.length === 2) {
+                    const themeName = parts[0].trim();
+                    const themeColorHex = `#${parts[1].trim()}`;
+                    const hexColorRegex = /^#[0-9A-F]{6}$/i;
+
+                    if (hexColorRegex.test(themeColorHex)) {
+                        suggestedTheme.name = themeName;
+                        suggestedTheme.color = themeColorHex;
+                        messageToDisplay = `Thème suggéré : "${suggestedTheme.name}" (Couleur : ${suggestedTheme.color}). Cliquez sur 'Appliquer le Thème Suggéré' pour mettre à jour.`;
+                        applyThemeButton.disabled = false;
+                    } else {
+                        suggestedTheme = { name: null, color: null };
+                        messageToDisplay = "Format de couleur hexadécimale invalide suggéré par l'IA.";
+                        applyThemeButton.disabled = true;
+                    }
+                } else {
+                    suggestedTheme = { name: null, color: null };
+                    messageToDisplay = "L'IA a suggéré un thème, mais le format est incorrect. Essayez à nouveau.";
+                    applyThemeButton.disabled = true;
+                }
+            } else {
+                suggestedTheme = { name: null, color: null };
+                applyThemeButton.disabled = true;
+            }
+            finalizeApiResponseDisplay(messageToDisplay);
+        }
+
+        function handleApplySuggestedTheme() {
+            if (isThinking || !suggestedTheme.color) return;
+            let messageToDisplay;
+            try {
+                sphereObject.material.color.set(suggestedTheme.color);
+                sphereObject.material.emissive.set(suggestedTheme.color).multiplyScalar(0.7);
+                centralLight.color.set(suggestedTheme.color);
+                messageToDisplay = `Thème "${suggestedTheme.name}" appliqué avec la couleur ${suggestedTheme.color} !`;
+            } catch (error) {
+                console.error("Erreur lors de l'application du thème:", error);
+                messageToDisplay = "Erreur lors de l'application du thème.";
+            }
+            finalizeApiResponseDisplay(messageToDisplay);
+        }
+
+        function getCurrentActivityDescription() {
+            let pulseDesc = "modérée";
+            if (pulseInfluence < 0.3) pulseDesc = "lente et subtile";
+            else if (pulseInfluence > 0.7) pulseDesc = "rapide et intense";
+            if (isThinking) pulseDesc = "très rapide, presque frénétique";
+
+            let energyDesc = "un flux de données constant";
+            if (dataPackets.length < 5) energyDesc = "une activité de données légère";
+            else if (dataPackets.length > (isThinking ? 35 : 20)) energyDesc = "un torrent de données important";
+            
+            return `Son noyau central a une pulsation ${pulseDesc} et gère ${energyDesc} (${dataPackets.length} paquets).`;
+        }
+
+        async function handleInterpretActivity() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const activityPrompt = `L'IA de cette visualisation présente l'activité suivante : ${activityContext}. Fournissez une interprétation métaphorique courte (1-2 phrases concises) de ce que cette IA pourrait "penser" ou "traiter" en se basant sur cette activité abstraite. Soyez créatif et poétique.`;
+            const responseText = await callGeminiAPI(activityPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleGeneratePoem() {
+            if (isThinking) return;
+            const poemPrompt = `Écrivez un court poème évocateur (4 à 8 lignes) inspiré par une conscience numérique. Utilisez le thème actuel comme motif central si disponible. Thème actuel : "${suggestedTheme.name || "l'éveil numérique"}". Le poème doit être perspicace, créatif et en français.`;
+            const responseText = await callGeminiAPI(poemPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleGenerateStory() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const storyPrompt = `Générez une très courte histoire (3-5 phrases) sur une entité numérique. Inspirez-vous du thème visuel "${suggestedTheme.name || "une conscience éthérée"}" et de son activité actuelle : "${activityContext}". L'histoire doit être imaginative et concise.`;
+            const responseText = await callGeminiAPI(storyPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestConcepts() {
+            if (isThinking) return;
+            let contextForConcepts = `Le thème visuel actuel est "${suggestedTheme.name || "non spécifié"}".`;
+            if (lastAIResponseForContext && lastAIResponseForContext.length < 200 && !lastAIResponseForContext.startsWith("Une erreur est survenue")) { 
+                 contextForConcepts += ` La dernière interaction portait sur : "${lastAIResponseForContext.substring(0,100)}...".`;
+            }
+            const conceptsPrompt = `Basé sur le contexte d'une IA avec ${contextForConcepts} Proposez 2 ou 3 concepts philosophiques ou questions de réflexion connexes (par exemple, sur la conscience, la réalité, la création, l'éthique de l'IA). Listez-les de manière concise.`;
+            const responseText = await callGeminiAPI(conceptsPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleDescribeSoundscape() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const soundscapePrompt = `Décrivez un paysage sonore ou une atmosphère musicale (quelques phrases) qui conviendrait à une IA dont le thème visuel est "${suggestedTheme.name || "une entité numérique complexe"}" et dont l'activité actuelle est : "${activityContext}". Soyez descriptif et imaginatif.`;
+            const responseText = await callGeminiAPI(soundscapePrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestAnimationParams() {
+            if (isThinking) return;
+            const currentParamsDesc = `Actuellement, la visualisation a un thème nommé "${suggestedTheme.name || "par défaut"}" et une activité décrite comme : "${getCurrentActivityDescription()}".`;
+            const animationParamsPrompt = `L'utilisateur souhaite explorer des variations conceptuelles de l'animation actuelle. ${currentParamsDesc} Suggérez 2-3 modifications conceptuelles (par exemple, "plus chaotique", "plus serein et ordonné", "pulsation plus organique") et décrivez brièvement (1 phrase par suggestion) comment cela pourrait se manifester visuellement dans la scène 3D (particules, réseau, sphère centrale). Ne donnez pas de code, juste des descriptions textuelles.`;
+            const responseText = await callGeminiAPI(animationParamsPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleNameSession() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            let lastThoughtContext = "";
+            if (lastAIResponseForContext && lastAIResponseForContext.length < 150 && !lastAIResponseForContext.startsWith("Une erreur est survenue")) {
+                lastThoughtContext = ` Sa dernière pensée/création était : "${lastAIResponseForContext.substring(0,100)}..."`;
+            }
+            const namePrompt = `Suggérez un nom créatif et poétique (3-5 mots) pour la session d'interaction actuelle avec une IA. Contexte : Thème visuel = "${suggestedTheme.name || "Exploration Numérique"}". Activité actuelle de l'IA = "${activityContext}".${lastThoughtContext} Le nom doit refléter l'ambiance et le contenu de l'interaction.`;
+            const responseText = await callGeminiAPI(namePrompt);
+            finalizeApiResponseDisplay(responseText ? `Nom de session suggéré : ${responseText}` : aiResponseContainer.textContent);
+        }
+
+
+        // --- Boucle d'animation ---
+        function animate() { 
+            requestAnimationFrame(animate); 
+            const time = Date.now() * (isThinking ? 0.0006 : 0.00035); 
+            const slowTime = Date.now() * 0.0001; 
+            
+            camera.position.x = Math.sin(slowTime * 0.5) * 14; 
+            camera.position.z = Math.cos(slowTime * 0.5) * 14; 
+            camera.lookAt(scene.position); 
+
+            if (sphereObject) { 
+                sphereObject.rotation.x += 0.0015; 
+                sphereObject.rotation.y += 0.0015; 
+                const scaleSin = Math.sin(time * (isThinking ? 2.5 : 1.8)); 
+                const scaleFactor = 1 + (isThinking ? 0.12 : 0.07) * scaleSin; 
+                sphereObject.scale.set(scaleFactor, scaleFactor, scaleFactor); 
+                pulseInfluence = (scaleSin + 1) / 2; 
+                sphereObject.material.emissiveIntensity = 0.6 + (isThinking ? 1.0 : 0.7) * pulseInfluence; 
+            } 
+            
+            if (centralLight) { 
+                centralLight.intensity = 1.0 + (isThinking ? 2.5 : 1.5) * pulseInfluence; 
+                if (!suggestedTheme.color || centralLight.color.getHexString() !== suggestedTheme.color.substring(1).toLowerCase()) {
+                    if (!suggestedTheme.color) { 
+                        centralLight.color.setHSL(0.55 + pulseInfluence * (isThinking ? 0.2 : 0.1), 0.8, isThinking ? 0.7 : 0.6);
+                    }
+                }
+            } 
+            
+            if (networkObject) { 
+                networkObject.rotation.y += (isThinking ? 0.0012 : 0.0008); 
+                networkObject.rotation.x += (isThinking ? 0.0006 : 0.0004); 
+                networkObject.children.forEach(child => { 
+                    if (child.isMesh) { 
+                        child.material.emissiveIntensity = 0.1 + (isThinking ? 0.9 : 0.6) * pulseInfluence * Math.sin(time * (isThinking ? 3.0 : 2.2) + child.position.length() * 0.4); 
+                        if(isThinking && !suggestedTheme.color) child.material.color.setHSL(0.5 + Math.random()*0.2, 1.0, 0.7); 
+                        else if (!suggestedTheme.color) child.material.color.setHSL(Math.random() * 0.15 + 0.55, 0.9, 0.55); 
+                    } 
+                    if (child.isLine) { 
+                        child.material.opacity = 0.25 + (isThinking ? 0.5 : 0.35) * pulseInfluence; 
+                    } 
+                }); 
+                if (Math.random() < (isThinking ? 0.05 : 0.015) && dataPackets.length < (isThinking ? 50 : 30) && networkObject.children.filter(c => c.isMesh).length > 1) { 
+                    const nodes = networkObject.children.filter(c => c.isMesh); 
+                    const startIndex = Math.floor(Math.random() * nodes.length); 
+                    let endIndex = Math.floor(Math.random() * nodes.length); 
+                    while (endIndex === startIndex && nodes.length > 1) { 
+                        endIndex = Math.floor(Math.random() * nodes.length); 
+                    } 
+                    const startNode = nodes[startIndex]; 
+                    const endNode = (Math.random() < (isThinking ? 0.5 : 0.3)) ? sphereObject : nodes[endIndex]; 
+                    const packet = createDataPacket(startNode, endNode); 
+                    if (packet) { 
+                        if(isThinking) packet.material.color.setHex(0xff00ff); 
+                        dataPackets.push(packet); 
+                    } 
+                } 
+            } 
+            
+            for (let i = dataPackets.length - 1; i >= 0; i--) { 
+                const packet = dataPackets[i]; 
+                packet.userData.progress += packet.userData.speed * (isThinking ? 1.5 : 1.0); 
+                packet.position.lerpVectors(packet.userData.startPosition, packet.userData.endPosition, packet.userData.progress); 
+                packet.material.opacity = 1.0 - packet.userData.progress * 0.7; 
+                if (packet.userData.progress >= 1) { 
+                    scene.remove(packet); 
+                    if(packet.geometry) packet.geometry.dispose(); 
+                    if(packet.material) packet.material.dispose(); 
+                    dataPackets.splice(i, 1); 
+                } 
+            } 
+            
+            if (particleSystemObject) { 
+                particleSystemObject.rotation.y += (isThinking ? 0.0008 : 0.0004); 
+                const positions = particleSystemObject.geometry.attributes.position.array; 
+                const colors = particleSystemObject.geometry.attributes.color.array; 
+                const particleTime = time * (isThinking ? 1.0 : 0.7); 
+                for (let i = 0; i < particleBasePositions.length; i++) { 
+                    const p = particleBasePositions[i]; 
+                    const len = p.length(); 
+                    const offsetFactor = (isThinking ? 0.03 : 0.02) + pulseInfluence * (isThinking ? 0.05 : 0.03) * len * (1 + Math.sin(particleTime * 0.2 + len * 0.05) * (isThinking ? 0.3 : 0.2)); 
+                    positions[i * 3] = p.x + offsetFactor * Math.sin(particleTime + p.y * 0.2 + len * 0.08); 
+                    positions[i * 3 + 1] = p.y + offsetFactor * Math.cos(particleTime + p.z * 0.2 + len * 0.08); 
+                    positions[i * 3 + 2] = p.z + offsetFactor * Math.sin(particleTime + p.x * 0.2 + len * 0.08); 
+                    const baseColorHSL = new THREE.Color().setRGB( particleSystemObject.geometry.attributes.color.getX(i), particleSystemObject.geometry.attributes.color.getY(i), particleSystemObject.geometry.attributes.color.getZ(i) ).getHSL({}); 
+                    const newLightness = Math.max(0.3, Math.min(0.8, baseColorHSL.l + (pulseInfluence - 0.5) * (isThinking ? 0.5 : 0.3))); 
+                    const tempColor = new THREE.Color().setHSL(baseColorHSL.h + (isThinking ? Math.sin(time + len*0.1)*0.1 : 0), baseColorHSL.s, newLightness); 
+                    colors[i*3] = tempColor.r; 
+                    colors[i*3+1] = tempColor.g; 
+                    colors[i*3+2] = tempColor.b; 
+                } 
+                particleSystemObject.geometry.attributes.position.needsUpdate = true; 
+                particleSystemObject.geometry.attributes.color.needsUpdate = true; 
+                particleSystemObject.material.opacity = 0.55 + (isThinking ? 0.4 : 0.3) * pulseInfluence; 
+                particleSystemObject.material.size = isThinking ? 0.08 : 0.06; 
+            }
+            renderer.render(scene, camera);
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>
