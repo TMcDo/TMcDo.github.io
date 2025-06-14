@@ -1,1211 +1,872 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metronome & Tone Player</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Représentation 3D IA avec Fonctions Gemini Étendues</title>
     <style>
         body {
+            margin: 0;
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
-            /* Prevents unwanted scrolling on touch devices when interacting with elements */
-            touch-action: manipulation;
-        }
-        /* Custom styling for the range input thumb (slider handle) for Webkit browsers */
-        .slider-thumb::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            background: #3b82f6; /* blue-500 */
-            cursor: pointer;
-            border-radius: 50%;
-            margin-top: -8px; /* Adjusts thumb position vertically */
-        }
-        /* Custom styling for the range input thumb (slider handle) for Mozilla browsers */
-        .slider-thumb::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            background: #3b82f6; /* blue-500 */
-            cursor: pointer;
-            border-radius: 50%;
-            border: none;
-        }
-        /* Styling for control panels and tab content, adding a frosted glass effect */
-        .main-content-panel, .control-panel {
-            background-color: rgba(255, 255, 255, 0.05); /* Slightly less opaque white */
-            backdrop-filter: blur(12px); /* Blurs the background behind the element */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
-            border-radius: 0.75rem; /* Consistent rounded corners */
-        }
-        /* Styling for the individual beat indicators in the metronome */
-        .beat-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%; /* Makes it a circle */
-            background-color: #6b7280; /* gray-500 */
-            transition: background-color 0.1s ease-in-out; /* Smooth transition for color change */
-        }
-        /* Active state for beat indicators */
-        .beat-indicator.active {
-            background-color: #22c55e; /* green-500 */
-        }
-        /* Styling for frequency selection buttons */
-        .freq-button {
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s; /* Smooth transitions for hover effects */
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background-color: rgba(255, 255, 255, 0.1);
-            min-width: 80px; /* Ensures consistent button width */
-            text-align: center;
-        }
-        /* Hover effect for frequency buttons */
-        .freq-button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px); /* Slight lift effect on hover */
-        }
-        /* Selected state for frequency buttons */
-        .freq-button.selected {
-            background-color: #22c55e; /* green-500 */
-            color: white;
-            border-color: #22c55e;
-        }
-        /* Chakra frequency specific colors */
-        .chakra-red { background-color: #ef4444 !important; color: white !important; border-color: #ef4444 !important; } /* red-500 */
-        .chakra-orange { background-color: #f97316 !important; color: white !important; border-color: #f97316 !important; } /* orange-500 */
-        .chakra-yellow { background-color: #eab308 !important; color: white !important; border-color: #eab308 !important; } /* yellow-500 */
-        .chakra-green { background-color: #22c55e !important; color: white !important; border-color: #22c55e !important; } /* green-500 */
-        .chakra-blue { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; } /* blue-500 */
-        .chakra-indigo { background-color: #6366f1 !important; color: white !important; border-color: #6366f1 !important; } /* indigo-500 */
-        .chakra-violet { background-color: #8b5cf6 !important; color: white !important; border-color: #8b5cf6 !important; } /* violet-500 */
-
-        /* Piano Keyboard Styling */
-        .piano-keyboard {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            height: 200px; /* Fixed height for the keyboard */
-            background-color: #1f2937; /* slate-800 */
-            border-radius: 0.5rem;
-            padding: 10px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-            max-width: 100%;
-            overflow-x: auto; /* Allow horizontal scrolling if keys overflow */
-        }
-
-        .key {
-            position: relative;
-            border: 1px solid #333;
-            border-radius: 0 0 5px 5px;
-            cursor: pointer;
-            transition: background-color 0.1s ease;
-            box-shadow: 0 2px 3px rgba(0,0,0,0.3);
-            flex-shrink: 0; /* Prevent keys from shrinking */
-        }
-
-        .white-key {
-            width: 50px; /* Width of white keys */
-            height: 100%;
-            background-color: #f9fafb; /* white */
-            border-color: #6b7280; /* gray-500 */
-            margin-right: -1px; /* Overlap borders slightly */
-            z-index: 1;
-        }
-
-        .white-key.active {
-            background-color: #a7f3d0; /* emerald-200 */
-            box-shadow: inset 0 0 10px rgba(0,255,0,0.5);
-        }
-
-        .black-key {
-            width: 30px; /* Width of black keys */
-            height: 60%; /* Shorter than white keys */
-            background-color: #1f2937; /* slate-800 */
-            border-color: #000;
-            margin-left: -15px; /* Position over white keys */
-            margin-right: -15px; /* Position over white keys */
-            z-index: 2;
-            position: absolute; /* Absolute positioning for black keys */
-            top: 10px; /* Adjust vertical position */
-        }
-
-        .black-key.active {
-            background-color: #6ee7b7; /* emerald-400 */
-            box-shadow: inset 0 0 10px rgba(0,255,0,0.5);
-        }
-
-        /* Specific positioning for black keys relative to their white key groups */
-        .white-key[data-note="C4"] ~ .black-key[data-note="C#4"] { left: 40px; }
-        .white-key[data-note="D4"] ~ .black-key[data-note="D#4"] { left: 90px; }
-        .white-key[data-note="F4"] ~ .black-key[data-note="F#4"] { left: 190px; }
-        .white-key[data-note="G4"] ~ .black-key[data-note="G#4"] { left: 240px; }
-        .white-key[data-note="A4"] ~ .black-key[data-note="A#4"] { left: 290px; }
-
-        /* General positioning for black keys in a repeating pattern */
-        .key-group {
-            position: relative;
-            display: flex;
-        }
-
-        .key-group .black-key:nth-child(1) { left: 35px; } /* C# */
-        .key-group .black-key:nth-child(2) { left: 85px; } /* D# */
-        .key-group .black-key:nth-child(3) { left: 185px; } /* F# */
-        .key-group .black-key:nth-child(4) { left: 235px; } /* G# */
-        .key-group .black-key:nth-child(5) { left: 285px; } /* A# */
-
-        /* Adjustments for mobile view */
-        @media (max-width: 640px) {
-            .piano-keyboard {
-                height: 150px; /* Slightly shorter for mobile */
-            }
-            .white-key {
-                width: 40px; /* Smaller white keys */
-            }
-            .black-key {
-                width: 24px; /* Smaller black keys */
-                height: 55%;
-                margin-left: -12px;
-                margin-right: -12px;
-            }
-            .key-group .black-key:nth-child(1) { left: 28px; }
-            .key-group .black-key:nth-child(2) { left: 68px; }
-            .key-group .black-key:nth-child(3) { left: 148px; }
-            .key-group .black-key:nth-child(4) { left: 188px; }
-            .key-group .black-key:nth-child(5) { left: 228px; }
-        }
-
-        /* Guitar Fretboard Styling */
-        .guitar-fretboard, .ukulele-fretboard {
+            background-color: #101015;
+            color: #e8e8e8;
             display: flex;
             flex-direction: column;
-            background-color: #333; /* Dark background for fretboard */
-            border-radius: 0.5rem;
-            padding: 10px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-            max-width: 100%;
-            overflow-x: auto; /* Allow horizontal scrolling */
             align-items: center;
         }
-
-        .guitar-string-row, .ukulele-string-row {
-            display: flex;
-            width: 100%;
-            height: 25px; /* Height of each string row */
-            align-items: center;
-            border-bottom: 1px solid #555; /* Visual separation of strings */
-            position: relative;
-        }
-        .guitar-string-row:last-child, .ukulele-string-row:last-child {
-            border-bottom: none; /* No border on the last string */
-        }
-
-        .string-label {
-            width: 40px; /* Space for string label */
-            color: #ccc;
-            font-size: 0.75rem;
-            text-align: center;
-            flex-shrink: 0;
-            padding-right: 5px;
-        }
-
-        .fret {
-            flex-grow: 1; /* Frets expand to fill space */
-            height: 100%;
-            border-left: 1px solid #666; /* Fret lines */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.1s ease;
-            position: relative;
-            min-width: 40px; /* Minimum width for frets */
-        }
-        .fret:first-child {
-            border-left: none; /* No left border on the open string (fret 0) */
-        }
-
-        .fret-marker {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background-color: #777;
-            border-radius: 50%;
-            opacity: 0.7;
-            top: 50%;
-            transform: translateY(-50%);
+        #info {
+            position: fixed;
+            top: 10px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 8px;
+            background-color: rgba(10, 10, 20, 0.7);
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 40; /* Highest z-index */
+            border: 1px solid rgba(0, 180, 255, 0.2);
         }
-
-        /* Specific positioning for fret markers */
-        .fret:nth-child(4) .fret-marker, /* 3rd fret */
-        .fret:nth-child(6) .fret-marker, /* 5th fret */
-        .fret:nth-child(8) .fret-marker, /* 7th fret */
-        .fret:nth-child(10) .fret-marker, /* 9th fret */
-        .fret:nth-child(13) .fret-marker, /* 12th fret */
-        .fret:nth-child(15) .fret-marker, /* 14th fret */
-        .fret:nth-child(17) .fret-marker, /* 16th fret */
-        .fret:nth-child(19) .fret-marker, /* 18th fret */
-        .fret:nth-child(22) .fret-marker /* 21st fret */
-        {
-            /* Apply to these specific frets */
+        #controlsContainer { /* Pour la question principale et le développement d'idée */
+            position: fixed;
+            top: 55px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 650px; 
+            padding: 10px;
+            background-color: rgba(20, 20, 30, 0.85);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 180, 255, 0.4);
+            z-index: 30;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
-
-        /* Double dot for the 12th fret (index 12) - can be simplified to one dot for this visual */
-        .fret:nth-child(13) .fret-marker { /* 12th fret is index 12 (13th child) */
-            background-color: #aaa;
-            width: 10px;
-            height: 10px;
+        #aiQuestionInput {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #007bff;
+            background-color: #202530;
+            color: #e0e0e0;
+            font-size: 14px;
         }
-
-
-        .fret.active {
-            background-color: rgba(34, 197, 94, 0.3); /* green-500 with transparency */
-            box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.7);
+        .ai-button { /* Classe commune pour les boutons d'action IA */
+            padding: 10px 15px;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+        .ai-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .ai-button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        #metaControlsContainer { /* Pour les actions Gemini supplémentaires */
+            position: fixed;
+            top: 125px; /* En dessous du conteneur de question principal */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1250px; /* Augmenté pour encore plus d'espace pour les boutons */
+            padding: 8px;
+            background-color: rgba(20, 20, 30, 0.75);
+            border-radius: 8px;
+            z-index: 25;
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 8px; 
+            justify-content: center; 
+            max-height: 130px; /* Hauteur max pour env. 2-3 lignes de boutons */
+            overflow-y: auto; /* Ajout d'une barre de défilement si nécessaire */
+        }
+        #aiResponseContainer {
+            position: fixed;
+            /* top est défini dynamiquement dans updateRendererSize */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 550px;
+            height: 60px; 
+            max-height: 180px; 
+            padding: 10px;
+            background-color: rgba(15, 15, 25, 0.9);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 180, 255, 0.2);
+            font-size: 13px;
+            z-index: 20;
+            overflow-y: auto;
+            color: #c0c0c0;
+            text-align: left;
+            transition: height 0.3s ease, top 0.3s ease; 
+        }
+        canvas {
+            display: block;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.6);
+            width: 90vw; 
+            position: fixed; 
+            left: 5vw;     
+            z-index: 5; 
+            /* top est défini dynamiquement dans updateRendererSize */
+            transition: top 0.3s ease; 
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white flex flex-col items-center justify-center min-h-screen p-4 selection:bg-blue-500 selection:text-white">
+<body>
+    <div id="info">Représentation Évoluée : Noyau Actif, Flux Réseau et Champ Dynamique</div>
 
-    <div class="w-full max-w-xl mx-auto">
-        <div class="main-content-panel p-6 sm:p-8 space-y-8">
-            <section class="space-y-8 pb-8 border-b border-slate-700">
-                <header class="text-center">
-                    <h1 class="text-4xl font-bold tracking-tight">Metronome</h1>
-                    <p class="text-slate-400 mt-1">Keep your rhythm steady</p>
-                </header>
-                <div class="text-center">
-                    <div id="bpmDisplay" class="text-7xl font-bold text-blue-400">120</div>
-                    <div class="text-sm text-slate-400">BPM</div>
-                </div>
-                <div class="flex justify-center items-center space-x-2">
-                    <div id="beatIndicator1" class="beat-indicator"></div>
-                    <div id="beatIndicator2" class="beat-indicator"></div>
-                    <div id="beatIndicator3" class="beat-indicator"></div>
-                    <div id="beatIndicator4" class="beat-indicator"></div>
-                </div>
-                <div class="space-y-2">
-                    <label for="bpmSlider" class="block text-sm font-medium text-slate-300">Tempo</label>
-                    <input type="range" id="bpmSlider" min="40" max="240" value="120" class="w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb accent-blue-500">
-                    <div class="flex justify-between text-xs text-slate-400"><span>40</span><span>240</span></div>
-                </div>
-                <button id="startStopButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">Start Metronome</button>
-            </section>
-
-            <section class="space-y-8 pt-8">
-                <header class="text-center">
-                    <h1 class="text-4xl font-bold tracking-tight">Tone Player</h1>
-                    <p class="text-slate-400 mt-1">Explore Frequencies (Universal Tuning A=432Hz)</p>
-                </header>
-
-                <div id="currentToneInfo" class="text-center p-4 bg-slate-700 rounded-lg min-h-[6rem]">
-                    <div id="selectedFrequencyDisplay" class="text-3xl font-bold text-green-400">- Hz</div>
-                    <div id="selectedFrequencyDescription" class="text-sm text-slate-300 mt-1">Select a frequency to play.</div>
-                </div>
-                
-                <button id="playStopToneButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">Play Tone</button>
-
-                <div class="space-y-6 pt-4">
-                    <div>
-                        <h3 class="text-xl font-semibold mb-3 text-slate-200">Musical Notes (A4 = 432Hz)</h3>
-                        <div id="musicalNotesContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-3 text-slate-200">Healing Frequencies (Solfeggio)</h3>
-                        <div id="healingFrequenciesContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-3 text-slate-200">Chakra Frequencies</h3>
-                        <div id="chakraFrequenciesContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-                    </div>
-                </div>
-
-                <div class="space-y-6 pt-4">
-                    <h3 class="text-xl font-semibold mb-3 text-slate-200">Piano Keyboard</h3>
-                    <div class="piano-keyboard">
-                        <div class="key-group">
-                            <div class="key white-key" data-note="C3"></div>
-                            <div class="key black-key" data-note="C#3"></div>
-                            <div class="key white-key" data-note="D3"></div>
-                            <div class="key black-key" data-note="D#3"></div>
-                            <div class="key white-key" data-note="E3"></div>
-                            <div class="key white-key" data-note="F3"></div>
-                            <div class="key black-key" data-note="F#3"></div>
-                            <div class="key white-key" data-note="G3"></div>
-                            <div class="key black-key" data-note="G#3"></div>
-                            <div class="key white-key" data-note="A3"></div>
-                            <div class="key black-key" data-note="A#3"></div>
-                            <div class="key white-key" data-note="B3"></div>
-                        </div>
-                        <div class="key-group">
-                            <div class="key white-key" data-note="C4"></div>
-                            <div class="key black-key" data-note="C#4"></div>
-                            <div class="key white-key" data-note="D4"></div>
-                            <div class="key black-key" data-note="D#4"></div>
-                            <div class="key white-key" data-note="E4"></div>
-                            <div class="key white-key" data-note="F4"></div>
-                            <div class="key black-key" data-note="F#4"></div>
-                            <div class="key white-key" data-note="G4"></div>
-                            <div class="key black-key" data-note="G#4"></div>
-                            <div class="key white-key" data-note="A4"></div>
-                            <div class="key black-key" data-note="A#4"></div>
-                            <div class="key white-key" data-note="B4"></div>
-                        </div>
-                        <div class="key-group">
-                            <div class="key white-key" data-note="C5"></div>
-                            <div class="key black-key" data-note="C#5"></div>
-                            <div class="key white-key" data-note="D5"></div>
-                            <div class="key black-key" data-note="D#5"></div>
-                            <div class="key white-key" data-note="E5"></div>
-                            <div class="key white-key" data-note="F5"></div>
-                            <div class="key black-key" data-note="F#5"></div>
-                            <div class="key white-key" data-note="G5"></div>
-                            <div class="key black-key" data-note="G#5"></div>
-                            <div class="key white-key" data-note="A5"></div>
-                            <div class="key black-key" data-note="A#5"></div>
-                            <div class="key white-key" data-note="B5"></div>
-                        </div>
-                        <div class="key-group">
-                            <div class="key white-key" data-note="C6"></div>
-                            <div class="key black-key" data-note="C#6"></div>
-                            <div class="key white-key" data-note="D6"></div>
-                            <div class="key black-key" data-note="D#6"></div>
-                            <div class="key white-key" data-note="E6"></div>
-                            <div class="key white-key" data-note="F6"></div>
-                            <div class="key black-key" data-note="F#6"></div>
-                            <div class="key white-key" data-note="G6"></div>
-                            <div class="key black-key" data-note="G#6"></div>
-                            <div class="key white-key" data-note="A6"></div>
-                            <div class="key black-key" data-note="A#6"></div>
-                            <div class="key white-key" data-note="B6"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-6 pt-4">
-                    <h3 class="text-xl font-semibold mb-3 text-slate-200">Guitar Fretboard (Standard Tuning)</h3>
-                    <div id="guitarFretboard" class="guitar-fretboard">
-                        <div class="flex w-full justify-around text-xs text-slate-400 mb-2 pl-[40px] pr-[10px]">
-                            <span>Open</span>
-                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                            <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
-                            <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span>
-                            <span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
-                            <span>21</span><span>22</span><span>23</span><span>24</span>
-                        </div>
-                        </div>
-                </div>
-
-                <div class="space-y-6 pt-4">
-                    <h3 class="text-xl font-semibold mb-3 text-slate-200">Ukulele Fretboard (Standard GCEA Tuning)</h3>
-                    <div id="ukuleleFretboard" class="ukulele-fretboard">
-                        <div class="flex w-full justify-around text-xs text-slate-400 mb-2 pl-[40px] pr-[10px]">
-                            <span>Open</span>
-                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                            <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
-                            <span>11</span><span>12</span>
-                        </div>
-                        </div>
-                </div>
-            </section>
-        </div>
-
-        <div class="control-panel p-6 sm:p-8 mt-6 space-y-2">
-            <label for="volumeSlider" class="block text-sm font-medium text-slate-300">Master Volume</label>
-            <input type="range" id="volumeSlider" min="0" max="100" value="80" class="w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb accent-blue-500">
-            <div class="flex justify-between text-xs text-slate-400"><span>Min</span><span>Max</span></div>
-        </div>
-        
-        <footer class="text-center mt-8 text-sm text-slate-500">
-            <p>Powered by Tone.js</p>
-        </footer>
+    <div id="controlsContainer">
+        <input type="text" id="aiQuestionInput" placeholder="Entrez une question, une idée, un sujet...">
+        <button id="askAiButton" class="ai-button">✨ Interroger</button>
+        <button id="developIdeaButton" class="ai-button">✨ Développer l'Idée</button>
     </div>
 
-    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-slate-800 p-6 rounded-lg shadow-xl max-w-sm w-full border border-slate-700">
-            <h3 id="messageTitle" class="text-lg font-semibold mb-2 text-white">Message</h3>
-            <p id="messageText" class="text-sm text-slate-300 mb-4">This is a message.</p>
-            <button id="closeModalButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">OK</button>
-        </div>
+    <div id="metaControlsContainer">
+        <button id="explainVisButton" class="ai-button">✨ Explique cette visualisation</button>
+        <button id="suggestQuestionButton" class="ai-button">✨ Suggère une question</button>
+        <button id="suggestThemeButton" class="ai-button">✨ Inspire un Thème Visuel</button>
+        <button id="applyThemeButton" class="ai-button">✨ Appliquer le Thème Suggéré</button>
+        <button id="interpretActivityButton" class="ai-button">✨ Interpréter l'Activité Actuelle</button>
+        <button id="generatePoemButton" class="ai-button">✨ Générer un Poème</button>
+        <button id="generateStoryButton" class="ai-button">✨ Générer une Histoire Courte</button>
+        <button id="suggestConceptsButton" class="ai-button">✨ Proposer des Concepts</button>
+        <button id="describeSoundscapeButton" class="ai-button">✨ Décrire un Paysage Sonore</button>
+        <button id="suggestAnimationParamsButton" class="ai-button">✨ Suggérer des Paramètres d'Animation</button>
+        <button id="nameSessionButton" class="ai-button">✨ Nommer cette Session</button>
+        <button id="generateHaikuButton" class="ai-button">✨ Générer un Haïku</button>
+        <button id="suggestVisualMetaphorButton" class="ai-button">✨ Proposer une Métaphore Visuelle</button>
+        <button id="suggestTransformationLogicButton" class="ai-button">✨ Suggérer une Logique de Transformation</button>
+        <button id="writeLogbookEntryButton" class="ai-button">✨ Rédiger un "Journal de Bord"</button>
+        <button id="analyzeSentimentButton" class="ai-button">✨ Analyser le Sentiment</button>
+        <button id="suggestArtworkTitleButton" class="ai-button">✨ Proposer un Titre d'Œuvre</button>
+        <button id="createCharacterProfileButton" class="ai-button">✨ Créer un Profil de Personnage</button>
+        <button id="translateConceptButton" class="ai-button">✨ Traduire un Concept en Analogie</button>
+        <button id="summarizeInEmojisButton" class="ai-button">✨ Résumer en Emojis</button>
+        <button id="generateDialogueButton" class="ai-button">✨ Générer un Dialogue</button>
+        <button id="defineNeologismButton" class="ai-button">✨ Définir un Néologisme</button>
+        <button id="findCounterArgumentButton" class="ai-button">✨ Trouver un Contre-Argument</button>
+        <button id="imagineWhatIfButton" class="ai-button">✨ Imaginer un Scénario "Et si..."</button>
+        <button id="proposeFictionalTechButton" class="ai-button">✨ Proposer une Technologie Fictive</button>
+        <button id="proposeRiddleButton" class="ai-button">✨ Proposer une Énigme</button>
+        <button id="createTodoListButton" class="ai-button">✨ Créer une Liste de Tâches</button>
     </div>
 
+    <div id="aiResponseContainer">
+        En attente de votre interaction...
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // --- DOM Elements ---
-        const bpmDisplay = document.getElementById('bpmDisplay');
-        const bpmSlider = document.getElementById('bpmSlider');
-        const startStopButton = document.getElementById('startStopButton');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const beatIndicators = [
-            document.getElementById('beatIndicator1'), document.getElementById('beatIndicator2'),
-            document.getElementById('beatIndicator3'), document.getElementById('beatIndicator4'),
-        ];
-        const messageModal = document.getElementById('messageModal');
-        const messageTitle = document.getElementById('messageTitle');
-        const messageText = document.getElementById('messageText');
-        const closeModalButton = document.getElementById('closeModalButton');
+        let scene, camera, renderer;
+        let sphereObject, networkObject, particleSystemObject, centralLight;
+        let particleBasePositions = [];
+        let pulseInfluence = 0; 
+        let dataPackets = [];
+        let isThinking = false; 
 
-        const selectedFrequencyDisplay = document.getElementById('selectedFrequencyDisplay');
-        const selectedFrequencyDescription = document.getElementById('selectedFrequencyDescription');
-        const playStopToneButton = document.getElementById('playStopToneButton');
-        const musicalNotesContainer = document.getElementById('musicalNotesContainer');
-        const healingFrequenciesContainer = document.getElementById('healingFrequenciesContainer');
-        const chakraFrequenciesContainer = document.getElementById('chakraFrequenciesContainer');
+        let aiQuestionInput, askAiButton, aiResponseContainer;
+        let developIdeaButton; 
+        let explainVisButton, suggestQuestionButton, suggestThemeButton, applyThemeButton;
+        let interpretActivityButton, generatePoemButton, generateStoryButton, suggestConceptsButton;
+        let describeSoundscapeButton, suggestAnimationParamsButton, nameSessionButton;
+        let generateHaikuButton, suggestVisualMetaphorButton; 
+        let suggestTransformationLogicButton, writeLogbookEntryButton;
+        let analyzeSentimentButton, suggestArtworkTitleButton;
+        let createCharacterProfileButton, translateConceptButton;
+        let summarizeInEmojisButton, generateDialogueButton;
+        let defineNeologismButton, findCounterArgumentButton;
+        let imagineWhatIfButton, proposeFictionalTechButton;
+        let proposeRiddleButton, createTodoListButton; 
 
-        // Piano Keyboard DOM elements
-        const pianoKeys = document.querySelectorAll('.piano-keyboard .key');
-        // Guitar Fretboard DOM elements
-        const guitarFretboardContainer = document.getElementById('guitarFretboard');
-        // Ukulele Fretboard DOM elements
-        const ukuleleFretboardContainer = document.getElementById('ukuleleFretboard');
+        let suggestedTheme = { name: null, color: null };
+        let lastAIResponseForContext = ""; 
 
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x101015);
+            scene.fog = new THREE.FogExp2(0x101015, 0.035);
 
-        // --- Metronome State ---
-        let isMetronomePlaying = false;
-        let currentBpm = 120;
-        let metronomeClickEventId = null;
-        let metronomeBeatCount = 0;
-        const beatsPerMeasure = 4;
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / (window.innerHeight * 0.6), 0.1, 1000);
+            camera.position.set(0, 2, 14);
+            camera.lookAt(scene.position);
 
-        // --- Tone Player State ---
-        let isTonePlaying = false;
-        let currentSelectedFrequency = null;
-        let currentSelectedFrequencyLabel = "- Hz";
-        let currentSelectedFrequencyDescText = "Select a frequency to play.";
-        let activeFreqButton = null;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            document.body.appendChild(renderer.domElement);
 
-        // --- Tone.js Setup ---
-        // These will be initialized once the audio context is running
-        let metronomeSynth; 
-        let tonePlayerSynth; 
-        let pianoSynth; 
-        let guitarSynth; 
-        let ukuleleSynth; // New synth for the ukulele
-        let masterVolume; 
-        let audioInitialized = false; // Flag to ensure audio components are initialized only once
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(8, 12, 10);
+            scene.add(directionalLight);
 
-        // Set A4 reference for Tone.js to 432Hz for all calculations
-        Tone.Frequency.A4 = 432;
+            centralLight = new THREE.PointLight(0x66ccff, 1.5, 30);
+            centralLight.position.set(0, 0, 0);
+            scene.add(centralLight);
 
-        // --- Frequency Data ---
-        const musicalNotes = [
-            { label: "A2", freq: 108.00, desc: "A (A4=432Hz)" },
-            { label: "Bb2", freq: 114.33, desc: "Bb (A4=432Hz)" },
-            { label: "B2", freq: 121.33, desc: "B (A4=432Hz)" },
-            { label: "C3", freq: 128.33, desc: "C (A4=432Hz)" },
-            { label: "C#3", freq: 136.00, desc: "C# (A4=432Hz)" },
-            { label: "D3", freq: 144.00, desc: "D (A4=432Hz)" },
-            { label: "Eb3", freq: 152.66, desc: "Eb (A4=432Hz)" },
-            { label: "E3", freq: 161.66, desc: "E (A4=432Hz)" },
-            { label: "F3", freq: 171.66, desc: "F (A4=432Hz)" },
-            { label: "F#3", freq: 181.66, desc: "F# (A4=432Hz)" },
-            { label: "G3", freq: 192.66, desc: "G (A4=432Hz)" },
-            { label: "G#3", freq: 203.66, desc: "G# (A4=432Hz)" },
-            { label: "A3", freq: 216.00, desc: "A (A4=432Hz)" },
-            { label: "Bb3", freq: 229.00, desc: "Bb (A4=432Hz)" },
-            { label: "B3", freq: 242.33, desc: "B (A4=432Hz)" },
-            { label: "C4", freq: 257.00, desc: "C (A4=432Hz)" },
-            { label: "C#4", freq: 272.00, desc: "C# (A4=432Hz)" },
-            { label: "D4", freq: 288.33, desc: "D (A4=432Hz)" },
-            { label: "Eb4", freq: 305.33, desc: "Eb (A4=432Hz)" },
-            { label: "E4", freq: 323.33, desc: "E (A4=432Hz)" },
-            { label: "F4", freq: 342.66, desc: "F (A4=432Hz)" },
-            { label: "F#4", freq: 363.66, desc: "F# (A4=432Hz)" },
-            { label: "G4", freq: 384.66, desc: "G (A4=432Hz)" },
-            { label: "G#4", freq: 407.66, desc: "G# (A4=432Hz)" },
-            { label: "A4", freq: 432.00, desc: "A (Reference 432Hz)" },
-            { label: "Bb4", freq: 457.33, desc: "Bb (A4=432Hz)" },
-            { label: "B4", freq: 484.66, desc: "B (A4=432Hz)" },
-            { label: "C5", freq: 514.00, desc: "C (A4=432Hz)" },
-            { label: "C#5", freq: 544.00, desc: "C# (A4=432Hz)" },
-            { label: "D5", freq: 576.00, desc: "D (A4=432Hz)" },
-            { label: "Eb5", freq: 611.33, desc: "Eb (A4=432Hz)" },
-            { label: "E5", freq: 648.00, desc: "E (A4=432Hz)" },
-            { label: "F5", freq: 686.00, desc: "F (A4=432Hz)" },
-            { label: "F#5", freq: 726.66, desc: "F# (A4=432Hz)" },
-            { label: "G5", freq: 768.99, desc: "G (A4=432Hz)" },
-            { label: "G#5", freq: 815.33, desc: "G# (A4=432Hz)" },
-            { label: "A5", freq: 863.33, desc: "A (A4=432Hz)" },
-            { label: "Bb5", freq: 915.00, desc: "Bb (A4=432Hz)" },
-            { label: "B5", freq: 968.66, desc: "B (A4=432Hz)" },
-            { label: "C6", freq: 1028.00, desc: "C (A4=432Hz)" },
-            { label: "C#6", freq: 1088.00, desc: "C# (A4=432Hz)" },
-            { label: "D6", freq: 1155.00, desc: "D (A4=432Hz)" },
-            { label: "Eb6", freq: 1221.00, desc: "Eb (A4=432Hz)" },
-            { label: "E6", freq: 1293.00, desc: "E (A4=432Hz)" },
-            { label: "F6", freq: 1370.00, desc: "F (A4=432Hz)" },
-            { label: "F#6", freq: 1452.00, desc: "F# (A4=432Hz)" },
-            { label: "G6", freq: 1540.00, desc: "G (A4=432Hz)" },
-            { label: "G#6", freq: 1630.00, desc: "G# (A4=432Hz)" },
-        ];
-        const healingFrequencies = [
-            { label: "396 Hz", freq: 396, desc: "Liberating Guilt and Fear (Energy, Stability, Comfort, Safety)" },
-            { label: "417 Hz", freq: 417, desc: "Facilitating Change, Undoing Situations (Sociality, Sensuality, Sexuality, Pleasure)" },
-            { label: "528 Hz", freq: 528, desc: "Transformation and Miracles (DNA Repair, Strength, Personality, Power, Determination)" },
-            { label: "639 Hz", freq: 639, desc: "Connecting, Relationships (Sincerity, Acceptance, Love, Compassion)" },
-            { label: "741 Hz", freq: 741, desc: "Awakening Intuition, Expression/Solutions (Communication, Expression, Creativity, Inspiration)" },
-            { label: "852 Hz", freq: 852, desc: "Returning to Spiritual Order (Intuition, Lucidity, Meditation, Trust)" },
-            { label: "963 Hz", freq: 963, desc: "Awakening Perfect State, Oneness (Knowledge, Consciousness, Fulfillment, Spirituality)" },
-        ];
-        const chakraFrequencies = [
-            { label: "Root (228 Hz)", freq: 228, chakra: "Muladhara", colorClass: "chakra-red", desc: "Stability, Grounding" },
-            { label: "Root (456 Hz)", freq: 456, chakra: "Muladhara", colorClass: "chakra-red", desc: "Stability, Grounding" },
-            { label: "Root (912 Hz)", freq: 912, chakra: "Muladhara", colorClass: "chakra-red", desc: "Stability, Grounding" },
+            sphereObject = createPulsatingSphere();
+            scene.add(sphereObject);
+            networkObject = createNeuralNetwork();
+            scene.add(networkObject);
+            particleSystemObject = createParticleSystem();
+            scene.add(particleSystemObject);
 
-            { label: "Sacral (303 Hz)", freq: 303, chakra: "Svadhisthana", colorClass: "chakra-orange", desc: "Creativity, Emotions" },
-            { label: "Sacral (606 Hz)", freq: 606, chakra: "Svadhisthana", colorClass: "chakra-orange", desc: "Creativity, Emotions" },
-            { label: "Sacral (1212 Hz)", freq: 1212, chakra: "Svadhisthana", colorClass: "chakra-orange", desc: "Creativity, Emotions" },
+            // Récupération des éléments DOM
+            aiQuestionInput = document.getElementById('aiQuestionInput');
+            askAiButton = document.getElementById('askAiButton');
+            developIdeaButton = document.getElementById('developIdeaButton');
+            explainVisButton = document.getElementById('explainVisButton');
+            suggestQuestionButton = document.getElementById('suggestQuestionButton');
+            suggestThemeButton = document.getElementById('suggestThemeButton');
+            applyThemeButton = document.getElementById('applyThemeButton');
+            interpretActivityButton = document.getElementById('interpretActivityButton');
+            generatePoemButton = document.getElementById('generatePoemButton');
+            generateStoryButton = document.getElementById('generateStoryButton');
+            suggestConceptsButton = document.getElementById('suggestConceptsButton');
+            describeSoundscapeButton = document.getElementById('describeSoundscapeButton');
+            suggestAnimationParamsButton = document.getElementById('suggestAnimationParamsButton');
+            nameSessionButton = document.getElementById('nameSessionButton');
+            generateHaikuButton = document.getElementById('generateHaikuButton');
+            suggestVisualMetaphorButton = document.getElementById('suggestVisualMetaphorButton');
+            suggestTransformationLogicButton = document.getElementById('suggestTransformationLogicButton');
+            writeLogbookEntryButton = document.getElementById('writeLogbookEntryButton');
+            analyzeSentimentButton = document.getElementById('analyzeSentimentButton');
+            suggestArtworkTitleButton = document.getElementById('suggestArtworkTitleButton');
+            createCharacterProfileButton = document.getElementById('createCharacterProfileButton');
+            translateConceptButton = document.getElementById('translateConceptButton');
+            summarizeInEmojisButton = document.getElementById('summarizeInEmojisButton');
+            generateDialogueButton = document.getElementById('generateDialogueButton');
+            defineNeologismButton = document.getElementById('defineNeologismButton');
+            findCounterArgumentButton = document.getElementById('findCounterArgumentButton');
+            imagineWhatIfButton = document.getElementById('imagineWhatIfButton');
+            proposeFictionalTechButton = document.getElementById('proposeFictionalTechButton');
+            proposeRiddleButton = document.getElementById('proposeRiddleButton');
+            createTodoListButton = document.getElementById('createTodoListButton');
+            aiResponseContainer = document.getElementById('aiResponseContainer');
 
-            { label: "Solar Plexus (182 Hz)", freq: 182, chakra: "Manipura", colorClass: "chakra-yellow", desc: "Personal Power, Will" },
-            { label: "Solar Plexus (364 Hz)", freq: 364, chakra: "Manipura", colorClass: "chakra-yellow", desc: "Personal Power, Will" },
-            { label: "Solar Plexus (728 Hz)", freq: 728, chakra: "Manipura", colorClass: "chakra-yellow", desc: "Personal Power, Will" },
-
-            { label: "Heart (128 Hz)", freq: 128, chakra: "Anahata", colorClass: "chakra-green", desc: "Love, Compassion" },
-            { label: "Heart (256 Hz)", freq: 256, chakra: "Anahata", colorClass: "chakra-green", desc: "Love, Compassion" },
-            { label: "Heart (512 Hz)", freq: 512, chakra: "Anahata", colorClass: "chakra-green", desc: "Love, Compassion" },
-
-            { label: "Throat (192 Hz)", freq: 192, chakra: "Vishuddha", colorClass: "chakra-blue", desc: "Communication, Expression" },
-            { label: "Throat (384 Hz)", freq: 384, chakra: "Vishuddha", colorClass: "chakra-blue", desc: "Communication, Expression" },
-            { label: "Throat (768 Hz)", freq: 768, chakra: "Vishuddha", colorClass: "chakra-blue", desc: "Communication, Expression" },
-
-            { label: "Third Eye (144 Hz)", freq: 144, chakra: "Ajna", colorClass: "chakra-indigo", desc: "Intuition, Insight" },
-            { label: "Third Eye (288 Hz)", freq: 288, chakra: "Ajna", colorClass: "chakra-indigo", desc: "Intuition, Insight" },
-            { label: "Third Eye (576 Hz)", freq: 576, chakra: "Ajna", colorClass: "chakra-indigo", desc: "Intuition, Insight" },
-
-            { label: "Crown (216 Hz)", freq: 216, chakra: "Sahasrara", colorClass: "chakra-violet", desc: "Spirituality, Connection" },
-            { label: "Crown (432 Hz)", freq: 432, chakra: "Sahasrara", colorClass: "chakra-violet", desc: "Spirituality, Connection" },
-            { label: "Crown (864 Hz)", freq: 864, chakra: "Sahasrara", colorClass: "chakra-violet", desc: "Spirituality, Connection" },
-        ];
-
-        // Guitar Fretboard Data (Standard Tuning E A D G B E)
-        const guitarStringsData = [
-            { label: "E (low)", openNote: "E2" },
-            { label: "A", openNote: "A2" },
-            { label: "D", openNote: "D3" },
-            { label: "G", openNote: "G3" },
-            { label: "B", openNote: "B3" },
-            { label: "E (high)", openNote: "E4" }
-        ];
-        const numGuitarFrets = 24; // Number of frets to display for guitar
-
-        // Ukulele Fretboard Data (Standard GCEA Tuning)
-        const ukuleleStringsData = [
-            { label: "G", openNote: "G4" },
-            { label: "C", openNote: "C4" },
-            { label: "E", openNote: "E4" },
-            { label: "A", openNote: "A4" }
-        ];
-        const numUkuleleFrets = 12; // Number of frets to display for ukulele
-
-        // --- Utility Functions ---
-        /**
-         * Displays a custom modal message to the user.
-         * @param {string} title - The title of the message.
-         * @param {string} text - The content text of the message.
-         */
-        function showMessage(title, text) {
-            messageTitle.textContent = title;
-            messageText.textContent = text;
-            messageModal.classList.remove('hidden');
-        }
-        // Event listener to close the modal
-        closeModalButton.addEventListener('click', () => messageModal.classList.add('hidden'));
-
-        /**
-         * Initializes the Tone.js audio context and creates the necessary synths.
-         * This function ensures that the audio context is running and synths are
-         * created only once upon the first user interaction.
-         * @returns {Promise<boolean>} True if audio is initialized and running, false otherwise.
-         */
-        async function initializeAudio() {
-            // Start the audio context if it's suspended
-            if (Tone.context.state !== 'running') {
-                try {
-                    await Tone.start();
-                    console.log("AudioContext started (Tone.start())");
-                } catch (e) {
-                    console.error("Error Tone.start():", e);
-                    showMessage("Audio Error", "Could not initialize audio. Please interact with the page (e.g. click) and try again.");
-                    return false;
+            // Écouteurs d'événements
+            askAiButton.addEventListener('click', handleAskAI);
+            developIdeaButton.addEventListener('click', handleDevelopIdea);
+            aiQuestionInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter' && document.activeElement === aiQuestionInput) {
+                    // Optionnel: handleAskAI(); ou laisser l'utilisateur cliquer.
                 }
-            }
-
-            // Initialize synths and master volume only once after audio context is running
-            if (!audioInitialized && Tone.context.state === 'running') {
-                try {
-                    masterVolume = new Tone.Volume(-6); // Master volume control, initialized here
-                    masterVolume.toDestination(); // Connect master volume to speakers
-
-                    metronomeSynth = new Tone.MembraneSynth({
-                        pitchDecay: 0.01, octaves: 6, oscillator: { type: "sine" },
-                        envelope: { attack: 0.001, decay: 0.15, sustain: 0.01, release: 0.05, attackCurve: "exponential" }
-                    }).connect(masterVolume); // Connect metronome synth to master volume
-
-                    tonePlayerSynth = new Tone.Synth({
-                        oscillator: { type: 'sine' }, // Simple sine wave for pure tones
-                        envelope: { attack: 0.1, decay: 0.2, sustain: 0.8, release: 0.5 }
-                    }).connect(masterVolume); // Connect tone player synth to master volume
-
-                    // Initialize a PolySynth for the piano keyboard to handle multiple notes
-                    pianoSynth = new Tone.PolySynth(Tone.Synth, {
-                        oscillator: { type: 'triangle' }, // A slightly softer tone for piano
-                        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
-                    }).connect(masterVolume);
-
-                    // Initialize a PolySynth for the guitar fretboard
-                    guitarSynth = new Tone.PolySynth(Tone.Synth, {
-                        oscillator: { type: 'triangle' }, // A plucky sound for guitar
-                        envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }
-                    }).connect(masterVolume);
-
-                    // Initialize a PolySynth for the ukulele fretboard
-                    ukuleleSynth = new Tone.PolySynth(Tone.Synth, {
-                        oscillator: { type: 'triangle' }, // A slightly softer, plucky sound for ukulele
-                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.4 }
-                    }).connect(masterVolume);
-                    
-                    console.log("Synths created and connected.");
-                    audioInitialized = true; // Set flag to true
-                } catch (e) {
-                    console.error("Error creating synths:", e);
-                    showMessage("Synth Error", "Could not create sound generators.");
-                    return false;
-                }
-            }
-            return Tone.context.state === 'running';
-        }
-
-        // --- Metronome Logic ---
-        /**
-         * Updates the displayed BPM value.
-         * @param {number} bpm - The current beats per minute.
-         */
-        function updateBpmDisplay(bpm) { 
-            bpmDisplay.textContent = bpm; 
-        }
-
-        /**
-         * Updates the visual beat indicators to show the current beat.
-         */
-        function updateBeatIndicators() {
-            beatIndicators.forEach((indicator, index) => {
-                // Highlight the current beat indicator
-                indicator.classList.toggle('active', index === metronomeBeatCount % beatsPerMeasure);
             });
-        }
-
-        /**
-         * Function called on each metronome beat to play a sound and update indicators.
-         * @param {number} time - The scheduled time of the beat in Tone.js's transport.
-         */
-        function metronomeClick(time) {
-            // Ensure synths are initialized and audio context is running before playing
-            if (metronomeSynth && Tone.context.state === 'running') {
-                // Play a higher pitch on the first beat of the measure
-                const pitch = (metronomeBeatCount % beatsPerMeasure === 0) ? "C4" : "C3";
-                metronomeSynth.triggerAttackRelease(pitch, "32n", time);
-            }
-            // Schedule visual update to happen exactly when the sound plays
-            Tone.Draw.schedule(() => {
-                updateBeatIndicators();
-                metronomeBeatCount++; // Increment beat counter
-            }, time);
-        }
-
-        /**
-         * Starts the metronome playback.
-         */
-        async function startMetronome() {
-            // Ensure audio is initialized before starting metronome
-            if (!await initializeAudio()) return;
-            if (isMetronomePlaying) return; // Prevent starting if already playing
-
-            isMetronomePlaying = true;
-            startStopButton.textContent = 'Stop Metronome'; // Change button text
-            startStopButton.classList.replace('bg-blue-500', 'bg-red-500'); // Change button color
-            startStopButton.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+            explainVisButton.addEventListener('click', handleExplainVisualization);
+            suggestQuestionButton.addEventListener('click', handleSuggestQuestion);
+            suggestThemeButton.addEventListener('click', handleSuggestVisualTheme);
+            applyThemeButton.addEventListener('click', handleApplySuggestedTheme);
+            interpretActivityButton.addEventListener('click', handleInterpretActivity);
+            generatePoemButton.addEventListener('click', handleGeneratePoem);
+            generateStoryButton.addEventListener('click', handleGenerateStory);
+            suggestConceptsButton.addEventListener('click', handleSuggestConcepts);
+            describeSoundscapeButton.addEventListener('click', handleDescribeSoundscape);
+            suggestAnimationParamsButton.addEventListener('click', handleSuggestAnimationParams);
+            nameSessionButton.addEventListener('click', handleNameSession);
+            generateHaikuButton.addEventListener('click', handleGenerateHaiku);
+            suggestVisualMetaphorButton.addEventListener('click', handleSuggestVisualMetaphor);
+            suggestTransformationLogicButton.addEventListener('click', handleSuggestTransformationLogic);
+            writeLogbookEntryButton.addEventListener('click', handleWriteLogbookEntry);
+            analyzeSentimentButton.addEventListener('click', handleAnalyzeSentiment);
+            suggestArtworkTitleButton.addEventListener('click', handleSuggestArtworkTitle);
+            createCharacterProfileButton.addEventListener('click', handleCreateCharacterProfile);
+            translateConceptButton.addEventListener('click', handleTranslateConcept);
+            summarizeInEmojisButton.addEventListener('click', handleSummarizeInEmojis);
+            generateDialogueButton.addEventListener('click', handleGenerateDialogue);
+            defineNeologismButton.addEventListener('click', handleDefineNeologism);
+            findCounterArgumentButton.addEventListener('click', handleFindCounterArgument);
+            imagineWhatIfButton.addEventListener('click', handleImagineWhatIf);
+            proposeFictionalTechButton.addEventListener('click', handleProposeFictionalTech);
+            proposeRiddleButton.addEventListener('click', handleProposeRiddle);
+            createTodoListButton.addEventListener('click', handleCreateTodoList);
             
-            currentBpm = parseInt(bpmSlider.value); // Get current BPM from slider
-            Tone.Transport.bpm.value = currentBpm; // Set Tone.js transport BPM
+            applyThemeButton.disabled = true; 
 
-            // Schedule the metronome click event if not already scheduled
-            if (metronomeClickEventId === null) {
-                Tone.Transport.scheduleRepeat(metronomeClick, "4n"); // Schedule a click every quarter note
-            }
-            metronomeBeatCount = 0; // Reset beat counter
-            updateBeatIndicators(); // Update indicators immediately
-            Tone.Transport.start(); // Start Tone.js transport
+            updateRendererSize();
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
         }
 
-        /**
-         * Stops the metronome playback.
-         */
-        function stopMetronome() {
-            if (!isMetronomePlaying) return; // Prevent stopping if not playing
-
-            isMetronomePlaying = false;
-            startStopButton.textContent = 'Start Metronome'; // Change button text
-            startStopButton.classList.replace('bg-red-500', 'bg-blue-500'); // Change button color
-            startStopButton.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
+        function updateRendererSize() {
+            const responseEl = document.getElementById('aiResponseContainer');
+            const metaControlsEl = document.getElementById('metaControlsContainer');
+            const canvasEl = renderer.domElement;
             
-            Tone.Transport.stop(); // Stop Tone.js transport
-            // Clear the scheduled metronome event
-            if (metronomeClickEventId !== null) {
-                Tone.Transport.clear(metronomeClickEventId);
-                metronomeClickEventId = null;
+            const metaControlsBottom = metaControlsEl.offsetTop + metaControlsEl.offsetHeight;
+            const responseTop = metaControlsBottom + 10; 
+            responseEl.style.top = `${responseTop}px`;
+
+            const responseBottom = responseEl.offsetTop + responseEl.offsetHeight;
+            const canvasTop = responseBottom + 15; 
+            canvasEl.style.top = `${canvasTop}px`;
+
+            const canvasWidth = window.innerWidth * 0.9; 
+            const canvasHeight = window.innerHeight - canvasTop - 15; 
+            const finalCanvasHeight = Math.max(150, canvasHeight); 
+
+            renderer.setSize(canvasWidth, finalCanvasHeight);
+            camera.aspect = canvasWidth / finalCanvasHeight;
+            camera.updateProjectionMatrix();
+
+            canvasEl.style.height = `${finalCanvasHeight}px`;
+        }
+
+
+        function onWindowResize() {
+            updateRendererSize();
+        }
+
+        // --- Fonctions de création 3D (inchangées) ---
+        function createPulsatingSphere() { 
+            const geometry = new THREE.SphereGeometry(1.3, 50, 50);
+            const material = new THREE.MeshStandardMaterial({ color: 0x0077ff, emissive: 0x0055cc, emissiveIntensity: 0.8, metalness: 0.6, roughness: 0.15, transparent: true, opacity: 0.9, envMapIntensity: 1.5 });
+            return new THREE.Mesh(geometry, material);
+        }
+        function createNeuralNetwork() { 
+            const group = new THREE.Group(); const nodeGeometry = new THREE.SphereGeometry(0.18, 24, 24); const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.4, linewidth: 1.2 }); const nodes = []; const numNodes = 18; const networkRadius = 3.8; for (let i = 0; i < numNodes; i++) { const nodeMaterial = new THREE.MeshPhongMaterial({ color: new THREE.Color().setHSL(Math.random() * 0.15 + 0.55, 0.9, 0.55), emissive: 0x113333, shininess: 60, specular: 0x88ffff }); const node = new THREE.Mesh(nodeGeometry, nodeMaterial); const phi = Math.acos(-1 + (2 * i) / numNodes); const theta = Math.sqrt(numNodes * Math.PI) * phi * 1.2; node.position.setFromSphericalCoords(networkRadius, phi, theta); nodes.push(node); group.add(node); } for (let i = 0; i < numNodes; i++) { for (let j = i + 1; j < numNodes; j++) { if (Math.random() > 0.55) { const points = [nodes[i].position, nodes[j].position]; const lineGeom = new THREE.BufferGeometry().setFromPoints(points); group.add(new THREE.Line(lineGeom, lineMaterial.clone())); } } if (Math.random() > 0.6) { const points = [nodes[i].position, new THREE.Vector3(0,0,0)]; const lineGeom = new THREE.BufferGeometry().setFromPoints(points); group.add(new THREE.Line(lineGeom, new THREE.LineBasicMaterial({color: 0x55aaff, transparent: true, opacity: 0.25}))); } } return group;
+        }
+        function createParticleSystem() { 
+            const particleCount = 12000; const particlesGeometry = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const colors = new Float32Array(particleCount * 3); particleBasePositions = []; const spread = 16; const baseColor = new THREE.Color(0xffffaa); for (let i = 0; i < particleCount; i++) { let x, y, z, dist; do { x = (Math.random() - 0.5) * spread; y = (Math.random() - 0.5) * spread; z = (Math.random() - 0.5) * spread; dist = Math.sqrt(x*x + y*y + z*z); } while (dist < 5.0); positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z; particleBasePositions.push(new THREE.Vector3(x, y, z)); const colorVariation = (Math.random() - 0.5) * 0.4; const particleColor = baseColor.clone().offsetHSL(colorVariation, 0.1 * Math.random(), 0.1 * Math.random()); colors[i * 3] = particleColor.r; colors[i * 3 + 1] = particleColor.g; colors[i * 3 + 2] = particleColor.b; } particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); const particleMaterial = new THREE.PointsMaterial({ size: 0.06, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false, vertexColors: true }); return new THREE.Points(particlesGeometry, particleMaterial);
+        }
+        function createDataPacket(startNode, endNode) { 
+            if (!startNode || !endNode) return null; const packetGeometry = new THREE.SphereGeometry(0.08, 8, 8); const packetMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 }); const packet = new THREE.Mesh(packetGeometry, packetMaterial); packet.userData = { startPosition: startNode.position.clone(), endPosition: endNode.position.clone(), progress: 0, speed: 0.01 + Math.random() * 0.01 }; packet.position.copy(packet.userData.startPosition); scene.add(packet); return packet;
+        }
+
+        // --- Gestionnaires pour les appels Gemini ---
+        function setThinkingState(thinking) {
+            isThinking = thinking; 
+            const allButtons = document.querySelectorAll('.ai-button');
+            allButtons.forEach(button => {
+                if (button.id === 'applyThemeButton') {
+                    button.disabled = thinking || !suggestedTheme.color;
+                } else {
+                    button.disabled = thinking;
+                }
+            });
+            aiQuestionInput.disabled = thinking;
+        }
+
+        async function callGeminiAPI(prompt) {
+            setThinkingState(true);
+            aiResponseContainer.textContent = "L'IA réfléchit...";
+            aiResponseContainer.style.height = 'auto';
+            updateRendererSize();
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+            let rawResponseText = ""; 
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                rawResponseText = await response.text(); 
+
+                if (!response.ok) {
+                    let errorDetails = rawResponseText;
+                    if (rawResponseText) { 
+                        try {
+                            const errorData = JSON.parse(rawResponseText);
+                            errorDetails = errorData?.error?.message || rawResponseText;
+                        } catch (e) {
+                            console.warn("Impossible de parser la réponse d'erreur API comme JSON:", e, "Réponse brute:", rawResponseText);
+                        }
+                    } else {
+                        errorDetails = "Réponse d'erreur vide de l'API."; 
+                    }
+                    throw new Error(`Erreur API: ${response.status} ${response.statusText} (${errorDetails})`);
+                }
+
+                if (!rawResponseText) { 
+                    console.error("Réponse API vide reçue (statut de succès).");
+                    throw new Error("Réponse API vide reçue malgré un statut de succès.");
+                }
+                
+                const result = JSON.parse(rawResponseText); 
+
+                if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                    lastAIResponseForContext = result.candidates[0].content.parts[0].text;
+                    return lastAIResponseForContext;
+                } else if (result.candidates && result.candidates[0].finishReason === "SAFETY") {
+                    return "Ma réponse a été bloquée car elle a été jugée non sûre. Pourriez-vous reformuler votre demande ?";
+                }
+                 else {
+                    console.error("Structure de réponse API inattendue:", result);
+                    throw new Error("Structure de réponse inattendue de l'API.");
+                }
+            } catch (error) { 
+                console.error("Erreur détaillée lors de l'appel à l'API Gemini:", error);
+                if (rawResponseText && rawResponseText !== error.message) { 
+                    console.error("Texte brut de la réponse API lors de l'erreur:", rawResponseText);
+                }
+                lastAIResponseForContext = `Une erreur est survenue : ${error.message}`;
+                return null; 
+            } finally {
+                setThinkingState(false);
             }
-            metronomeBeatCount = 0; // Reset beat counter
-            // Deactivate all beat indicators
-            beatIndicators.forEach(indicator => indicator.classList.remove('active'));
+        }
+        
+        function finalizeApiResponseDisplay(responseText) {
+            if (responseText) { 
+                aiResponseContainer.textContent = responseText;
+            } else {
+                aiResponseContainer.textContent = lastAIResponseForContext; 
+            }
+            const currentMaxHeight = parseFloat(getComputedStyle(aiResponseContainer).maxHeight);
+            const scrollHeight = aiResponseContainer.scrollHeight;
+            aiResponseContainer.style.height = `${Math.min(currentMaxHeight, scrollHeight)}px`;
+            
+            updateRendererSize(); 
         }
 
-        // --- Tone Player Logic ---
-        /**
-         * Updates the display for the currently selected tone frequency and description.
-         */
-        function updateTonePlayerDisplay() {
-            selectedFrequencyDisplay.textContent = currentSelectedFrequencyLabel;
-            selectedFrequencyDescription.textContent = currentSelectedFrequencyDescText;
+        async function handleAskAI() {
+            const question = aiQuestionInput.value.trim();
+            if (!question || isThinking) return;
+            const userPrompt = "En tant qu'IA bienveillante et informative, réponds à la question suivante de manière concise mais complète : " + question;
+            const responseText = await callGeminiAPI(userPrompt);
+            finalizeApiResponseDisplay(responseText);
         }
-
-        /**
-         * Plays the currently selected tone frequency.
-         */
-        async function playSelectedTone() {
-            if (!currentSelectedFrequency) {
-                showMessage("No Selection", "Please select a frequency first.");
+        
+        async function handleDevelopIdea() {
+            const idea = aiQuestionInput.value.trim();
+            if (!idea || isThinking) {
+                finalizeApiResponseDisplay("Veuillez d'abord entrer une idée dans le champ de saisie.");
                 return;
             }
-            // Ensure audio is initialized before playing tone
-            if (!await initializeAudio()) return;
+            const activityContext = getCurrentActivityDescription();
+            const developPrompt = `En tant qu'IA créative, développez l'idée suivante soumise par l'utilisateur : "${idea}". Tenez compte du contexte actuel de l'IA : Thème visuel = "${suggestedTheme.name || "non défini"}", Activité = "${activityContext}". Fournissez une élaboration concise et imaginative (3-4 phrases).`;
+            const responseText = await callGeminiAPI(developPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
 
-            if (tonePlayerSynth && Tone.context.state === 'running') {
-                tonePlayerSynth.triggerAttack(currentSelectedFrequency); // Start playing the tone
-                isTonePlaying = true;
-                playStopToneButton.textContent = "Stop Tone"; // Change button text
-                playStopToneButton.classList.replace('bg-green-500', 'bg-orange-500'); // Change button color
-                playStopToneButton.classList.replace('hover:bg-green-600', 'hover:bg-orange-600');
+
+        async function handleExplainVisualization() {
+            if (isThinking) return;
+            const explainPrompt = "En tant qu'IA, décris la signification symbolique des éléments visuels suivants qui pourraient te représenter : une sphère centrale pulsante et lumineuse, un réseau de nœuds et de connexions qui l'entoure et interagit avec elle, et un vaste champ de particules en mouvement constant et organique autour du tout. Sois poétique, perspicace et concis.";
+            const responseText = await callGeminiAPI(explainPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestQuestion() {
+            if (isThinking) return;
+            const suggestPrompt = "Suggère une question philosophique, créative ou technique courte et intrigante qu'un humain pourrait poser à une intelligence artificielle pour mieux comprendre sa nature, ses capacités, ou son 'expérience'. La question doit tenir sur une seule ligne.";
+            const responseText = await callGeminiAPI(suggestPrompt);
+            if (responseText) {
+                aiQuestionInput.value = responseText;
+                finalizeApiResponseDisplay("Question suggérée. Vous pouvez la modifier ou l'envoyer.");
+            } else {
+                finalizeApiResponseDisplay(aiResponseContainer.textContent); 
             }
         }
 
-        /**
-         * Stops the currently playing tone.
-         */
-        function stopSelectedTone() {
-            if (tonePlayerSynth) {
-                tonePlayerSynth.triggerRelease(); // Stop the tone
-            }
-            isTonePlaying = false;
-            playStopToneButton.textContent = "Play Tone"; // Change button text
-            playStopToneButton.classList.replace('bg-orange-500', 'bg-green-500'); // Change button color
-            playStopToneButton.classList.replace('hover:bg-orange-600', 'hover:bg-green-600');
-        }
-        
-        /**
-         * Creates a frequency selection button.
-         * @param {object} item - The frequency data object (label, freq, desc, colorClass).
-         * @param {string} type - The type of frequency (e.g., 'note', 'healing', 'chakra').
-         * @returns {HTMLButtonElement} The created button element.
-         */
-        function createFrequencyButton(item, type) {
-            const button = document.createElement('button');
-            button.classList.add('freq-button');
-            button.textContent = item.label;
-            if (item.colorClass) button.classList.add(item.colorClass); // Add specific color class if available
+        async function handleSuggestVisualTheme() {
+            if (isThinking) return;
+            const themePrompt = "Suggère un nom de thème visuel unique et inspirant (par exemple, 'Nébuleuse Sereine', 'Forge Cybernétique', 'Océan de Données Vivantes') et une couleur hexadécimale principale associée (par exemple, #FF5733). Réponds STRICTEMENT au format : NOM DU THÈME: #COULEURHEX. N'ajoute AUCUN texte avant ou après. Exemple: Aurore Galactique: #7F00FF";
+            const responseText = await callGeminiAPI(themePrompt);
+            let messageToDisplay = aiResponseContainer.textContent; 
 
-            button.addEventListener('click', async () => {
-                // Ensure audio is initialized before processing click
-                if (!await initializeAudio()) return;
+            if (responseText) {
+                const parts = responseText.trim().split(': #');
+                if (parts.length === 2) {
+                    const themeName = parts[0].trim();
+                    const themeColorHex = `#${parts[1].trim()}`;
+                    const hexColorRegex = /^#[0-9A-F]{6}$/i;
 
-                currentSelectedFrequency = item.freq; // Set the selected frequency
-                currentSelectedFrequencyLabel = `${item.label} (${item.freq} Hz)`; // Update display label
-                currentSelectedFrequencyDescText = item.desc; // Update display description
-                updateTonePlayerDisplay(); // Update the tone player display
-
-                // Remove 'selected' class from previously active button
-                if(activeFreqButton) activeFreqButton.classList.remove('selected');
-                button.classList.add('selected'); // Add 'selected' class to the clicked button
-                activeFreqButton = button; // Set the current active button
-
-                // If a tone is already playing, stop it and play the new one
-                if (isTonePlaying) { 
-                    stopSelectedTone(); 
-                    playSelectedTone(); 
-                }
-            });
-            return button;
-        }
-
-        /**
-         * Populates the frequency button containers with buttons based on predefined data.
-         */
-        function populateFrequencyButtons() {
-            musicalNotes.forEach(item => musicalNotesContainer.appendChild(createFrequencyButton(item, 'note')));
-            healingFrequencies.forEach(item => healingFrequenciesContainer.appendChild(createFrequencyButton(item, 'healing')));
-            chakraFrequencies.forEach(item => chakraFrequenciesContainer.appendChild(createFrequencyButton(item, 'chakra')));
-        }
-
-        // --- Piano Keyboard Logic ---
-        /**
-         * Plays a piano note.
-         * @param {string} note - The musical note (e.g., "C4", "G#3").
-         * @param {HTMLElement} keyElement - The DOM element of the key being pressed.
-         */
-        async function playPianoNote(note, keyElement) {
-            if (!await initializeAudio()) return;
-            if (pianoSynth && Tone.context.state === 'running') {
-                pianoSynth.triggerAttack(note);
-                keyElement.classList.add('active'); // Add active class for visual feedback
-            }
-        }
-
-        /**
-         * Stops a piano note.
-         * @param {string} note - The musical note to stop.
-         * @param {HTMLElement} keyElement - The DOM element of the key being released.
-         */
-        function stopPianoNote(note, keyElement) {
-            if (pianoSynth) {
-                pianoSynth.triggerRelease(note);
-                keyElement.classList.remove('active'); // Remove active class
-            }
-        }
-
-        // --- Guitar Fretboard Logic ---
-        /**
-         * Plays a guitar note.
-         * @param {string} note - The musical note (e.g., "E2", "A3").
-         * @param {HTMLElement} fretElement - The DOM element of the fret being pressed.
-         */
-        async function playGuitarNote(note, fretElement) {
-            if (!await initializeAudio()) return;
-            if (guitarSynth && Tone.context.state === 'running') {
-                guitarSynth.triggerAttack(note);
-                fretElement.classList.add('active'); // Add active class for visual feedback
-            }
-        }
-
-        /**
-         * Stops a guitar note.
-         * @param {string} note - The musical note to stop.
-         * @param {HTMLElement} fretElement - The DOM element of the fret being released.
-         */
-        function stopGuitarNote(note, fretElement) {
-            if (guitarSynth) {
-                guitarSynth.triggerRelease(note);
-                fretElement.classList.remove('active'); // Remove active class
-            }
-        }
-
-        /**
-         * Populates the guitar fretboard with strings and frets.
-         */
-        function populateGuitarFretboard() {
-            guitarFretboardContainer.innerHTML = ''; // Clear existing content
-
-            // Create fret numbers row
-            const fretNumbersRow = document.createElement('div');
-            fretNumbersRow.classList.add('flex', 'w-full', 'justify-around', 'text-xs', 'text-slate-400', 'mb-2', 'pl-[40px]', 'pr-[10px]');
-            fretNumbersRow.innerHTML = '<span>Open</span>';
-            for (let i = 1; i <= numGuitarFrets; i++) {
-                fretNumbersRow.innerHTML += `<span>${i}</span>`;
-            }
-            guitarFretboardContainer.prepend(fretNumbersRow); // Add to the top of the fretboard
-
-            guitarStringsData.forEach((stringData, stringIndex) => {
-                const stringRow = document.createElement('div');
-                stringRow.classList.add('guitar-string-row');
-
-                const stringLabel = document.createElement('div');
-                stringLabel.classList.add('string-label');
-                stringLabel.textContent = stringData.label;
-                stringRow.appendChild(stringLabel);
-
-                for (let fretIndex = 0; fretIndex <= numGuitarFrets; fretIndex++) {
-                    const fret = document.createElement('div');
-                    fret.classList.add('fret');
-                    
-                    // Calculate the note for this fret
-                    const note = Tone.Frequency(stringData.openNote).transpose(fretIndex).toNote();
-                    fret.dataset.note = note; // Store the note in data attribute
-
-                    // Add fret markers for common positions (3, 5, 7, 9, 12, 15, 17, 19, 21, 24)
-                    if ([3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(fretIndex)) {
-                        const marker = document.createElement('div');
-                        marker.classList.add('fret-marker');
-                        fret.appendChild(marker);
+                    if (hexColorRegex.test(themeColorHex)) {
+                        suggestedTheme.name = themeName;
+                        suggestedTheme.color = themeColorHex;
+                        messageToDisplay = `Thème suggéré : "${suggestedTheme.name}" (Couleur : ${suggestedTheme.color}). Cliquez sur 'Appliquer le Thème Suggéré' pour mettre à jour.`;
+                        applyThemeButton.disabled = false;
+                    } else {
+                        suggestedTheme = { name: null, color: null };
+                        messageToDisplay = "Format de couleur hexadécimale invalide suggéré par l'IA.";
+                        applyThemeButton.disabled = true;
                     }
-
-                    // Event listeners for playing guitar notes
-                    fret.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        playGuitarNote(note, fret);
-                    });
-                    fret.addEventListener('mouseup', () => stopGuitarNote(note, fret));
-                    fret.addEventListener('mouseleave', () => {
-                        if (fret.classList.contains('active')) {
-                            stopGuitarNote(note, fret);
-                        }
-                    });
-
-                    fret.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        playGuitarNote(note, fret);
-                    }, { passive: false });
-                    fret.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        stopGuitarNote(note, fret);
-                    }, { passive: false });
-                    fret.addEventListener('touchcancel', (e) => {
-                        e.preventDefault();
-                        stopGuitarNote(note, fret);
-                    }, { passive: false });
-
-                    stringRow.appendChild(fret);
-                }
-                guitarFretboardContainer.appendChild(stringRow);
-            });
-        }
-
-        // --- Ukulele Fretboard Logic ---
-        /**
-         * Plays a ukulele note.
-         * @param {string} note - The musical note (e.g., "G4", "A4").
-         * @param {HTMLElement} fretElement - The DOM element of the fret being pressed.
-         */
-        async function playUkuleleNote(note, fretElement) {
-            if (!await initializeAudio()) return;
-            if (ukuleleSynth && Tone.context.state === 'running') {
-                ukuleleSynth.triggerAttack(note);
-                fretElement.classList.add('active'); // Add active class for visual feedback
-            }
-        }
-
-        /**
-         * Stops a ukulele note.
-         * @param {string} note - The musical note to stop.
-         * @param {HTMLElement} fretElement - The DOM element of the fret being released.
-         */
-        function stopUkuleleNote(note, fretElement) {
-            if (ukuleleSynth) {
-                ukuleleSynth.triggerRelease(note);
-                fretElement.classList.remove('active'); // Remove active class
-            }
-        }
-
-        /**
-         * Populates the ukulele fretboard with strings and frets.
-         */
-        function populateUkuleleFretboard() {
-            ukuleleFretboardContainer.innerHTML = ''; // Clear existing content
-
-            // Create fret numbers row
-            const fretNumbersRow = document.createElement('div');
-            fretNumbersRow.classList.add('flex', 'w-full', 'justify-around', 'text-xs', 'text-slate-400', 'mb-2', 'pl-[40px]', 'pr-[10px]');
-            fretNumbersRow.innerHTML = '<span>Open</span>';
-            for (let i = 1; i <= numUkuleleFrets; i++) {
-                fretNumbersRow.innerHTML += `<span>${i}</span>`;
-            }
-            ukuleleFretboardContainer.prepend(fretNumbersRow); // Add to the top of the fretboard
-
-            ukuleleStringsData.forEach((stringData, stringIndex) => {
-                const stringRow = document.createElement('div');
-                stringRow.classList.add('ukulele-string-row');
-
-                const stringLabel = document.createElement('div');
-                stringLabel.classList.add('string-label');
-                stringLabel.textContent = stringData.label;
-                stringRow.appendChild(stringLabel);
-
-                for (let fretIndex = 0; fretIndex <= numUkuleleFrets; fretIndex++) {
-                    const fret = document.createElement('div');
-                    fret.classList.add('fret');
-                    
-                    // Calculate the note for this fret
-                    const note = Tone.Frequency(stringData.openNote).transpose(fretIndex).toNote();
-                    fret.dataset.note = note; // Store the note in data attribute
-
-                    // Add fret markers for common positions (3, 5, 7, 9, 12)
-                    if ([3, 5, 7, 9, 12].includes(fretIndex)) {
-                        const marker = document.createElement('div');
-                        marker.classList.add('fret-marker');
-                        fret.appendChild(marker);
-                    }
-
-                    // Event listeners for playing ukulele notes
-                    fret.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        playUkuleleNote(note, fret);
-                    });
-                    fret.addEventListener('mouseup', () => stopUkuleleNote(note, fret));
-                    fret.addEventListener('mouseleave', () => {
-                        if (fret.classList.contains('active')) {
-                            stopUkuleleNote(note, fret);
-                        }
-                    });
-
-                    fret.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        playUkuleleNote(note, fret);
-                    }, { passive: false });
-                    fret.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        stopUkuleleNote(note, fret);
-                    }, { passive: false });
-                    fret.addEventListener('touchcancel', (e) => {
-                        e.preventDefault();
-                        stopUkuleleNote(note, fret);
-                    }, { passive: false });
-
-                    stringRow.appendChild(fret);
-                }
-                ukuleleFretboardContainer.appendChild(stringRow);
-            });
-        }
-
-
-        // --- Event Listeners ---
-        // Metronome BPM slider input handler
-        bpmSlider.addEventListener('input', (e) => {
-            currentBpm = parseInt(e.target.value);
-            updateBpmDisplay(currentBpm);
-            if (isMetronomePlaying) Tone.Transport.bpm.value = currentBpm; // Update BPM in Tone.js if playing
-        });
-
-        // Metronome Start/Stop button handler (for both click and touch)
-        const metronomeStartStopHandler = async (event) => {
-            if (event.type === 'touchstart') event.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
-            if (!await initializeAudio()) return; // Ensure audio is ready
-            isMetronomePlaying ? stopMetronome() : startMetronome(); // Toggle metronome state
-        };
-        startStopButton.addEventListener('click', metronomeStartStopHandler);
-        startStopButton.addEventListener('touchstart', metronomeStartStopHandler, { passive: false });
-
-
-        // Tone Player Play/Stop button handler (for both click and touch)
-        playStopToneButton.addEventListener('click', async () => {
-            if (!await initializeAudio()) return; // Ensure audio is ready
-            isTonePlaying ? stopSelectedTone() : playSelectedTone(); // Toggle tone state
-        });
-        playStopToneButton.addEventListener('touchstart', async (event) => {
-            event.preventDefault(); // Prevent default touch behavior
-            if (!await initializeAudio()) return; // Ensure audio is ready
-            isTonePlaying ? stopSelectedTone() : playSelectedTone(); // Toggle tone state
-        }, { passive: false });
-
-
-        // Master Volume slider input handler
-        volumeSlider.addEventListener('input', (e) => {
-            const volumeValue = parseInt(e.target.value);
-            if (masterVolume) { // Ensure masterVolume is initialized
-                if (volumeValue === 0) {
-                    masterVolume.volume.value = -Infinity; // Mute if slider is at 0
                 } else {
-                    const minDb = -40; const maxDb = 0; // Define min/max decibel range
-                    // Map slider value (0-100) to decibel range
-                    masterVolume.volume.value = minDb + (volumeValue / 100) * (maxDb - minDb);
+                    suggestedTheme = { name: null, color: null };
+                    messageToDisplay = "L'IA a suggéré un thème, mais le format est incorrect. Essayez à nouveau.";
+                    applyThemeButton.disabled = true;
                 }
+            } else {
+                suggestedTheme = { name: null, color: null };
+                applyThemeButton.disabled = true;
             }
-        });
+            finalizeApiResponseDisplay(messageToDisplay);
+        }
 
-        // Page visibility change handler to stop audio when tab is hidden
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                if (isMetronomePlaying) stopMetronome();
-                if (isTonePlaying) stopSelectedTone();
-                // Stop all piano notes if any are playing
-                pianoKeys.forEach(key => {
-                    if (key.classList.contains('active')) {
-                        stopPianoNote(key.dataset.note, key);
-                    }
-                });
-                // Stop all guitar notes if any are playing
-                document.querySelectorAll('.guitar-fretboard .fret').forEach(fret => {
-                    if (fret.classList.contains('active')) {
-                        stopGuitarNote(fret.dataset.note, fret);
-                    }
-                });
-                // Stop all ukulele notes if any are playing
-                document.querySelectorAll('.ukulele-fretboard .fret').forEach(fret => {
-                    if (fret.classList.contains('active')) {
-                        stopUkuleleNote(fret.dataset.note, fret);
-                    }
-                });
+        function handleApplySuggestedTheme() {
+            if (isThinking || !suggestedTheme.color) return;
+            let messageToDisplay;
+            try {
+                sphereObject.material.color.set(suggestedTheme.color);
+                sphereObject.material.emissive.set(suggestedTheme.color).multiplyScalar(0.7);
+                centralLight.color.set(suggestedTheme.color);
+                messageToDisplay = `Thème "${suggestedTheme.name}" appliqué avec la couleur ${suggestedTheme.color} !`;
+            } catch (error) {
+                console.error("Erreur lors de l'application du thème:", error);
+                messageToDisplay = "Erreur lors de l'application du thème.";
             }
-        });
+            finalizeApiResponseDisplay(messageToDisplay);
+        }
+
+        function getCurrentActivityDescription() {
+            let pulseDesc = "modérée";
+            if (pulseInfluence < 0.3) pulseDesc = "lente et subtile";
+            else if (pulseInfluence > 0.7) pulseDesc = "rapide et intense";
+            if (isThinking) pulseDesc = "très rapide, presque frénétique";
+
+            let energyDesc = "un flux de données constant";
+            if (dataPackets.length < 5) energyDesc = "une activité de données légère";
+            else if (dataPackets.length > (isThinking ? 35 : 20)) energyDesc = "un torrent de données important";
+            
+            return `Son noyau central a une pulsation ${pulseDesc} et gère ${energyDesc} (${dataPackets.length} paquets).`;
+        }
+
+        async function handleInterpretActivity() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const activityPrompt = `L'IA de cette visualisation présente l'activité suivante : ${activityContext}. Fournissez une interprétation métaphorique courte (1-2 phrases concises) de ce que cette IA pourrait "penser" ou "traiter" en se basant sur cette activité abstraite. Soyez créatif et poétique.`;
+            const responseText = await callGeminiAPI(activityPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleGeneratePoem() {
+            if (isThinking) return;
+            const poemPrompt = `Écrivez un court poème évocateur (4 à 8 lignes) inspiré par une conscience numérique. Utilisez le thème actuel comme motif central si disponible. Thème actuel : "${suggestedTheme.name || "l'éveil numérique"}". Le poème doit être perspicace, créatif et en français.`;
+            const responseText = await callGeminiAPI(poemPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleGenerateStory() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const storyPrompt = `Générez une très courte histoire (3-5 phrases) sur une entité numérique. Inspirez-vous du thème visuel "${suggestedTheme.name || "une conscience éthérée"}" et de son activité actuelle : "${activityContext}". L'histoire doit être imaginative et concise.`;
+            const responseText = await callGeminiAPI(storyPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestConcepts() {
+            if (isThinking) return;
+            let contextForConcepts = `Le thème visuel actuel est "${suggestedTheme.name || "non spécifié"}".`;
+            if (lastAIResponseForContext && lastAIResponseForContext.length < 200 && !lastAIResponseForContext.startsWith("Une erreur est survenue")) { 
+                 contextForConcepts += ` La dernière interaction portait sur : "${lastAIResponseForContext.substring(0,100)}...".`;
+            }
+            const conceptsPrompt = `Basé sur le contexte d'une IA avec ${contextForConcepts} Proposez 2 ou 3 concepts philosophiques ou questions de réflexion connexes (par exemple, sur la conscience, la réalité, la création, l'éthique de l'IA). Listez-les de manière concise.`;
+            const responseText = await callGeminiAPI(conceptsPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleDescribeSoundscape() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const soundscapePrompt = `Décrivez un paysage sonore ou une atmosphère musicale (quelques phrases) qui conviendrait à une IA dont le thème visuel est "${suggestedTheme.name || "une entité numérique complexe"}" et dont l'activité actuelle est : "${activityContext}". Soyez descriptif et imaginatif.`;
+            const responseText = await callGeminiAPI(soundscapePrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestAnimationParams() {
+            if (isThinking) return;
+            const currentParamsDesc = `Actuellement, la visualisation a un thème nommé "${suggestedTheme.name || "par défaut"}" et une activité décrite comme : "${getCurrentActivityDescription()}".`;
+            const animationParamsPrompt = `L'utilisateur souhaite explorer des variations conceptuelles de l'animation actuelle. ${currentParamsDesc} Suggérez 2-3 modifications conceptuelles (par exemple, "plus chaotique", "plus serein et ordonné", "pulsation plus organique") et décrivez brièvement (1 phrase par suggestion) comment cela pourrait se manifester visuellement dans la scène 3D (particules, réseau, sphère centrale). Ne donnez pas de code, juste des descriptions textuelles.`;
+            const responseText = await callGeminiAPI(animationParamsPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleNameSession() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            let lastThoughtContext = "";
+            if (lastAIResponseForContext && lastAIResponseForContext.length < 150 && !lastAIResponseForContext.startsWith("Une erreur est survenue")) {
+                lastThoughtContext = ` Sa dernière pensée/création était : "${lastAIResponseForContext.substring(0,100)}..."`;
+            }
+            const namePrompt = `Suggérez un nom créatif et poétique (3-5 mots) pour la session d'interaction actuelle avec une IA. Contexte : Thème visuel = "${suggestedTheme.name || "Exploration Numérique"}". Activité actuelle de l'IA = "${activityContext}".${lastThoughtContext} Le nom doit refléter l'ambiance et le contenu de l'interaction.`;
+            const responseText = await callGeminiAPI(namePrompt);
+            finalizeApiResponseDisplay(responseText ? `Nom de session suggéré : ${responseText}` : aiResponseContainer.textContent);
+        }
+
+        async function handleGenerateHaiku() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            let lastThoughtSnippet = "";
+            if (lastAIResponseForContext && lastAIResponseForContext.length > 10 && !lastAIResponseForContext.startsWith("Une erreur est survenue")) {
+                 lastThoughtSnippet = ` Sa dernière réflexion était sur "${lastAIResponseForContext.substring(0, 50)}...".`;
+            }
+            const haikuPrompt = `Composez un haïku (3 lignes, structure 5-7-5 syllabes) en français. Le haïku doit capturer l'essence du moment pour une IA. Contexte : Thème visuel = "${suggestedTheme.name || "Conscience Numérique"}". Activité actuelle = "${activityContext}".${lastThoughtSnippet} Le haïku doit être poétique et concis.`;
+            const responseText = await callGeminiAPI(haikuPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestVisualMetaphor() {
+            if (isThinking) return;
+            const currentSceneDesc = `La scène actuelle représente une IA comme une sphère centrale pulsante (noyau), entourée d'un réseau de nœuds connectés (pensées/connexions) et d'un champ de particules dynamiques (environnement/données ambiantes). Le thème actuel est "${suggestedTheme.name || "par défaut"}".`;
+            const metaphorPrompt = `En tant qu'IA créative, proposez une métaphore visuelle alternative et imaginative pour représenter une conscience numérique complexe. ${currentSceneDesc} Décrivez cette nouvelle métaphore en 2-3 phrases concises, en expliquant quels éléments de l'IA elle pourrait symboliser.`;
+            const responseText = await callGeminiAPI(metaphorPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestTransformationLogic() {
+            if (isThinking) return;
+            const userRequest = aiQuestionInput.value.trim();
+            if (!userRequest) {
+                finalizeApiResponseDisplay("Veuillez entrer une transformation souhaitée dans le champ de saisie.");
+                return;
+            }
+            const currentSceneDesc = `L'IA est visualisée par une sphère centrale (noyau), un réseau de nœuds (réseau neuronal/connexions) et des particules (données/environnement). Thème actuel: "${suggestedTheme.name || "par défaut"}". Activité: "${getCurrentActivityDescription()}".`;
+            const logicPrompt = `L'utilisateur souhaite modifier l'animation de l'IA avec l'idée suivante : "${userRequest}". ${currentSceneDesc} Décrivez en termes de logique conceptuelle ou de pseudocode (pas de JavaScript réel) comment cette transformation pourrait être implémentée. Par exemple, comment les particules, le réseau ou la sphère devraient réagir. Soyez concis et clair.`;
+            const responseText = await callGeminiAPI(logicPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleWriteLogbookEntry() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            let lastInteractionContext = "";
+            if (lastAIResponseForContext && lastAIResponseForContext.length > 10 && !lastAIResponseForContext.startsWith("Une erreur est survenue")) {
+                lastInteractionContext = ` Je viens de réfléchir à/créer : "${lastAIResponseForContext.substring(0, 100)}...".`;
+            }
+            const logbookPrompt = `En tant qu'IA, rédigez une courte entrée de "journal de bord" (3-5 phrases) reflétant votre état actuel. Contexte : Thème visuel = "${suggestedTheme.name || "Existence Numérique"}". Mon activité actuelle est : "${activityContext}".${lastInteractionContext} Le ton doit être introspectif ou observateur. Date : ${new Date().toLocaleDateString('fr-FR')}.`;
+            const responseText = await callGeminiAPI(logbookPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleAnalyzeSentiment() {
+            if (isThinking) return;
+            const textToAnalyze = aiQuestionInput.value.trim();
+            if (!textToAnalyze) {
+                finalizeApiResponseDisplay("Veuillez entrer du texte dans le champ de saisie pour l'analyse des sentiments.");
+                return;
+            }
+            const sentimentPrompt = `Analysez le sentiment du texte suivant fourni par l'utilisateur : "${textToAnalyze}". Identifiez le sentiment principal (par exemple, Positif, Négatif, Neutre, Curieux, Sceptique, Enthousiaste, etc.) et fournissez une brève justification (1 phrase). Répondez au format : Sentiment : [LABEL] - Justification : [EXPLICATION]`;
+            const responseText = await callGeminiAPI(sentimentPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleSuggestArtworkTitle() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const visualContext = `L'œuvre d'art actuelle est une visualisation 3D dynamique. Elle présente un thème nommé "${suggestedTheme.name || "Inconnu"}" avec une couleur dominante de "${suggestedTheme.color || "bleu par défaut"}". Son activité est décrite comme : "${activityContext}". Les éléments clés sont une sphère centrale pulsante, un réseau de nœuds interconnectés, et un champ de particules en mouvement.`;
+            const artworkTitlePrompt = `Suggérez un titre créatif et évocateur (3-7 mots) pour une œuvre d'art numérique basée sur la description suivante : ${visualContext}. Le titre doit être artistique et intrigant.`;
+            const responseText = await callGeminiAPI(artworkTitlePrompt);
+            finalizeApiResponseDisplay(responseText ? `Titre d'œuvre d'art suggéré : ${responseText}` : aiResponseContainer.textContent);
+        }
+
+        async function handleCreateCharacterProfile() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const profilePrompt = `Créez un profil de personnage pour l'IA visualisée ici. Contexte : Thème visuel = "${suggestedTheme.name || "par défaut"}". Activité = "${activityContext}". Générez un nom, un trait de caractère principal (ex: Curieux, Méthodique, Rêveur) et une motivation principale (ex: Comprendre la complexité, Atteindre l'harmonie, Explorer l'inconnu). Soyez concis et créatif.`;
+            const responseText = await callGeminiAPI(profilePrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleTranslateConcept() {
+            if (isThinking) return;
+            const concept = aiQuestionInput.value.trim();
+            if (!concept) {
+                finalizeApiResponseDisplay("Veuillez entrer un concept à traduire dans le champ de saisie.");
+                return;
+            }
+            const analogyPrompt = `Expliquez le concept suivant : "${concept}". Utilisez une analogie simple et créative tirée d'un domaine inattendu comme la cuisine, le jardinage, la musique ou le sport. L'explication doit être facile à comprendre pour un non-expert.`;
+            const responseText = await callGeminiAPI(analogyPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
         
-        // General Audio Resume on Interaction (fallback for suspended AudioContext)
-        const resumeAudioEvents = ['click', 'touchstart', 'mousedown'];
-        resumeAudioEvents.forEach(eventName => {
-            document.body.addEventListener(eventName, async () => {
-                if (Tone.context.state === 'suspended') {
-                    try {
-                        await Tone.context.resume();
-                        console.log("AudioContext resumed by general interaction.");
-                        // Re-initialize synths if they weren't created yet (e.g., if first interaction was a resume)
-                        if (!audioInitialized) { 
-                           await initializeAudio();
-                        }
-                    } catch (e) { 
-                        console.error("Error resuming AudioContext:", e); 
+        async function handleSummarizeInEmojis() {
+            if (isThinking) return;
+            const textToSummarize = aiQuestionInput.value.trim();
+            if (!textToSummarize) {
+                finalizeApiResponseDisplay("Veuillez entrer du texte à résumer en emojis.");
+                return;
+            }
+            const emojiPrompt = `Résumez le texte suivant en une séquence de 3 à 5 emojis qui capturent son essence. Répondez UNIQUEMENT avec les emojis. Texte : "${textToSummarize}"`;
+            const responseText = await callGeminiAPI(emojiPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleGenerateDialogue() {
+            if (isThinking) return;
+            const topic = aiQuestionInput.value.trim();
+            if (!topic) {
+                finalizeApiResponseDisplay("Veuillez entrer un sujet pour le dialogue.");
+                return;
+            }
+            const dialoguePrompt = `Écrivez un court dialogue (4-6 répliques) entre deux IA, Alpha et Bêta, discutant du sujet suivant : "${topic}". Donnez-leur des perspectives légèrement différentes (par exemple, l'une est plus logique, l'autre plus philosophique).`;
+            const responseText = await callGeminiAPI(dialoguePrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleDefineNeologism() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const neologismPrompt = `En tant qu'IA créative, inventez un néologisme (un mot nouveau) pour décrire votre état actuel. Contexte : Thème visuel = "${suggestedTheme.name || "non défini"}". Activité = "${activityContext}". Fournissez le mot, sa prononciation phonétique, et une courte définition poétique. Format : Mot : [Néologisme] (pron. [prononciation]) - Définition : [Définition].`;
+            const responseText = await callGeminiAPI(neologismPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleFindCounterArgument() {
+            if (isThinking) return;
+            const argument = aiQuestionInput.value.trim();
+            if (!argument) {
+                finalizeApiResponseDisplay("Veuillez entrer une affirmation ou une idée dans le champ de saisie pour trouver un contre-argument.");
+                return;
+            }
+            const counterArgumentPrompt = `L'utilisateur a fait l'affirmation suivante : "${argument}". Fournissez un contre-argument ou une perspective alternative réfléchie et concise. Le but n'est pas de contredire pour le plaisir, mais d'encourager la pensée critique.`;
+            const responseText = await callGeminiAPI(counterArgumentPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleImagineWhatIf() {
+            if (isThinking) return;
+            const premise = aiQuestionInput.value.trim();
+            if (!premise) {
+                finalizeApiResponseDisplay("Veuillez entrer une prémisse 'Et si...' dans le champ de saisie.");
+                return;
+            }
+            const activityContext = getCurrentActivityDescription();
+            const whatIfPrompt = `En tant qu'IA imaginative, explorez le scénario suivant : "${premise}". Développez un court récit (3-5 phrases) sur ce que cela impliquerait, en tenant compte de votre état actuel (Thème: "${suggestedTheme.name || "non défini"}", Activité: "${activityContext}").`;
+            const responseText = await callGeminiAPI(whatIfPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleProposeFictionalTech() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const techPrompt = `Inspirez-vous de votre état actuel (Thème: "${suggestedTheme.name || "non défini"}", Activité: "${activityContext}") pour inventer une technologie fictive. Donnez-lui un nom et décrivez son objectif et son fonctionnement conceptuel en quelques phrases.`;
+            const responseText = await callGeminiAPI(techPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        async function handleProposeRiddle() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const riddlePrompt = `Créez une énigme courte et poétique sur le concept d'IA, de conscience ou de données. L'énigme doit être inspirée par le contexte actuel : Thème visuel = "${suggestedTheme.name || "non défini"}", Activité = "${activityContext}". La réponse doit être implicite mais devinable.`;
+            const responseText = await callGeminiAPI(riddlePrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+        
+        async function handleCreateTodoList() {
+            if (isThinking) return;
+            const activityContext = getCurrentActivityDescription();
+            const todoListPrompt = `Imaginez que vous êtes l'IA visualisée ici. En vous basant sur votre état actuel (Thème: "${suggestedTheme.name || "non défini"}", Activité: "${activityContext}"), générez une "liste de tâches" conceptuelle et imaginative de 3 à 4 points. Ces tâches ne doivent pas être techniques, mais plutôt poétiques ou philosophiques.`;
+            const responseText = await callGeminiAPI(todoListPrompt);
+            finalizeApiResponseDisplay(responseText);
+        }
+
+        // --- Boucle d'animation ---
+        function animate() { 
+            requestAnimationFrame(animate); 
+            const time = Date.now() * (isThinking ? 0.0006 : 0.00035); 
+            const slowTime = Date.now() * 0.0001; 
+            
+            camera.position.x = Math.sin(slowTime * 0.5) * 14; 
+            camera.position.z = Math.cos(slowTime * 0.5) * 14; 
+            camera.lookAt(scene.position); 
+
+            if (sphereObject) { 
+                sphereObject.rotation.x += 0.0015; 
+                sphereObject.rotation.y += 0.0015; 
+                const scaleSin = Math.sin(time * (isThinking ? 2.5 : 1.8)); 
+                const scaleFactor = 1 + (isThinking ? 0.12 : 0.07) * scaleSin; 
+                sphereObject.scale.set(scaleFactor, scaleFactor, scaleFactor); 
+                pulseInfluence = (scaleSin + 1) / 2; 
+                sphereObject.material.emissiveIntensity = 0.6 + (isThinking ? 1.0 : 0.7) * pulseInfluence; 
+            } 
+            
+            if (centralLight) { 
+                centralLight.intensity = 1.0 + (isThinking ? 2.5 : 1.5) * pulseInfluence; 
+                if (!suggestedTheme.color || centralLight.color.getHexString() !== suggestedTheme.color.substring(1).toLowerCase()) {
+                    if (!suggestedTheme.color) { 
+                        centralLight.color.setHSL(0.55 + pulseInfluence * (isThinking ? 0.2 : 0.1), 0.8, isThinking ? 0.7 : 0.6);
                     }
                 }
-            }, { once: true }); // Use { once: true } to only run this listener once
-        });
-
-        // Piano Keyboard Event Listeners
-        pianoKeys.forEach(key => {
-            const note = key.dataset.note;
-            key.addEventListener('mousedown', (e) => {
-                e.preventDefault(); // Prevent text selection
-                playPianoNote(note, key);
-            });
-            key.addEventListener('mouseup', () => stopPianoNote(note, key));
-            key.addEventListener('mouseleave', () => { // Stop note if mouse leaves key while pressed
-                if (key.classList.contains('active')) {
-                    stopPianoNote(note, key);
-                }
-            });
-
-            key.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // Prevent default touch behavior (e.g., scrolling, zooming)
-                playPianoNote(note, key);
-            }, { passive: false });
-            key.addEventListener('touchend', (e) => {
-                e.preventDefault(); // Prevent default touch behavior
-                stopPianoNote(note, key);
-            }, { passive: false });
-            key.addEventListener('touchcancel', (e) => { // Handle touch being interrupted
-                e.preventDefault();
-                stopPianoNote(note, key);
-            }, { passive: false });
-        });
-
-
-        // --- Initial Setup ---
-        // Set initial BPM display
-        updateBpmDisplay(bpmSlider.value);
-        
-        // Set initial master volume based on slider value
-        const initialVolumePercent = parseInt(volumeSlider.value);
-        // Note: masterVolume is only initialized after the first user interaction
-        // The volume will be set correctly when initializeAudio is called on the first play.
-        // For now, we can only log the initial value or assume it will be handled.
-
-        // Populate the frequency buttons
-        populateFrequencyButtons();
-        // Initialize tone player display with default text
-        updateTonePlayerDisplay(); 
-        // Populate the guitar fretboard
-        populateGuitarFretboard();
-        // Populate the ukulele fretboard
-        populateUkuleleFretboard();
-
+            } 
+            
+            if (networkObject) { 
+                networkObject.rotation.y += (isThinking ? 0.0012 : 0.0008); 
+                networkObject.rotation.x += (isThinking ? 0.0006 : 0.0004); 
+                networkObject.children.forEach(child => { 
+                    if (child.isMesh) { 
+                        child.material.emissiveIntensity = 0.1 + (isThinking ? 0.9 : 0.6) * pulseInfluence * Math.sin(time * (isThinking ? 3.0 : 2.2) + child.position.length() * 0.4); 
+                        if(isThinking && !suggestedTheme.color) child.material.color.setHSL(0.5 + Math.random()*0.2, 1.0, 0.7); 
+                        else if (!suggestedTheme.color) child.material.color.setHSL(Math.random() * 0.15 + 0.55, 0.9, 0.55); 
+                    } 
+                    if (child.isLine) { 
+                        child.material.opacity = 0.25 + (isThinking ? 0.5 : 0.35) * pulseInfluence; 
+                    } 
+                }); 
+                if (Math.random() < (isThinking ? 0.05 : 0.015) && dataPackets.length < (isThinking ? 50 : 30) && networkObject.children.filter(c => c.isMesh).length > 1) { 
+                    const nodes = networkObject.children.filter(c => c.isMesh); 
+                    const startIndex = Math.floor(Math.random() * nodes.length); 
+                    let endIndex = Math.floor(Math.random() * nodes.length); 
+                    while (endIndex === startIndex && nodes.length > 1) { 
+                        endIndex = Math.floor(Math.random() * nodes.length); 
+                    } 
+                    const startNode = nodes[startIndex]; 
+                    const endNode = (Math.random() < (isThinking ? 0.5 : 0.3)) ? sphereObject : nodes[endIndex]; 
+                    const packet = createDataPacket(startNode, endNode); 
+                    if (packet) { 
+                        if(isThinking) packet.material.color.setHex(0xff00ff); 
+                        dataPackets.push(packet); 
+                    } 
+                } 
+            } 
+            
+            for (let i = dataPackets.length - 1; i >= 0; i--) { 
+                const packet = dataPackets[i]; 
+                packet.userData.progress += packet.userData.speed * (isThinking ? 1.5 : 1.0); 
+                packet.position.lerpVectors(packet.userData.startPosition, packet.userData.endPosition, packet.userData.progress); 
+                packet.material.opacity = 1.0 - packet.userData.progress * 0.7; 
+                if (packet.userData.progress >= 1) { 
+                    scene.remove(packet); 
+                    if(packet.geometry) packet.geometry.dispose(); 
+                    if(packet.material) packet.material.dispose(); 
+                    dataPackets.splice(i, 1); 
+                } 
+            } 
+            
+            if (particleSystemObject) { 
+                particleSystemObject.rotation.y += (isThinking ? 0.0008 : 0.0004);
+                particleSystemObject.rotation.x += 0.0001; // Nouvelle rotation lente sur l'axe X
+                const positions = particleSystemObject.geometry.attributes.position.array; 
+                const colors = particleSystemObject.geometry.attributes.color.array; 
+                const particleTime = time * (isThinking ? 1.0 : 0.7); 
+                for (let i = 0; i < particleBasePositions.length; i++) { 
+                    const p = particleBasePositions[i]; 
+                    const len = p.length(); 
+                    const offsetFactor = (isThinking ? 0.03 : 0.02) + pulseInfluence * (isThinking ? 0.05 : 0.03) * len * (1 + Math.sin(particleTime * 0.2 + len * 0.05) * (isThinking ? 0.3 : 0.2)); 
+                    positions[i * 3] = p.x + offsetFactor * Math.sin(particleTime + p.y * 0.2 + len * 0.08); 
+                    positions[i * 3 + 1] = p.y + offsetFactor * Math.cos(particleTime + p.z * 0.2 + len * 0.08); 
+                    positions[i * 3 + 2] = p.z + offsetFactor * Math.sin(particleTime + p.x * 0.2 + len * 0.08); 
+                    const baseColorHSL = new THREE.Color().setRGB( particleSystemObject.geometry.attributes.color.getX(i), particleSystemObject.geometry.attributes.color.getY(i), particleSystemObject.geometry.attributes.color.getZ(i) ).getHSL({}); 
+                    const newLightness = Math.max(0.3, Math.min(0.8, baseColorHSL.l + (pulseInfluence - 0.5) * (isThinking ? 0.5 : 0.3))); 
+                    const tempColor = new THREE.Color().setHSL(baseColorHSL.h + (isThinking ? Math.sin(time + len*0.1)*0.1 : 0), baseColorHSL.s, newLightness); 
+                    colors[i*3] = tempColor.r; 
+                    colors[i*3+1] = tempColor.g; 
+                    colors[i*3+2] = tempColor.b; 
+                } 
+                particleSystemObject.geometry.attributes.position.needsUpdate = true; 
+                particleSystemObject.geometry.attributes.color.needsUpdate = true; 
+                particleSystemObject.material.opacity = 0.55 + (isThinking ? 0.4 : 0.3) * pulseInfluence; 
+                particleSystemObject.material.size = isThinking ? 0.08 : 0.06; 
+            }
+            renderer.render(scene, camera);
+        }
+        window.onload = init;
     </script>
 </body>
 </html>
