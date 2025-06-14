@@ -15,6 +15,27 @@
             flex-direction: column;
             align-items: center;
         }
+        #apiKeyBanner {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            background-color: #4a402a; 
+            color: #fff; 
+            padding: 10px; 
+            z-index: 100; 
+            text-align: center; 
+            border-bottom: 2px solid #ffc107;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #apiKeyContent {
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px; 
+            flex-wrap: wrap;
+        }
         #info {
             position: fixed;
             top: 10px;
@@ -125,6 +146,15 @@
     </style>
 </head>
 <body>
+    <div id="apiKeyBanner">
+        <div id="apiKeyContent">
+            <span style="font-weight: bold;">Action Requise :</span>
+            <span>Pour utiliser les fonctions IA, veuillez entrer votre clé API Google Gemini.</span>
+            <input type="password" id="apiKeyInput" placeholder="Collez votre clé API ici" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; background-color: #333; color: #fff;">
+            <button id="saveApiKeyButton" class="ai-button" style="background-color: #ffc107; color: #000;">Sauvegarder la Clé</button>
+        </div>
+    </div>
+
     <div id="info">Représentation Évoluée : Noyau Actif, Flux Réseau et Champ Dynamique</div>
 
     <div id="controlsContainer">
@@ -176,19 +206,10 @@
         let dataPackets = [];
         let isThinking = false; 
 
+        // --- Références aux éléments DOM ---
+        let apiKeyBanner, apiKeyInput, saveApiKeyButton;
         let aiQuestionInput, askAiButton, aiResponseContainer;
         let developIdeaButton; 
-        let explainVisButton, suggestQuestionButton, suggestThemeButton, applyThemeButton;
-        let interpretActivityButton, generatePoemButton, generateStoryButton, suggestConceptsButton;
-        let describeSoundscapeButton, suggestAnimationParamsButton, nameSessionButton;
-        let generateHaikuButton, suggestVisualMetaphorButton; 
-        let suggestTransformationLogicButton, writeLogbookEntryButton;
-        let analyzeSentimentButton, suggestArtworkTitleButton;
-        let createCharacterProfileButton, translateConceptButton;
-        let summarizeInEmojisButton, generateDialogueButton;
-        let defineNeologismButton, findCounterArgumentButton;
-        let imagineWhatIfButton, proposeFictionalTechButton;
-        let proposeRiddleButton, createTodoListButton; 
 
         let suggestedTheme = { name: null, color: null };
         let lastAIResponseForContext = ""; 
@@ -222,87 +243,90 @@
             particleSystemObject = createParticleSystem();
             scene.add(particleSystemObject);
 
-            // Récupération des éléments DOM
-            aiQuestionInput = document.getElementById('aiQuestionInput');
-            askAiButton = document.getElementById('askAiButton');
-            developIdeaButton = document.getElementById('developIdeaButton');
-            explainVisButton = document.getElementById('explainVisButton');
-            suggestQuestionButton = document.getElementById('suggestQuestionButton');
-            suggestThemeButton = document.getElementById('suggestThemeButton');
-            applyThemeButton = document.getElementById('applyThemeButton');
-            interpretActivityButton = document.getElementById('interpretActivityButton');
-            generatePoemButton = document.getElementById('generatePoemButton');
-            generateStoryButton = document.getElementById('generateStoryButton');
-            suggestConceptsButton = document.getElementById('suggestConceptsButton');
-            describeSoundscapeButton = document.getElementById('describeSoundscapeButton');
-            suggestAnimationParamsButton = document.getElementById('suggestAnimationParamsButton');
-            nameSessionButton = document.getElementById('nameSessionButton');
-            generateHaikuButton = document.getElementById('generateHaikuButton');
-            suggestVisualMetaphorButton = document.getElementById('suggestVisualMetaphorButton');
-            suggestTransformationLogicButton = document.getElementById('suggestTransformationLogicButton');
-            writeLogbookEntryButton = document.getElementById('writeLogbookEntryButton');
-            analyzeSentimentButton = document.getElementById('analyzeSentimentButton');
-            suggestArtworkTitleButton = document.getElementById('suggestArtworkTitleButton');
-            createCharacterProfileButton = document.getElementById('createCharacterProfileButton');
-            translateConceptButton = document.getElementById('translateConceptButton');
-            summarizeInEmojisButton = document.getElementById('summarizeInEmojisButton');
-            generateDialogueButton = document.getElementById('generateDialogueButton');
-            defineNeologismButton = document.getElementById('defineNeologismButton');
-            findCounterArgumentButton = document.getElementById('findCounterArgumentButton');
-            imagineWhatIfButton = document.getElementById('imagineWhatIfButton');
-            proposeFictionalTechButton = document.getElementById('proposeFictionalTechButton');
-            proposeRiddleButton = document.getElementById('proposeRiddleButton');
-            createTodoListButton = document.getElementById('createTodoListButton');
-            aiResponseContainer = document.getElementById('aiResponseContainer');
+            // --- Gestion de la Clé API ---
+            apiKeyBanner = document.getElementById('apiKeyBanner');
+            apiKeyInput = document.getElementById('apiKeyInput');
+            saveApiKeyButton = document.getElementById('saveApiKeyButton');
+            saveApiKeyButton.addEventListener('click', handleSaveApiKey);
+            checkApiKey();
 
-            // Écouteurs d'événements
-            askAiButton.addEventListener('click', handleAskAI);
-            developIdeaButton.addEventListener('click', handleDevelopIdea);
-            aiQuestionInput.addEventListener('keypress', function(event) {
-                if (event.key === 'Enter' && document.activeElement === aiQuestionInput) {
-                    // Optionnel: handleAskAI(); ou laisser l'utilisateur cliquer.
+            // --- Récupération des autres éléments DOM ---
+            aiQuestionInput = document.getElementById('aiQuestionInput');
+            aiResponseContainer = document.getElementById('aiResponseContainer');
+            
+            // --- Association des événements ---
+            // On récupère tous les boutons et on leur attache l'événement correspondant via leur ID
+            const buttons = document.querySelectorAll('.ai-button');
+            buttons.forEach(button => {
+                const handlerName = `handle${button.id.charAt(0).toUpperCase() + button.id.slice(1).replace('Button', '')}`;
+                if (window[handlerName]) {
+                    button.addEventListener('click', window[handlerName]);
                 }
             });
-            explainVisButton.addEventListener('click', handleExplainVisualization);
-            suggestQuestionButton.addEventListener('click', handleSuggestQuestion);
-            suggestThemeButton.addEventListener('click', handleSuggestVisualTheme);
-            applyThemeButton.addEventListener('click', handleApplySuggestedTheme);
-            interpretActivityButton.addEventListener('click', handleInterpretActivity);
-            generatePoemButton.addEventListener('click', handleGeneratePoem);
-            generateStoryButton.addEventListener('click', handleGenerateStory);
-            suggestConceptsButton.addEventListener('click', handleSuggestConcepts);
-            describeSoundscapeButton.addEventListener('click', handleDescribeSoundscape);
-            suggestAnimationParamsButton.addEventListener('click', handleSuggestAnimationParams);
-            nameSessionButton.addEventListener('click', handleNameSession);
-            generateHaikuButton.addEventListener('click', handleGenerateHaiku);
-            suggestVisualMetaphorButton.addEventListener('click', handleSuggestVisualMetaphor);
-            suggestTransformationLogicButton.addEventListener('click', handleSuggestTransformationLogic);
-            writeLogbookEntryButton.addEventListener('click', handleWriteLogbookEntry);
-            analyzeSentimentButton.addEventListener('click', handleAnalyzeSentiment);
-            suggestArtworkTitleButton.addEventListener('click', handleSuggestArtworkTitle);
-            createCharacterProfileButton.addEventListener('click', handleCreateCharacterProfile);
-            translateConceptButton.addEventListener('click', handleTranslateConcept);
-            summarizeInEmojisButton.addEventListener('click', handleSummarizeInEmojis);
-            generateDialogueButton.addEventListener('click', handleGenerateDialogue);
-            defineNeologismButton.addEventListener('click', handleDefineNeologism);
-            findCounterArgumentButton.addEventListener('click', handleFindCounterArgument);
-            imagineWhatIfButton.addEventListener('click', handleImagineWhatIf);
-            proposeFictionalTechButton.addEventListener('click', handleProposeFictionalTech);
-            proposeRiddleButton.addEventListener('click', handleProposeRiddle);
-            createTodoListButton.addEventListener('click', handleCreateTodoList);
+            aiQuestionInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter' && document.activeElement === aiQuestionInput) {
+                    // On pourrait déclencher handleAskAI ici, mais on laisse l'utilisateur cliquer
+                }
+            });
             
-            applyThemeButton.disabled = true; 
+            document.getElementById('applyThemeButton').disabled = true; 
 
             updateRendererSize();
             window.addEventListener('resize', onWindowResize, false);
             animate();
         }
 
+        // --- Fonctions de gestion de la Clé API ---
+        function checkApiKey() {
+            const apiKey = sessionStorage.getItem('geminiApiKey');
+            if (!apiKey) {
+                apiKeyBanner.style.display = 'block';
+                // Laisser un peu d'espace pour la bannière
+                document.getElementById('info').style.marginTop = '60px';
+                updateControlsState(false);
+            } else {
+                apiKeyBanner.style.display = 'none';
+                document.getElementById('info').style.marginTop = '0px';
+                updateControlsState(true);
+            }
+        }
+
+        function handleSaveApiKey() {
+            const apiKey = apiKeyInput.value.trim();
+            if (apiKey) {
+                sessionStorage.setItem('geminiApiKey', apiKey);
+                apiKeyInput.value = '';
+                checkApiKey();
+            }
+        }
+
+        function updateControlsState(isEnabled) {
+            const allButtons = document.querySelectorAll('.ai-button');
+            allButtons.forEach(button => {
+                // Le bouton de sauvegarde de clé doit toujours être actif
+                if (button.id === 'saveApiKeyButton') return;
+                
+                if (button.id === 'applyThemeButton') {
+                    button.disabled = !isEnabled || !suggestedTheme.color;
+                } else {
+                    button.disabled = !isEnabled;
+                }
+            });
+            aiQuestionInput.disabled = !isEnabled;
+        }
+
         function updateRendererSize() {
             const responseEl = document.getElementById('aiResponseContainer');
             const metaControlsEl = document.getElementById('metaControlsContainer');
             const canvasEl = renderer.domElement;
+            const topOffset = apiKeyBanner.style.display === 'block' ? apiKeyBanner.offsetHeight : 0;
             
+            // Repositionner tous les éléments en fonction de la présence de la bannière
+            document.getElementById('info').style.top = `${10 + topOffset}px`;
+            document.getElementById('controlsContainer').style.top = `${55 + topOffset}px`;
+            document.getElementById('metaControlsContainer').style.top = `${125 + topOffset}px`;
+
+
             const metaControlsBottom = metaControlsEl.offsetTop + metaControlsEl.offsetHeight;
             const responseTop = metaControlsBottom + 10; 
             responseEl.style.top = `${responseTop}px`;
@@ -343,27 +367,25 @@
             if (!startNode || !endNode) return null; const packetGeometry = new THREE.SphereGeometry(0.08, 8, 8); const packetMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 }); const packet = new THREE.Mesh(packetGeometry, packetMaterial); packet.userData = { startPosition: startNode.position.clone(), endPosition: endNode.position.clone(), progress: 0, speed: 0.01 + Math.random() * 0.01 }; packet.position.copy(packet.userData.startPosition); scene.add(packet); return packet;
         }
 
-        // --- Gestionnaires pour les appels Gemini ---
+        // --- Gestionnaire d'appel à l'API Gemini ---
         function setThinkingState(thinking) {
             isThinking = thinking; 
-            const allButtons = document.querySelectorAll('.ai-button');
-            allButtons.forEach(button => {
-                if (button.id === 'applyThemeButton') {
-                    button.disabled = thinking || !suggestedTheme.color;
-                } else {
-                    button.disabled = thinking;
-                }
-            });
-            aiQuestionInput.disabled = thinking;
+            updateControlsState(!thinking);
         }
 
         async function callGeminiAPI(prompt) {
+            const apiKey = sessionStorage.getItem('geminiApiKey');
+            if (!apiKey) {
+                finalizeApiResponseDisplay("Erreur : Clé API non trouvée. Veuillez en fournir une.");
+                checkApiKey(); // Assure que la bannière est visible
+                return null;
+            }
+
             setThinkingState(true);
             aiResponseContainer.textContent = "L'IA réfléchit...";
             aiResponseContainer.style.height = 'auto';
             updateRendererSize();
 
-            const apiKey = "";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
 
@@ -434,8 +456,11 @@
             
             updateRendererSize(); 
         }
+        
+        // --- Gestionnaires d'événements pour les boutons ---
+        // Les fonctions `handle...` sont maintenant appelées via la boucle dans init()
 
-        async function handleAskAI() {
+        async function handleAskAi() {
             const question = aiQuestionInput.value.trim();
             if (!question || isThinking) return;
             const userPrompt = "En tant qu'IA bienveillante et informative, réponds à la question suivante de manière concise mais complète : " + question;
@@ -456,7 +481,7 @@
         }
 
 
-        async function handleExplainVisualization() {
+        async function handleExplainVis() {
             if (isThinking) return;
             const explainPrompt = "En tant qu'IA, décris la signification symbolique des éléments visuels suivants qui pourraient te représenter : une sphère centrale pulsante et lumineuse, un réseau de nœuds et de connexions qui l'entoure et interagit avec elle, et un vaste champ de particules en mouvement constant et organique autour du tout. Sois poétique, perspicace et concis.";
             const responseText = await callGeminiAPI(explainPrompt);
@@ -475,7 +500,7 @@
             }
         }
 
-        async function handleSuggestVisualTheme() {
+        async function handleSuggestTheme() {
             if (isThinking) return;
             const themePrompt = "Suggère un nom de thème visuel unique et inspirant (par exemple, 'Nébuleuse Sereine', 'Forge Cybernétique', 'Océan de Données Vivantes') et une couleur hexadécimale principale associée (par exemple, #FF5733). Réponds STRICTEMENT au format : NOM DU THÈME: #COULEURHEX. N'ajoute AUCUN texte avant ou après. Exemple: Aurore Galactique: #7F00FF";
             const responseText = await callGeminiAPI(themePrompt);
@@ -492,25 +517,25 @@
                         suggestedTheme.name = themeName;
                         suggestedTheme.color = themeColorHex;
                         messageToDisplay = `Thème suggéré : "${suggestedTheme.name}" (Couleur : ${suggestedTheme.color}). Cliquez sur 'Appliquer le Thème Suggéré' pour mettre à jour.`;
-                        applyThemeButton.disabled = false;
+                        document.getElementById('applyThemeButton').disabled = false;
                     } else {
                         suggestedTheme = { name: null, color: null };
                         messageToDisplay = "Format de couleur hexadécimale invalide suggéré par l'IA.";
-                        applyThemeButton.disabled = true;
+                        document.getElementById('applyThemeButton').disabled = true;
                     }
                 } else {
                     suggestedTheme = { name: null, color: null };
                     messageToDisplay = "L'IA a suggéré un thème, mais le format est incorrect. Essayez à nouveau.";
-                    applyThemeButton.disabled = true;
+                    document.getElementById('applyThemeButton').disabled = true;
                 }
             } else {
                 suggestedTheme = { name: null, color: null };
-                applyThemeButton.disabled = true;
+                document.getElementById('applyThemeButton').disabled = true;
             }
             finalizeApiResponseDisplay(messageToDisplay);
         }
 
-        function handleApplySuggestedTheme() {
+        function handleApplyTheme() {
             if (isThinking || !suggestedTheme.color) return;
             let messageToDisplay;
             try {
