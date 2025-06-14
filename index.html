@@ -191,6 +191,7 @@
         <button id="proposeFictionalTechButton" class="ai-button">✨ Proposer une Technologie Fictive</button>
         <button id="proposeRiddleButton" class="ai-button">✨ Proposer une Énigme</button>
         <button id="createTodoListButton" class="ai-button">✨ Créer une Liste de Tâches</button>
+        <button onclick="window.location.href='soundz.html'" class="ai-button">🎵 Soundz</button>
     </div>
 
     <div id="aiResponseContainer">
@@ -208,8 +209,7 @@
 
         // --- Références aux éléments DOM ---
         let apiKeyBanner, apiKeyInput, saveApiKeyButton;
-        let aiQuestionInput, askAiButton, aiResponseContainer;
-        let developIdeaButton; 
+        let aiQuestionInput, aiResponseContainer;
 
         let suggestedTheme = { name: null, color: null };
         let lastAIResponseForContext = ""; 
@@ -243,31 +243,35 @@
             particleSystemObject = createParticleSystem();
             scene.add(particleSystemObject);
 
-            // --- Gestion de la Clé API ---
+            // --- Récupération de TOUS les éléments DOM ---
             apiKeyBanner = document.getElementById('apiKeyBanner');
             apiKeyInput = document.getElementById('apiKeyInput');
             saveApiKeyButton = document.getElementById('saveApiKeyButton');
-            saveApiKeyButton.addEventListener('click', handleSaveApiKey);
-            checkApiKey();
-
-            // --- Récupération des autres éléments DOM ---
             aiQuestionInput = document.getElementById('aiQuestionInput');
             aiResponseContainer = document.getElementById('aiResponseContainer');
             
             // --- Association des événements ---
-            // On récupère tous les boutons et on leur attache l'événement correspondant via leur ID
+            saveApiKeyButton.addEventListener('click', handleSaveApiKey);
+
             const buttons = document.querySelectorAll('.ai-button');
             buttons.forEach(button => {
+                if (button.id === 'saveApiKeyButton' || button.onclick) return;
+                
                 const handlerName = `handle${button.id.charAt(0).toUpperCase() + button.id.slice(1).replace('Button', '')}`;
                 if (window[handlerName]) {
                     button.addEventListener('click', window[handlerName]);
+                } else {
+                    console.warn(`Handler non trouvé pour le bouton : ${button.id}`);
                 }
             });
             aiQuestionInput.addEventListener('keypress', function(event) {
                 if (event.key === 'Enter' && document.activeElement === aiQuestionInput) {
-                    // On pourrait déclencher handleAskAI ici, mais on laisse l'utilisateur cliquer
+                    // L'utilisateur doit cliquer sur un bouton pour choisir une action
                 }
             });
+            
+            // --- État initial ---
+            checkApiKey();
             
             document.getElementById('applyThemeButton').disabled = true; 
 
@@ -281,7 +285,6 @@
             const apiKey = sessionStorage.getItem('geminiApiKey');
             if (!apiKey) {
                 apiKeyBanner.style.display = 'block';
-                // Laisser un peu d'espace pour la bannière
                 document.getElementById('info').style.marginTop = '60px';
                 updateControlsState(false);
             } else {
@@ -303,7 +306,6 @@
         function updateControlsState(isEnabled) {
             const allButtons = document.querySelectorAll('.ai-button');
             allButtons.forEach(button => {
-                // Le bouton de sauvegarde de clé doit toujours être actif
                 if (button.id === 'saveApiKeyButton') return;
                 
                 if (button.id === 'applyThemeButton') {
@@ -321,7 +323,6 @@
             const canvasEl = renderer.domElement;
             const topOffset = apiKeyBanner.style.display === 'block' ? apiKeyBanner.offsetHeight : 0;
             
-            // Repositionner tous les éléments en fonction de la présence de la bannière
             document.getElementById('info').style.top = `${10 + topOffset}px`;
             document.getElementById('controlsContainer').style.top = `${55 + topOffset}px`;
             document.getElementById('metaControlsContainer').style.top = `${125 + topOffset}px`;
