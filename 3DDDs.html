@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Représentation 3D IA - Interface Vibratoire THQV Avancée</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; background-color: #101015; color: #e8e8e8; display: flex; flex-direction: column; align-items: center; }
+        #info { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 700px; text-align: center; padding: 8px; background-color: rgba(10, 10, 20, 0.7); border-radius: 8px; font-size: 14px; z-index: 40; border: 1px solid rgba(0, 180, 255, 0.2); }
+        #controlsContainer { position: fixed; top: 55px; left: 50%; transform: translateX(-50%); padding: 10px; background-color: rgba(20, 20, 30, 0.85); border-radius: 10px; box-shadow: 0 0 15px rgba(0, 180, 255, 0.4); z-index: 30; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: center;}
+        .selector-group { display: flex; align-items: center; gap: 8px; }
+        select { padding: 10px; border-radius: 5px; border: 1px solid #007bff; background-color: #202530; color: #e0e0e0; font-size: 14px; }
+        .control-button { padding: 10px 15px; border-radius: 5px; background-color: #28a745; color: white; border: none; cursor: pointer; font-size: 14px; transition: background-color 0.3s ease; white-space: nowrap; }
+        .control-button.muted { background-color: #dc3545; }
+        #aiResponseContainer { position: fixed; top: 135px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; height: 70px; max-height: 180px; padding: 10px; background-color: rgba(15, 15, 25, 0.9); border-radius: 8px; border: 1px solid rgba(0, 180, 255, 0.2); font-size: 13px; z-index: 20; overflow-y: auto; color: #c0c0c0; text-align: left; transition: all 0.3s ease; }
+        canvas { display: block; border-radius: 10px; box-shadow: 0 0 30px rgba(0, 200, 255, 0.6); width: 90vw; position: fixed; left: 5vw; z-index: 5; }
+    </style>
+</head>
+<body>
+    <div id="info">Interface de Résonance THQV : Choisissez un élément ou lancez un protocole d'harmonisation.</div>
+
+    <div id="controlsContainer">
+        <div class="selector-group">
+            <label for="elementSelector">Élément :</label>
+            <select id="elementSelector">
+                <option value="none" selected>-- Manuel --</option>
+                <option value="fer">Fer (Fe)</option>
+                <option value="oxygene">Oxygène (O)</option>
+                <option value="magnesium">Magnésium (Mg)</option>
+                <option value="selenium">Sélénium (Se)</option>
+                <option value="azote">Azote (N)</option>
+                <option value="carbone">Carbone (C)</option>
+                <option value="or">Or (Au)</option>
+            </select>
+        </div>
+        <div class="selector-group">
+            <label for="protocolSelector">Protocole :</label>
+            <select id="protocolSelector">
+                <option value="none" selected>-- Aucun --</option>
+                <option value="fatigue">Fatigue Chronique</option>
+            </select>
+        </div>
+        <button id="soundToggle" class="control-button">🔊 Activer le Son</button>
+    </div>
+
+    <div id="aiResponseContainer">
+       [span_2](start_span)En attente... Votre Grimoire contient des protocoles pour divers troubles comme l'anxiété ou les douleurs osseuses.[span_2](end_span)
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- Scène et objets 3D ---
+        let scene, camera, renderer, sphereObject, networkObject, particleSystemObject, centralLight;
+        let particleBasePositions = [], dataPackets = [];
+        let pulseInfluence = 0, isThinking = false;
+
+        // --- Audio ---
+        let audioContext, oscillator, gainNode, isAudioInitialized = false, isMuted = true;
+
+        // --- Données Vibratoires Enrichies ---
+        const elementData = {
+            none: { name: "Abstrait", freq: 0, color: new THREE.Color(0x0077ff), pulseSpeed: 1.8, particleEffect: 'default' },
+            fer: { name: "Fer", freq: 756, protocol: "fatigue", color: new THREE.Color(0xff4500), pulseSpeed: 0.8, particleEffect: 'heavyPulse' },
+            oxygene: { name: "Oxygène", freq: 1264, protocol: "fatigue", color: new THREE.Color(0x87CEEB), pulseSpeed: 1.3, particleEffect: 'breath' },
+            magnesium: { name: "Magnésium", freq: 1872, protocol: "fatigue", color: new THREE.Color(0xcccccc), pulseSpeed: 1.5, particleEffect: 'calmPulse' },
+            selenium: { name: "Sélénium", freq: 6048, protocol: "fatigue", color: new THREE.Color(0x40E0D0), pulseSpeed: 2.2, particleEffect: 'fastSwirl' },
+            azote: { name: "Azote", freq: 2562, protocol: "fatigue", color: new THREE.Color(0x9400D3), pulseSpeed: 1.7, particleEffect: 'energetic' },
+            carbone: { name: "Carbone", freq: 836, protocol: "fatigue", color: new THREE.Color(0x444444), pulseSpeed: 0.9, particleEffect: 'structure' },
+            or: { name: "Or", freq: 7777, color: new THREE.Color(0xFFD700), pulseSpeed: 2.5, particleEffect: 'radiant' }
+        };
+        let currentElement = elementData.none;
+        
+        // --- Protocole ---
+        let protocolInterval = null, currentProtocol = 'none';
+
+        // --- Éléments DOM ---
+        let elementSelector, protocolSelector, aiResponseContainer, soundToggleButton;
+
+        function init() {
+            // ... (Initialisation de la scène, caméra, lumières comme précédemment) ...
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x101015); scene.fog = new THREE.FogExp2(0x101015, 0.035);
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / (window.innerHeight * 0.6), 0.1, 1000); camera.position.set(0, 2, 14); camera.lookAt(scene.position);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); document.body.appendChild(renderer.domElement);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); directionalLight.position.set(8, 12, 10); scene.add(directionalLight);
+            centralLight = new THREE.PointLight(0x66ccff, 1.5, 30); scene.add(centralLight);
+            sphereObject = createPulsatingSphere(); scene.add(sphereObject);
+            networkObject = createNeuralNetwork(); scene.add(networkObject);
+            particleSystemObject = createParticleSystem(); scene.add(particleSystemObject);
+
+            elementSelector = document.getElementById('elementSelector');
+            protocolSelector = document.getElementById('protocolSelector');
+            aiResponseContainer = document.getElementById('aiResponseContainer');
+            soundToggleButton = document.getElementById('soundToggle');
+
+            elementSelector.addEventListener('change', handleElementSelection);
+            protocolSelector.addEventListener('change', handleProtocolSelection);
+            soundToggleButton.addEventListener('click', toggleSound);
+            
+            updateRendererSize();
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        // --- Fonctions Audio ---
+        function initAudio() { if (isAudioInitialized) return; audioContext = new (window.AudioContext || window.webkitAudioContext)(); oscillator = audioContext.createOscillator(); gainNode = audioContext.createGain(); oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(0, audioContext.currentTime); gainNode.gain.setValueAtTime(0, audioContext.currentTime); oscillator.connect(gainNode); gainNode.connect(audioContext.destination); oscillator.start(); isAudioInitialized = true; }
+        function toggleSound() { if (!isAudioInitialized) initAudio(); isMuted = !isMuted; soundToggleButton.textContent = isMuted ? '🔊 Activer le Son' : '🔇 Couper le Son'; soundToggleButton.classList.toggle('muted', isMuted); if (!isMuted && currentElement.freq > 0) { gainNode.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.5); oscillator.frequency.setValueAtTime(currentElement.freq, audioContext.currentTime); } else { gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5); } }
+
+        // --- Gestion des sélections ---
+        function applyElement(elementKey) {
+            currentElement = elementData[elementKey] || elementData.none;
+            isThinking = (elementKey !== 'none');
+            
+            elementSelector.value = elementKey; // Synchroniser le menu déroulant
+
+            if (sphereObject) {
+                sphereObject.material.color.set(currentElement.color);
+                sphereObject.material.emissive.set(currentElement.color);
+            }
+            
+            if (currentElement.name === "Abstrait") {
+                aiResponseContainer.textContent = "Retour à l'état abstrait.";
+                if (!isMuted && isAudioInitialized) gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
+            } else {
+                aiResponseContainer.textContent = `Élément : ${currentElement.name}. Fréquence : ${currentElement.freq} Hz. Effet : ${currentElement.particleEffect}.`;
+                 if (!isMuted && isAudioInitialized) {
+                    oscillator.frequency.setValueAtTime(currentElement.freq, audioContext.currentTime);
+                    if(gainNode.gain.value < 0.1) gainNode.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.5);
+                }
+            }
+        }
+
+        function handleElementSelection(event) {
+            if (protocolInterval) clearInterval(protocolInterval); // Arrête le protocole si on choisit manuellement
+            protocolSelector.value = 'none';
+            applyElement(event.target.value);
+        }
+
+        function handleProtocolSelection(event) {
+            if (protocolInterval) clearInterval(protocolInterval);
+            currentProtocol = event.target.value;
+            if (currentProtocol === 'none') {
+                applyElement('none');
+                return;
+            }
+
+            const protocolElements = Object.keys(elementData).filter(key => elementData[key].protocol === currentProtocol);
+            if (protocolElements.length === 0) return;
+
+            if (!isAudioInitialized) toggleSound(); // Active le son si besoin
+
+            let currentIndex = 0;
+            applyElement(protocolElements[currentIndex]); // Applique le premier élément
+            
+            protocolInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % protocolElements.length;
+                applyElement(protocolElements[currentIndex]);
+            }, 5000); // Change toutes les 5 secondes
+        }
+
+        // --- Création 3D (abrégé) ---
+        function createPulsatingSphere() { const g = new THREE.SphereGeometry(1.3, 50, 50); const m = new THREE.MeshStandardMaterial({ color: 0x0077ff, emissive: 0x0055cc, emissiveIntensity: 0.8, metalness: 0.6, roughness: 0.15, transparent: true, opacity: 0.9 }); return new THREE.Mesh(g, m); }
+        function createNeuralNetwork() { const g = new THREE.Group(); const nG = new THREE.SphereGeometry(0.18, 24, 24); const lM = new THREE.LineBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.4 }); const n = []; const c = 18; const r = 3.8; for (let i = 0; i < c; i++) { const nM = new THREE.MeshPhongMaterial({ color: new THREE.Color().setHSL(Math.random()*0.15+0.55, 0.9, 0.55), emissive: 0x113333, shininess: 60 }); const o = new THREE.Mesh(nG, nM); const p = Math.acos(-1 + (2*i)/c); const t = Math.sqrt(c*Math.PI)*p*1.2; o.position.setFromSphericalCoords(r, p, t); n.push(o); g.add(o); } for (let i = 0; i < c; i++) { for (let j = i+1; j < c; j++) { if (Math.random() > 0.55) { const p = [n[i].position, n[j].position]; const lG = new THREE.BufferGeometry().setFromPoints(p); g.add(new THREE.Line(lG, lM.clone())); } } if (Math.random() > 0.6) { const p = [n[i].position, new THREE.Vector3(0,0,0)]; const lG = new THREE.BufferGeometry().setFromPoints(p); g.add(new THREE.Line(lG, new THREE.LineBasicMaterial({color:0x55aaff, transparent:true, opacity:0.25}))); } } return g; }
+        function createParticleSystem() { const pC = 12000; const pG = new THREE.BufferGeometry(); const pos = new Float32Array(pC*3); const col = new Float32Array(pC*3); particleBasePositions = []; const s = 16; const bC = new THREE.Color(0xffffaa); for (let i = 0; i < pC; i++) { let x, y, z, d; do { x = (Math.random()-0.5)*s; y = (Math.random()-0.5)*s; z = (Math.random()-0.5)*s; d = Math.sqrt(x*x+y*y+z*z); } while (d < 5.0); pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z; particleBasePositions.push(new THREE.Vector3(x,y,z)); const cV = (Math.random()-0.5)*0.4; const pCol = bC.clone().offsetHSL(cV, 0.1*Math.random(), 0.1*Math.random()); col[i*3]=pCol.r; col[i*3+1]=pCol.g; col[i*3+2]=pCol.b; } pG.setAttribute('position', new THREE.BufferAttribute(pos, 3)); pG.setAttribute('color', new THREE.BufferAttribute(col, 3)); const pM = new THREE.PointsMaterial({ size: 0.06, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false, vertexColors: true }); return new THREE.Points(pG, pM); }
+        function createDataPacket(s, e) { if (!s || !e) return null; const g = new THREE.SphereGeometry(0.08, 8, 8); const m = new THREE.MeshBasicMaterial({ color: 0xffffff }); const p = new THREE.Mesh(g, m); p.userData = { startPosition: s.position.clone(), endPosition: e.position.clone(), progress: 0, speed: 0.01 + Math.random() * 0.01 }; p.position.copy(p.userData.startPosition); scene.add(p); return p; }
+        function updateRendererSize() { const rE = document.getElementById('aiResponseContainer'); const cE = renderer.domElement; const rB = rE.offsetTop + rE.offsetHeight; const cT = rB + 15; cE.style.top = `${cT}px`; const cW = window.innerWidth * 0.9; const cH = window.innerHeight - cT - 15; const fCH = Math.max(150, cH); renderer.setSize(cW, fCH); camera.aspect = cW / fCH; camera.updateProjectionMatrix(); cE.style.width = `${cW}px`; cE.style.height = `${fCH}px`; }
+
+        // --- Boucle d'animation enrichie ---
+        function animate() {
+            requestAnimationFrame(animate); 
+            
+            const pulseSpeedFactor = currentElement.pulseSpeed || 1.8;
+            const time = Date.now() * 0.00035 * pulseSpeedFactor;
+            const slowTime = Date.now() * 0.0001;
+            
+            camera.position.x = Math.sin(slowTime * 0.5) * 14;
+            camera.position.z = Math.cos(slowTime * 0.5) * 14;
+            camera.lookAt(scene.position);
+
+            if (sphereObject) {
+                const scaleSin = Math.sin(time * 1.5);
+                const scaleFactor = 1 + (isThinking ? 0.12 : 0.07) * scaleSin;
+                sphereObject.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                pulseInfluence = (scaleSin + 1) / 2;
+                sphereObject.material.emissiveIntensity = 0.6 + (isThinking ? 1.0 : 0.7) * pulseInfluence;
+            }
+            
+            if (centralLight) {
+                centralLight.intensity = 1.0 + (isThinking ? 2.5 : 1.5) * pulseInfluence;
+                let lightColor = currentElement.color.clone();
+                centralLight.color.set(lightColor.lerp(new THREE.Color(0xffffff), 0.3));
+            }
+
+            // --- NOUVEAU : Logique de Visualisation Avancée des Particules ---
+            if (particleSystemObject) {
+                const positions = particleSystemObject.geometry.attributes.position.array;
+                const particleTime = Date.now() * 0.0005;
+
+                switch(currentElement.particleEffect) {
+                    case 'fastSwirl':
+                        particleSystemObject.rotation.y += 0.002;
+                        break;
+                    case 'calmPulse':
+                        const pulse = 1.0 + 0.1 * Math.sin(particleTime);
+                        particleSystemObject.scale.set(pulse, pulse, pulse);
+                        particleSystemObject.rotation.y += 0.0002;
+                        break;
+                    case 'heavyPulse':
+                        const heavyPulse = 1.0 + 0.05 * Math.sin(particleTime * 0.5);
+                        particleSystemObject.scale.set(heavyPulse, heavyPulse, heavyPulse);
+                        particleSystemObject.rotation.y += 0.0001;
+                        break;
+                    default: // 'default', 'breath', 'energetic', etc.
+                        particleSystemObject.rotation.y += 0.0004;
+                        particleSystemObject.scale.set(1, 1, 1);
+                        break;
+                }
+                // Animation de base des particules
+                for (let i = 0; i < particleBasePositions.length; i++) {
+                    const p = particleBasePositions[i];
+                    const len = p.length();
+                    const offsetFactor = 0.02 + pulseInfluence * 0.03 * len * (1 + Math.sin(time * 0.2 + len * 0.05));
+                    positions[i * 3] = p.x + offsetFactor * Math.sin(time + p.y);
+                    positions[i * 3 + 1] = p.y + offsetFactor * Math.cos(time + p.z);
+                    positions[i * 3 + 2] = p.z + offsetFactor * Math.sin(time + p.x);
+                }
+                particleSystemObject.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // ... (reste de la logique d'animation pour le réseau et les paquets de données) ...
+            if (networkObject) { networkObject.rotation.y += (isThinking ? 0.0012 : 0.0008); networkObject.rotation.x += (isThinking ? 0.0006 : 0.0004); networkObject.children.forEach(child => { if (child.isMesh) { child.material.emissiveIntensity = 0.1 + (isThinking ? 0.9 : 0.6) * pulseInfluence * Math.sin(time * 2.0 + child.position.length() * 0.4); if(isThinking) child.material.color.setHSL(currentElement.color.getHSL({}).h + Math.random()*0.1-0.05, 1.0, 0.7); } if (child.isLine) { child.material.opacity = 0.25 + (isThinking ? 0.5 : 0.35) * pulseInfluence; } }); if (Math.random() < (isThinking ? 0.05 : 0.015) && dataPackets.length < (isThinking ? 50 : 30) && networkObject.children.filter(c => c.isMesh).length > 1) { const nodes = networkObject.children.filter(c => c.isMesh); const startIndex = Math.floor(Math.random() * nodes.length); let endIndex = Math.floor(Math.random() * nodes.length); while (endIndex === startIndex && nodes.length > 1) { endIndex = Math.floor(Math.random() * nodes.length); } const startNode = nodes[startIndex]; const endNode = (Math.random() < 0.4) ? sphereObject : nodes[endIndex]; const packet = createDataPacket(startNode, endNode); if (packet) { if(isThinking) packet.material.color.set(currentElement.color); dataPackets.push(packet); } } } for (let i = dataPackets.length - 1; i >= 0; i--) { const packet = dataPackets[i]; packet.userData.progress += packet.userData.speed * (isThinking ? 1.5 : 1.0); packet.position.lerpVectors(packet.userData.startPosition, packet.userData.endPosition, packet.userData.progress); if (packet.userData.progress >= 1) { scene.remove(packet); if(packet.geometry) packet.geometry.dispose(); if(packet.material) packet.material.dispose(); dataPackets.splice(i, 1); } }
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
