@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur de Matériaux : Étagère</title>
+    
+    <!-- Tailwind CSS pour un design moderne et réactif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts pour une typographie propre -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Style de base pour le corps de la page */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Assurer que le canevas 3D ne déborde pas */
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <!-- Titre de l'application -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Calculateur de Matériaux</h1>
+            <p class="text-md text-gray-600 mt-2">Concevez votre étagère et obtenez la liste de matériaux instantanément.</p>
+        </header>
+
+        <!-- Conteneur principal de l'application (Panneaux de contrôle et de visualisation) -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Panneau de Gauche : Contrôles et Paramètres -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-6 border-b pb-3">Paramètres de l'étagère</h2>
+                
+                <!-- Formulaire pour les dimensions -->
+                <div class="space-y-6">
+                    <div>
+                        <label for="longueur" class="block text-sm font-medium text-gray-700 mb-2">Longueur (cm)</label>
+                        <input type="number" id="longueur" value="100" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label for="profondeur" class="block text-sm font-medium text-gray-700 mb-2">Profondeur (cm)</label>
+                        <input type="number" id="profondeur" value="30" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label for="hauteur" class="block text-sm font-medium text-gray-700 mb-2">Hauteur (cm)</label>
+                        <input type="number" id="hauteur" value="180" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label for="nbTablettes" class="block text-sm font-medium text-gray-700 mb-2">Nombre de tablettes</label>
+                        <input type="number" id="nbTablettes" value="5" min="1" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panneau de Droite : Visualisation 3D et Liste de matériaux -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Section de la visualisation 3D -->
+                <div class="bg-white p-2 md:p-4 rounded-2xl shadow-lg h-96 md:h-[500px]">
+                    <div id="scene-container" class="w-full h-full rounded-lg bg-gray-200 relative">
+                         <!-- Le canevas 3D sera inséré ici par three.js -->
+                         <div class="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                            Utilisez la souris pour faire pivoter
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Section de la liste de matériaux -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 border-b pb-3">Liste de matériaux requis</h2>
+                    <div id="liste-materiaux" class="space-y-3 text-gray-700">
+                        <!-- La liste sera générée par JavaScript -->
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Import map pour résoudre les modules JavaScript -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <!-- Script principal de l'application -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        
+        // --- VARIABLES GLOBALES ---
+        let scene, camera, renderer, controls, shelfGroup;
+        const sceneContainer = document.getElementById('scene-container');
+        
+        // Épaisseur du bois pour le réalisme
+        const THICKNESS = 2; // en cm
+
+        // --- ÉLÉMENTS DU DOM ---
+        const inputs = {
+            longueur: document.getElementById('longueur'),
+            profondeur: document.getElementById('profondeur'),
+            hauteur: document.getElementById('hauteur'),
+            nbTablettes: document.getElementById('nbTablettes'),
+        };
+        const materialsListDiv = document.getElementById('liste-materiaux');
+
+        // --- INITIALISATION ---
+        function init() {
+            // 1. Scène
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe5e7eb); // bg-gray-200
+
+            // 2. Caméra
+            camera = new THREE.PerspectiveCamera(50, sceneContainer.clientWidth / sceneContainer.clientHeight, 0.1, 1000);
+            camera.position.set(150, 200, 300);
+
+            // 3. Rendu
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            sceneContainer.appendChild(renderer.domElement);
+
+            // 4. Lumières
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(100, 200, 150);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // 5. Contrôles de la caméra
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            
+            // 6. Gestion du redimensionnement de la fenêtre
+            window.addEventListener('resize', onWindowResize);
+
+            // 7. Mise à jour initiale
+            updateApp();
+
+            // 8. Lancement de la boucle d'animation
+            animate();
+        }
+
+        // --- FONCTIONS PRINCIPALES ---
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = sceneContainer.clientWidth / sceneContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+        }
+
+        function drawShelf(longueur, profondeur, hauteur, nbTablettes) {
+            // Nettoyer l'ancienne étagère avant de dessiner la nouvelle
+            if (shelfGroup) {
+                scene.remove(shelfGroup);
+            }
+            shelfGroup = new THREE.Group();
+
+            const woodMaterial = new THREE.MeshStandardMaterial({ color: 0xdeb887, roughness: 0.8 });
+
+            // Montants verticaux (2)
+            const montantGeometry = new THREE.BoxGeometry(THICKNESS, hauteur, profondeur);
+            const montant1 = new THREE.Mesh(montantGeometry, woodMaterial);
+            montant1.position.set(-longueur / 2, hauteur / 2, 0);
+            const montant2 = new THREE.Mesh(montantGeometry, woodMaterial);
+            montant2.position.set(longueur / 2, hauteur / 2, 0);
+            shelfGroup.add(montant1, montant2);
+
+            // Tablettes
+            const tabletteGeometry = new THREE.BoxGeometry(longueur - THICKNESS * 2, THICKNESS, profondeur);
+            const espacement = hauteur / (nbTablettes + 1);
+
+            for (let i = 1; i <= nbTablettes; i++) {
+                const tablette = new THREE.Mesh(tabletteGeometry, woodMaterial);
+                const yPos = i * espacement;
+                tablette.position.set(0, yPos, 0);
+                shelfGroup.add(tablette);
+            }
+            
+            scene.add(shelfGroup);
+        }
+
+        function calculateMaterials(longueur, profondeur, hauteur, nbTablettes) {
+            // Logique de calcul simple
+            const totalWoodLength = (hauteur * 2) + (longueur * nbTablettes);
+            const screws = nbTablettes * 8; // 4 vis par côté
+            const brackets = nbTablettes * 4; // 4 équerres par tablette
+
+            // Affichage des résultats
+            materialsListDiv.innerHTML = `
+                <p><strong>Bois :</strong> Environ ${(totalWoodLength / 100).toFixed(2)} mètres de planches.</p>
+                <p><strong>Visserie :</strong> Au moins ${screws} vis à bois.</p>
+                <p><strong>Supports :</strong> ${brackets} équerres de renfort.</p>
+                <p class="mt-4 text-sm text-gray-500">*Ces calculs sont des estimations pour un design de base.</p>
+            `;
+        }
+        
+        function updateApp() {
+            const l = parseFloat(inputs.longueur.value);
+            const p = parseFloat(inputs.profondeur.value);
+            const h = parseFloat(inputs.hauteur.value);
+            const n = parseInt(inputs.nbTablettes.value);
+
+            if (isNaN(l) || isNaN(p) || isNaN(h) || isNaN(n) || l <= 0 || p <= 0 || h <= 0 || n <= 0) {
+                materialsListDiv.innerHTML = '<p class="text-red-500">Veuillez entrer des valeurs valides.</p>';
+                return;
+            }
+
+            drawShelf(l, p, h, n);
+            calculateMaterials(l, p, h, n);
+        }
+
+        // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updateApp);
+        });
+        
+        // --- DÉMARRAGE ---
+        init();
+    </script>
+</body>
+</html>
