@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Guide des Assaisonnements pour Haricots et Fèves</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy & Green Tones -->
+    <!-- Application Structure Plan: The structure remains a single-page dashboard for consistency and ease of use. Filters are based on culinary use-case (Salade, Soupe, Plat Principal), which is more practical for beans than filtering by bean type. This guides the user based on what they are cooking. The search and modal interaction pattern is preserved for its proven effectiveness. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Usage Categories -> Goal: Organize/Compare -> Viz/Presentation: Donut Chart -> Interaction: None -> Justification: Visually communicates the versatility of the seasonings for different types of dishes (salads, soups, etc.). -> Library: Chart.js/Canvas.
+        - Report Info: Individual Recipes -> Goal: Inform/Organize -> Viz/Presentation: Interactive Cards -> Interaction: Click for modal -> Justification: Allows users to quickly find a flavor profile. The modal provides specific pairing suggestions (e.g., "Excellent with black beans and chickpeas"). -> Library/Method: HTML/CSS/JS.
+        - Report Info: Culinary Uses -> Goal: Filter/Navigate -> Viz/Presentation: Filter Buttons -> Interaction: Click to filter -> Justification: A task-oriented approach that helps users find a recipe for the dish they are currently making. -> Library/Method: HTML/CSS/JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Very light green background */
+        }
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .card-enter {
+            animation: card-enter 0.5s ease-out;
+        }
+        @keyframes card-enter {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <div id="app-container" class="container mx-auto px-4 py-8 md:py-12">
+
+        <header class="text-center mb-12">
+            <h1 class="font-display text-4xl md:text-6xl text-green-900 mb-4">La Magie des Légumineuses</h1>
+            <p class="text-lg text-stone-600 max-w-2xl mx-auto">Des mélanges simples pour donner vie à vos haricots, fèves, lentilles et pois chiches.</p>
+        </header>
+
+        <main>
+            <div class="flex flex-col md:flex-row gap-8 md:gap-12 mb-12">
+                <div class="w-full md:w-1/3 lg:w-1/4">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg sticky top-8">
+                        <h3 class="font-display text-xl text-green-800 border-b border-green-200 pb-3 mb-4">Usages Culinaires</h3>
+                        <div id="filters" class="flex flex-wrap gap-2">
+                        </div>
+                        <div class="mt-6">
+                             <h3 class="font-display text-xl text-green-800 border-b border-green-200 pb-3 mb-4">Distribution</h3>
+                             <div class="chart-container relative h-64 w-full max-w-xs mx-auto">
+                                <canvas id="recipesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/3 lg:w-3/4">
+                    <div class="mb-8">
+                        <input type="text" id="search-input" placeholder="Rechercher par saveur ou légumineuse..." class="w-full p-4 border-2 border-green-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-shadow duration-300 shadow-sm">
+                    </div>
+                     <div id="intro-text" class="bg-white/70 backdrop-blur-sm p-6 rounded-2xl mb-8 shadow">
+                        <h2 class="font-display text-2xl text-green-900 mb-2">Donnez du Goût à vos Fèves</h2>
+                        <p class="text-stone-600">Explorez nos assaisonnements conçus spécifiquement pour les légumineuses. Que vous prépariez une salade rapide, une soupe réconfortante ou un plat d'accompagnement, vous trouverez ici le mélange parfait. Filtrez par type de plat ou cherchez un ingrédient. Cliquez sur une carte pour des suggestions de mariage parfait.</p>
+                    </div>
+                    <div id="recipes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                     <div id="no-results" class="hidden text-center py-12">
+                        <p class="text-xl text-stone-500">Aucun assaisonnement ne correspond à votre recherche.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <div id="recipe-modal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
+        </div>
+    </div>
+
+    <script>
+        const recipesData = [
+            { name: "Mexicain Authentique", category: "Plat Principal", icon: "🌶️", ingredients: ["2 c. à soupe de cumin moulu", "1 c. à soupe de poudre de chili", "1 c. à café de coriandre moulue", "1 c. à café d'origan séché", "1/2 c. à café de poudre d'ail"], prep: "Parfait pour les haricots noirs ou pinto. Ajoutez à vos haricots en conserve (égouttés) et réchauffez pour des tacos, burritos ou un chili rapide." },
+            { name: "Méditerranéen Fraîcheur", category: "Salade", icon: "🥗", ingredients: ["1 c. à soupe de persil séché", "1 c. à café de poudre d'ail", "Zeste d'un citron", "1/2 c. à café d'aneth séché", "Sel et poivre"], prep: "Excellent pour les salades de pois chiches ou de haricots blancs. Mélangez avec de l'huile d'olive et du jus de citron pour une vinaigrette instantanée." },
+            { name: "Curry de Lentilles", category: "Soupe", icon: "🥣", ingredients: ["2 c. à soupe de poudre de curry", "1 c. à café de curcuma", "1/2 c. à café de gingembre moulu", "1/2 c. à café de coriandre moulue", "Pincée de cannelle"], prep: "Incorporez ce mélange au début de la cuisson de votre soupe de lentilles (rouges ou vertes) avec des oignons et de l'ail pour une saveur profonde." },
+            { name: "BBQ Fumé pour Fèves", category: "Plat Principal", icon: "🔥", ingredients: ["1 c. à soupe de paprika fumé", "1 c. à soupe de cassonade", "1 c. à café de moutarde en poudre", "1 c. à café de poudre d'oignon", "Sel"], prep: "La base parfaite pour des fèves au lard maison. Mélangez avec de la mélasse, du ketchup et un peu de vinaigre." },
+            { name: "Herbes pour Soupe", category: "Soupe", icon: "🌿", ingredients: ["1 c. à soupe de thym séché", "1 c. à soupe de romarin séché", "1 c. à café de marjolaine", "1/2 c. à café de sauge moulue", "Poivre noir"], prep: "Ajoutez une ou deux cuillères à café à n'importe quelle soupe de haricots ou de légumes pendant qu'elle mijote pour lui donner une saveur classique et réconfortante." },
+            { name: "Salade de Fèves Asiatique", category: "Salade", icon: "🥢", ingredients: ["Graines de sésame grillées", "Gingembre moulu", "Poudre d'ail", "Flocons de piment rouge", "Sauce soja en poudre"], prep: "Idéal pour les fèves edamame ou les haricots verts blanchis. Mélangez avec un peu d'huile de sésame et de vinaigre de riz." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const filtersContainer = document.getElementById('filters');
+            const grid = document.getElementById('recipes-grid');
+            const searchInput = document.getElementById('search-input');
+            const noResults = document.getElementById('no-results');
+            const modal = document.getElementById('recipe-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            let activeFilter = 'Tous';
+
+            const categories = ['Tous', ...new Set(recipesData.map(r => r.category))];
+            const categoryColors = {
+                'Plat Principal': '#c2410c',
+                'Salade': '#16a34a',
+                'Soupe': '#2563eb'
+            };
+
+            function renderFilters() {
+                filtersContainer.innerHTML = categories.map(cat => `
+                    <button class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === cat ? 'bg-green-800 text-white shadow-md' : 'bg-white text-stone-700 hover:bg-green-100'}" data-filter="${cat}">
+                        ${cat}
+                    </button>
+                `).join('');
+            }
+
+            function renderRecipes(recipes) {
+                grid.innerHTML = '';
+                noResults.classList.toggle('hidden', recipes.length > 0);
+                recipes.forEach(recipe => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 card-enter';
+                    card.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-display text-xl text-green-900 mb-2">${recipe.name}</h3>
+                                <span class="text-3xl">${recipe.icon}</span>
+                            </div>
+                            <p class="text-sm font-medium rounded-full px-3 py-1 inline-block" style="background-color: ${categoryColors[recipe.category] || '#6b7280'}20; color: ${categoryColors[recipe.category] || '#6b7280'}">${recipe.category}</p>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => openModal(recipe));
+                    grid.appendChild(card);
+                });
+            }
+            
+            function filterAndRender() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let filteredRecipes = recipesData;
+
+                if (activeFilter !== 'Tous') {
+                    filteredRecipes = filteredRecipes.filter(r => r.category === activeFilter);
+                }
+
+                if (searchTerm) {
+                    filteredRecipes = filteredRecipes.filter(r => 
+                        r.name.toLowerCase().includes(searchTerm) ||
+                        r.ingredients.some(i => i.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                renderRecipes(filteredRecipes);
+            }
+
+            function openModal(recipe) {
+                modalContent.innerHTML = `
+                    <div class="p-6 md:p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="font-display text-3xl text-green-900">${recipe.name}</h2>
+                            <button id="close-modal" class="text-stone-400 hover:text-stone-800 text-3xl">&times;</button>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-bold text-lg text-stone-700 mb-3 border-b pb-2">Ingrédients</h4>
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    ${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-stone-700 mb-3 border-b pb-2">Préparation & Suggestions</h4>
+                                <p class="text-stone-600">${recipe.prep}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('opacity-0', 'scale-95');
+                    modalContent.classList.add('opacity-100', 'scale-100');
+                }, 10);
+
+                document.getElementById('close-modal').addEventListener('click', closeModal);
+            }
+
+            function closeModal() {
+                modalContent.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+            
+            function renderChart() {
+                const chartCanvas = document.getElementById('recipesChart');
+                const categoryCounts = recipesData.reduce((acc, recipe) => {
+                    acc[recipe.category] = (acc[recipe.category] || 0) + 1;
+                    return acc;
+                }, {});
+
+                new Chart(chartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(categoryCounts),
+                        datasets: [{
+                            data: Object.values(categoryCounts),
+                            backgroundColor: Object.keys(categoryCounts).map(cat => categoryColors[cat] || '#6b7280'),
+                            borderColor: '#f0fdf4',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { font: { family: "'Inter', sans-serif" }, padding: 15 } } }
+                    }
+                });
+            }
+
+            filtersContainer.addEventListener('click', e => {
+                if (e.target.classList.contains('filter-btn')) {
+                    activeFilter = e.target.dataset.filter;
+                    renderFilters();
+                    filterAndRender();
+                }
+            });
+
+            searchInput.addEventListener('input', filterAndRender);
+            
+            modal.addEventListener('click', e => (e.target === modal) && closeModal());
+            document.addEventListener('keydown', e => (e.key === "Escape" && !modal.classList.contains('hidden')) && closeModal());
+
+            renderFilters();
+            filterAndRender();
+            renderChart();
+        });
+    </script>
+</body>
+</html>
+
