@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonie des Chakras - Séquenceur</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js for 3D visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Tone.js for audio generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <!-- SortableJS for drag-and-drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        #three-canvas { width: 100%; height: 100%; display: block; }
+        @media (min-width: 768px) {
+            .scroll-container::-webkit-scrollbar { width: 4px; }
+            .scroll-container::-webkit-scrollbar-track { background: #1f2937; }
+            .scroll-container::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 20px; }
+        }
+        .freq-button.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--chakra-glow-color), 0 0 10px var(--chakra-shadow-color);
+            border-color: var(--chakra-shadow-color);
+            background-color: #374151;
+        }
+        .toggle-checkbox:checked { right: 0; border-color: #4f46e5; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #4f46e5; }
+        .sortable-ghost { opacity: 0.4; background: #4f46e5; }
+        .seq-item-active { border-left-color: #a78bfa !important; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased">
+
+    <div class="flex flex-col md:flex-row md:h-screen w-full">
+
+        <!-- Left Panel: 3D Visualization -->
+        <div class="relative w-full md:w-2/3 h-64 sm:h-80 md:h-full bg-black">
+            <div id="three-container" class="absolute inset-0"></div>
+            <div id="info-overlay" class="absolute top-4 left-4 p-4 bg-black bg-opacity-50 rounded-lg backdrop-blur-sm transition-opacity duration-500 opacity-0">
+                <h2 id="chakra-name" class="text-2xl font-bold"></h2>
+                <p id="chakra-sanskrit" class="text-lg text-gray-300"></p>
+                <div id="chakra-frequency-display" class="font-mono mt-2 text-lg"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Controls -->
+        <div class="w-full md:w-1/3 flex flex-col bg-gray-900 p-4 sm:p-6 md:h-full">
+            <header class="text-center mb-4 flex-shrink-0">
+                <h1 class="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-600">Harmonie des Chakras</h1>
+            </header>
+
+            <!-- Main controls container -->
+            <div class="flex-shrink-0">
+                <!-- Master Controls & Audio Options -->
+                <div class="flex items-center justify-center space-x-4 mb-4">
+                    <button id="play-pause-button" class="p-3 bg-indigo-600 rounded-full shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-transform transform hover:scale-110 disabled:bg-gray-600 disabled:cursor-not-allowed" disabled title="Arrêter la lecture manuelle">
+                        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div class="w-full max-w-xs flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5.071 8.036A1 1 0 016 7h1a1 1 0 011 1v4a1 1 0 01-1 1H6a1 1 0 01-1-1v-1.586l-.293.293a1 1 0 01-1.414-1.414l2-2zM12 7a1 1 0 011-1h1a1 1 0 011 1v4a1 1 0 01-1 1h-1a1 1 0 01-1-1V7z" /></svg>
+                        <input id="volume-slider" type="range" min="-40" max="0" value="-10" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                <div id="audio-options" class="space-y-3 p-4 bg-gray-800 rounded-lg mb-4">
+                    <h3 class="text-center font-semibold text-gray-300">Options Audio Supplémentaires</h3>
+                    <div class="flex items-center justify-between"><span class="text-gray-400">Battements Binauraux</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" name="binaural-toggle" id="binaural-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label for="binaural-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label></div></div>
+                    <div class="flex items-center justify-between"><span class="text-gray-400">Pulsions Isochrones</span><div class="relative inline-block w-10 mr-2 align-middle select-none"><input type="checkbox" name="isochronic-toggle" id="isochronic-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label for="isochronic-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label></div></div>
+                </div>
+            </div>
+
+            <!-- Scrollable container for sequencer and frequency list -->
+            <div class="flex-grow overflow-y-auto scroll-container md:pr-2">
+                <!-- Sequencer Section -->
+                <div id="sequencer-section" class="p-4 bg-gray-800 rounded-lg mb-4">
+                    <h3 class="text-center font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-2">Séquenceur</h3>
+                    <div id="sequence-list" class="min-h-[60px] bg-gray-900/50 rounded-md p-2">
+                        <!-- Sequence items will be injected here -->
+                    </div>
+                    <div id="sequencer-controls" class="mt-3 flex items-center justify-between hidden">
+                        <button id="play-sequence-button" class="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg shadow-lg transition-all text-white font-semibold">
+                            <svg id="seq-play-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                            <svg id="seq-pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                            <span>Lancer</span>
+                        </button>
+                        <button id="clear-sequence-button" class="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg shadow-lg transition-all text-white font-semibold">Vider</button>
+                    </div>
+                     <p id="sequence-placeholder" class="text-center text-gray-500 p-4">Ajoutez des fréquences à la séquence en utilisant le bouton '+'</p>
+                </div>
+
+                <!-- Frequency List -->
+                <div id="frequency-list-container">
+                    <!-- Buttons will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            const chakraData = [
+                { id: 'root', name: 'Racine', sanskrit: 'Muladhara', color: 0xf87171, shadow: '#E53E3E', frequencies: [228, 456, 912] },
+                { id: 'sacral', name: 'Sacré', sanskrit: 'Svadhisthana', color: 0xfb923c, shadow: '#F56565', frequencies: [303, 606, 1212] },
+                { id: 'solar-plexus', name: 'Plexus Solaire', sanskrit: 'Manipura', color: 0xf6e05e, shadow: '#F6B728', frequencies: [182, 364, 728] },
+                { id: 'heart', name: 'Cœur', sanskrit: 'Anahata', color: 0x68d391, shadow: '#48BB78', frequencies: [128, 256, 512] },
+                { id: 'throat', name: 'Gorge', sanskrit: 'Vishuddha', color: 0x63b3ed, shadow: '#4299E1', frequencies: [192, 384, 768] },
+                { id: 'third-eye', name: 'Troisième Œil', sanskrit: 'Ajna', color: 0x667eea, shadow: '#5A67D8', frequencies: [144, 288, 576] },
+                { id: 'crown', name: 'Couronne', sanskrit: 'Sahasrara', color: 0x9f7aea, shadow: '#805AD5', frequencies: [216, 432, 864] }
+            ];
+            const solfeggioData = [
+                { name: 'Ut', frequency: 396, color: 0xf87171, shadow: '#E53E3E' }, { name: 'Re', frequency: 417, color: 0xfb923c, shadow: '#F56565' },
+                { name: 'Mi', frequency: 528, color: 0xf6e05e, shadow: '#F6B728' }, { name: 'Fa', frequency: 639, color: 0x68d391, shadow: '#48BB78' },
+                { name: 'Sol', frequency: 741, color: 0x63b3ed, shadow: '#4299E1' }, { name: 'La', frequency: 852, color: 0x667eea, shadow: '#5A67D8' },
+                { name: 'Si', frequency: 963, color: 0x9f7aea, shadow: '#805AD5' }
+            ];
+
+            // --- DOM ELEMENTS ---
+            const frequencyListContainer = document.getElementById('frequency-list-container');
+            const playPauseButton = document.getElementById('play-pause-button');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const volumeSlider = document.getElementById('volume-slider');
+            const threeContainer = document.getElementById('three-container');
+            const infoOverlay = document.getElementById('info-overlay');
+            const chakraNameEl = document.getElementById('chakra-name');
+            const chakraSanskritEl = document.getElementById('chakra-sanskrit');
+            const chakraFrequencyEl = document.getElementById('chakra-frequency-display');
+            const binauralToggle = document.getElementById('binaural-toggle');
+            const isochronicToggle = document.getElementById('isochronic-toggle');
+            const sequenceList = document.getElementById('sequence-list');
+            const sequencerControls = document.getElementById('sequencer-controls');
+            const sequencePlaceholder = document.getElementById('sequence-placeholder');
+            const playSequenceButton = document.getElementById('play-sequence-button');
+            const clearSequenceButton = document.getElementById('clear-sequence-button');
+            const seqPlayIcon = document.getElementById('seq-play-icon');
+            const seqPauseIcon = document.getElementById('seq-pause-icon');
+
+            // --- STATE ---
+            let isManualPlaying = false;
+            let isSequencePlaying = false;
+            let currentSelection = null;
+            let audioInitialized = false;
+            let isBinauralEnabled = false;
+            let isIsochronicEnabled = false;
+            let sequence = [];
+            let toneSequence;
+
+            // --- AUDIO (Tone.js) ---
+            let solfeggioOsc, binauralLeft, binauralRight, isochronicPulse;
+            const masterVolume = new Tone.Volume(-10).toDestination();
+
+            function initializeAudio() {
+                if (audioInitialized) return;
+                solfeggioOsc = new Tone.Oscillator({ type: 'sine', volume: -3 }).connect(masterVolume);
+                const pannerLeft = new Tone.Panner(-1).connect(masterVolume);
+                const pannerRight = new Tone.Panner(1).connect(masterVolume);
+                binauralLeft = new Tone.Oscillator({ type: 'sine', volume: -12 }).connect(pannerLeft);
+                binauralRight = new Tone.Oscillator({ type: 'sine', volume: -12 }).connect(pannerRight);
+                const isochronicEnv = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.1 }).connect(masterVolume);
+                isochronicPulse = new Tone.PulseOscillator('4hz', 0.5).connect(isochronicEnv);
+                Tone.getTransport().scheduleRepeat(time => {
+                    if (currentSelection && (isManualPlaying || isSequencePlaying) && isIsochronicEnabled) {
+                        isochronicEnv.triggerAttackRelease('16n', time);
+                    }
+                }, '8n');
+                audioInitialized = true;
+            }
+
+            // --- 3D VISUALIZATION (Three.js) ---
+            let scene, camera, renderer, sphere, particles;
+            const clock = new THREE.Clock();
+            function initThree() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, threeContainer.clientWidth / threeContainer.clientHeight, 0.1, 1000);
+                camera.position.z = 5;
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                threeContainer.appendChild(renderer.domElement);
+                const geometry = new THREE.IcosahedronGeometry(1, 6);
+                const material = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x000000, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.8 });
+                sphere = new THREE.Mesh(geometry, material);
+                scene.add(sphere);
+                const particleCount = 2000;
+                const particleGeometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount * 3; i++) { positions[i] = (Math.random() - 0.5) * 10; }
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const particleMaterial = new THREE.PointsMaterial({ size: 0.02, color: 0xffffff, transparent: true, opacity: 0.5 });
+                particles = new THREE.Points(particleGeometry, particleMaterial);
+                scene.add(particles);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+                scene.add(ambientLight);
+                const pointLight = new THREE.PointLight(0xffffff, 1);
+                pointLight.position.set(5, 5, 5);
+                scene.add(pointLight);
+                animate();
+            }
+            function animate() {
+                requestAnimationFrame(animate);
+                const elapsedTime = clock.getElapsedTime();
+                sphere.rotation.y += 0.001;
+                sphere.rotation.x += 0.0005;
+                if ((isManualPlaying || isSequencePlaying) && currentSelection) {
+                    const pulse = Math.sin(elapsedTime * (currentSelection.freq / 100)) * 0.1 + 1;
+                    sphere.scale.set(pulse, pulse, pulse);
+                } else {
+                    sphere.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+                }
+                particles.rotation.y += 0.0005;
+                renderer.render(scene, camera);
+            }
+            window.addEventListener('resize', () => {
+                camera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+            });
+
+            // --- UI LOGIC ---
+            function createFrequencyLists() {
+                const createSection = (title, data, isChakra) => {
+                    const titleEl = document.createElement('h3');
+                    titleEl.className = 'text-lg font-bold text-gray-400 mt-4 mb-2';
+                    titleEl.textContent = title;
+                    frequencyListContainer.appendChild(titleEl);
+
+                    data.forEach(item => {
+                        const group = document.createElement('div');
+                        group.className = 'mb-3';
+                        if (isChakra) {
+                            const name = document.createElement('p');
+                            name.className = 'font-semibold text-base mb-1';
+                            name.textContent = item.name;
+                            name.style.color = new THREE.Color(item.color).getStyle();
+                            group.appendChild(name);
+                        }
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'grid grid-cols-3 gap-2';
+                        const freqs = isChakra ? item.frequencies : [item.frequency];
+                        freqs.forEach(freq => {
+                            const selection = { freq, color: item.color, shadow: item.shadow, name: isChakra ? item.name : `Solfeggio ${item.name}`, sanskrit: isChakra ? item.sanskrit : `${item.frequency} Hz` };
+                            const button = createFreqButton(selection);
+                            buttonContainer.appendChild(button);
+                        });
+                        group.appendChild(buttonContainer);
+                        frequencyListContainer.appendChild(group);
+                    });
+                };
+                createSection('Fréquences des Chakras', chakraData, true);
+                createSection('Fréquences de Guérison (Solfège)', solfeggioData, false);
+            }
+
+            function createFreqButton(selection) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative';
+                const button = document.createElement('button');
+                button.className = 'freq-button w-full p-2 bg-gray-800 rounded-lg shadow-md transition-all duration-300 ease-in-out border-2 border-transparent hover:bg-gray-700 focus:outline-none';
+                button.textContent = `${selection.freq} Hz`;
+                button.dataset.freq = selection.freq;
+                button.style.setProperty('--chakra-glow-color', new THREE.Color(selection.color).getStyle());
+                button.style.setProperty('--chakra-shadow-color', selection.shadow);
+                button.addEventListener('click', () => selectFrequency(selection, button));
+                
+                const addButton = document.createElement('button');
+                addButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>`;
+                addButton.className = 'absolute top-1 right-1 bg-indigo-500 hover:bg-indigo-400 text-white rounded-full p-0.5 transition-opacity opacity-50 hover:opacity-100';
+                addButton.title = "Ajouter à la séquence";
+                addButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addToSequence(selection);
+                });
+
+                wrapper.appendChild(button);
+                wrapper.appendChild(addButton);
+                return wrapper;
+            }
+
+            function selectFrequency(selection, clickedButton) {
+                const isAlreadyActive = clickedButton.classList.contains('active');
+                stopSequence();
+                if (isAlreadyActive) {
+                    manualPause();
+                    currentSelection = null;
+                    clickedButton.classList.remove('active');
+                    infoOverlay.style.opacity = '0';
+                } else {
+                    if (isManualPlaying) manualPause();
+                    currentSelection = selection;
+                    document.querySelectorAll('.freq-button').forEach(btn => btn.classList.remove('active'));
+                    clickedButton.classList.add('active');
+                    updateVisuals(selection);
+                    manualPlay();
+                }
+            }
+            
+            function updateVisuals(selection) {
+                sphere.material.color.set(selection.color);
+                sphere.material.emissive.set(selection.color);
+                sphere.material.emissiveIntensity = 0.4;
+                particles.material.color.set(selection.color);
+                chakraNameEl.textContent = selection.name;
+                chakraSanskritEl.textContent = selection.sanskrit;
+                chakraFrequencyEl.innerHTML = `<span>Fréquence: ${selection.freq} Hz</span>`;
+                infoOverlay.style.opacity = '1';
+            }
+
+            function updateFrequencies(freq) {
+                if (!audioInitialized) return;
+                const binauralBeat = 4; const pulseRate = 4;
+                solfeggioOsc.frequency.rampTo(freq, 0.1);
+                binauralLeft.frequency.rampTo(freq - binauralBeat / 2, 0.1);
+                binauralRight.frequency.rampTo(freq + binauralBeat / 2, 0.1);
+                isochronicPulse.frequency.value = freq; 
+                Tone.getTransport().bpm.rampTo(pulseRate * 30, 0.1);
+            }
+
+            function manualPlay() {
+                if (!currentSelection) return;
+                if (Tone.context.state !== 'running') { Tone.start(); }
+                if (!audioInitialized) initializeAudio();
+                updateFrequencies(currentSelection.freq);
+                
+                solfeggioOsc.start();
+                if (isBinauralEnabled) { binauralLeft.start(); binauralRight.start(); }
+                if (isIsochronicEnabled) { isochronicPulse.start(); }
+
+                isManualPlaying = true;
+                playPauseButton.disabled = false;
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            }
+
+            function manualPause() {
+                if (audioInitialized) {
+                    solfeggioOsc.stop(); binauralLeft.stop(); binauralRight.stop(); isochronicPulse.stop();
+                }
+                isManualPlaying = false;
+                playPauseButton.disabled = true;
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                document.querySelectorAll('.freq-button').forEach(btn => btn.classList.remove('active'));
+            }
+
+            // --- SEQUENCER LOGIC ---
+            function addToSequence(selection) {
+                const id = `seq_${Date.now()}`;
+                sequence.push({ ...selection, id, duration: 30 });
+                renderSequence();
+            }
+
+            function renderSequence() {
+                sequenceList.innerHTML = '';
+                if (sequence.length > 0) {
+                    sequencerControls.classList.remove('hidden');
+                    sequencePlaceholder.classList.add('hidden');
+                } else {
+                    sequencerControls.classList.add('hidden');
+                    sequencePlaceholder.classList.remove('hidden');
+                }
+
+                sequence.forEach((item, index) => {
+                    const el = document.createElement('div');
+                    el.className = 'seq-item flex items-center justify-between p-2 bg-gray-700 rounded-md mb-2 cursor-grab border-l-4';
+                    el.style.borderColor = new THREE.Color(item.color).getStyle();
+                    el.dataset.id = item.id;
+
+                    el.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-sm" style="color: ${new THREE.Color(item.color).getStyle()}">${item.name}</span>
+                            <span class="text-xs text-gray-400">${item.freq} Hz</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" value="${item.duration}" min="1" class="duration-input w-16 bg-gray-800 text-white text-center rounded-md p-1" data-id="${item.id}">
+                            <span class="text-xs text-gray-400">sec</span>
+                            <button class="remove-seq-item p-1 text-red-400 hover:text-red-300" data-id="${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    `;
+                    sequenceList.appendChild(el);
+                });
+            }
+            
+            function updateSequenceFromDOM() {
+                const newSequence = [];
+                const items = sequenceList.querySelectorAll('.seq-item');
+                items.forEach(itemEl => {
+                    const id = itemEl.dataset.id;
+                    const originalItem = sequence.find(s => s.id === id);
+                    if(originalItem) newSequence.push(originalItem);
+                });
+                sequence = newSequence;
+            }
+
+            function startSequence() {
+                if (isManualPlaying) manualPause();
+                isSequencePlaying = true;
+                playSequenceButton.querySelector('span').textContent = 'Pause';
+                seqPlayIcon.classList.add('hidden');
+                seqPauseIcon.classList.remove('hidden');
+
+                if (Tone.context.state !== 'running') { Tone.start(); }
+                if (!audioInitialized) initializeAudio();
+
+                const events = sequence.map(item => item.freq);
+                const durations = sequence.map(item => item.duration);
+                let time = 0;
+
+                toneSequence = new Tone.Sequence((t, note) => {
+                    const currentIndex = toneSequence.progress * events.length | 0;
+                    const currentItem = sequence[currentIndex];
+                    currentSelection = currentItem;
+                    
+                    Tone.Draw.schedule(() => {
+                        updateVisuals(currentItem);
+                        document.querySelectorAll('.seq-item').forEach(el => el.classList.remove('seq-item-active'));
+                        const activeEl = sequenceList.querySelector(`[data-id="${currentItem.id}"]`);
+                        if(activeEl) activeEl.classList.add('seq-item-active');
+                    }, t);
+                    
+                    updateFrequencies(note);
+                    solfeggioOsc.start(t).stop(t + durations[currentIndex]);
+                    if (isBinauralEnabled) { binauralLeft.start(t).stop(t + durations[currentIndex]); binauralRight.start(t).stop(t + durations[currentIndex]); }
+                    if (isIsochronicEnabled) { isochronicPulse.start(t).stop(t + durations[currentIndex]); }
+
+                }, events).start(0);
+                
+                toneSequence.loop = false;
+                Tone.getTransport().start();
+                
+                Tone.getTransport().on('stop', () => {
+                    stopSequence();
+                });
+            }
+
+            function stopSequence() {
+                if (toneSequence) {
+                    toneSequence.stop(0);
+                    toneSequence.dispose();
+                }
+                Tone.getTransport().stop();
+                Tone.getTransport().cancel();
+                isSequencePlaying = false;
+                currentSelection = null;
+                playSequenceButton.querySelector('span').textContent = 'Lancer';
+                seqPlayIcon.classList.remove('hidden');
+                seqPauseIcon.classList.add('hidden');
+                document.querySelectorAll('.seq-item').forEach(el => el.classList.remove('seq-item-active'));
+                infoOverlay.style.opacity = '0';
+                if(audioInitialized) {
+                    solfeggioOsc.stop(); binauralLeft.stop(); binauralRight.stop(); isochronicPulse.stop();
+                }
+            }
+            
+            // --- EVENT LISTENERS ---
+            playPauseButton.addEventListener('click', () => { if (isManualPlaying) manualPause(); });
+            volumeSlider.addEventListener('input', (e) => { masterVolume.volume.value = e.target.value; });
+            binauralToggle.addEventListener('change', (e) => { isBinauralEnabled = e.target.checked; });
+            isochronicToggle.addEventListener('change', (e) => { isIsochronicEnabled = e.target.checked; });
+            
+            playSequenceButton.addEventListener('click', () => {
+                if(isSequencePlaying) stopSequence();
+                else startSequence();
+            });
+            clearSequenceButton.addEventListener('click', () => {
+                stopSequence();
+                sequence = [];
+                renderSequence();
+            });
+            sequenceList.addEventListener('input', (e) => {
+                if(e.target.classList.contains('duration-input')) {
+                    const id = e.target.dataset.id;
+                    const value = parseInt(e.target.value, 10);
+                    const item = sequence.find(s => s.id === id);
+                    if(item) item.duration = value > 0 ? value : 1;
+                }
+            });
+            sequenceList.addEventListener('click', (e) => {
+                const button = e.target.closest('.remove-seq-item');
+                if(button) {
+                    const id = button.dataset.id;
+                    sequence = sequence.filter(s => s.id !== id);
+                    renderSequence();
+                }
+            });
+            new Sortable(sequenceList, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: updateSequenceFromDOM
+            });
+
+            // --- INITIALIZATION ---
+            createFrequencyLists();
+            initThree();
+        });
+    </script>
+
+</body>
+</html>
