@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Grand Livre des Assaisonnements pour Poulet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm & Savory Tones -->
+    <!-- Application Structure Plan: This app follows the successful model of the popcorn app. A single-page dashboard with category filters (BBQ, Rôti, Exotique), a search bar, and a grid of recipe cards. This structure is ideal for quickly comparing flavor profiles. Clicking a card opens a modal with specific instructions for applying the rub or marinade to chicken, making the information highly actionable for a home cook. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Seasoning Categories -> Goal: Organize/Compare -> Viz/Presentation: Donut Chart -> Interaction: None -> Justification: Provides a quick visual overview of the flavor profiles available for chicken. -> Library: Chart.js/Canvas.
+        - Report Info: Individual Recipes -> Goal: Inform/Organize -> Viz/Presentation: Interactive Cards -> Interaction: Click for modal -> Justification: Cards allow for easy scanning of names and types. The modal provides detailed, focused instructions without cluttering the main view. -> Library/Method: HTML/CSS/JS.
+        - Report Info: Flavor Profiles -> Goal: Filter/Navigate -> Viz/Presentation: Filter Buttons -> Interaction: Click to filter -> Justification: Enables users to rapidly narrow down options based on their cooking method or craving. -> Library/Method: HTML/CSS/JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FFF8F0; /* Light cream background */
+        }
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .card-enter {
+            animation: card-enter 0.5s ease-out;
+        }
+        @keyframes card-enter {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <div id="app-container" class="container mx-auto px-4 py-8 md:py-12">
+
+        <header class="text-center mb-12">
+            <h1 class="font-display text-4xl md:text-6xl text-red-900 mb-4">Maître du Poulet</h1>
+            <p class="text-lg text-stone-600 max-w-2xl mx-auto">Découvrez des mélanges d'épices pour transformer chaque plat de poulet en un chef-d'œuvre.</p>
+        </header>
+
+        <main>
+            <div class="flex flex-col md:flex-row gap-8 md:gap-12 mb-12">
+                <div class="w-full md:w-1/3 lg:w-1/4">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg sticky top-8">
+                        <h3 class="font-display text-xl text-red-800 border-b border-red-200 pb-3 mb-4">Styles de Saveurs</h3>
+                        <div id="filters" class="flex flex-wrap gap-2">
+                        </div>
+                        <div class="mt-6">
+                             <h3 class="font-display text-xl text-red-800 border-b border-red-200 pb-3 mb-4">Distribution</h3>
+                             <div class="chart-container relative h-64 w-full max-w-xs mx-auto">
+                                <canvas id="recipesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/3 lg:w-3/4">
+                    <div class="mb-8">
+                        <input type="text" id="search-input" placeholder="Rechercher par saveur ou ingrédient..." class="w-full p-4 border-2 border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-shadow duration-300 shadow-sm">
+                    </div>
+                     <div id="intro-text" class="bg-white/70 backdrop-blur-sm p-6 rounded-2xl mb-8 shadow">
+                        <h2 class="font-display text-2xl text-red-900 mb-2">Votre Arsenal d'Assaisonnements</h2>
+                        <p class="text-stone-600">Cette section contient tous nos mélanges secrets pour le poulet. Que vous prépariez des poitrines, des cuisses ou un oiseau entier, vous trouverez ici de quoi l'ennoblir. Utilisez les filtres pour choisir un style ou recherchez directement un ingrédient. Cliquez sur une carte pour voir comment préparer et utiliser le mélange.</p>
+                    </div>
+                    <div id="recipes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                     <div id="no-results" class="hidden text-center py-12">
+                        <p class="text-xl text-stone-500">Aucun assaisonnement ne correspond à votre recherche.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <div id="recipe-modal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
+        </div>
+    </div>
+
+    <script>
+        const recipesData = [
+            { name: "Curry Indien Doux", category: "Exotique", icon: "🍛", ingredients: ["2 c. à soupe de poudre de curry doux", "1 c. à café de curcuma", "1 c. à café de cumin moulu", "1/2 c. à café de gingembre moulu", "1/2 c. à café de coriandre moulue", "Sel et poivre"], prep: "Mélangez toutes les épices. Idéal pour mariner des morceaux de poulet dans du yogourt nature ou comme assaisonnement à sec avant de poêler." },
+            { name: "Classique du Rôtisseur", category: "Rôti", icon: "🍗", ingredients: ["2 c. à soupe d'herbes de Provence", "1 c. à soupe de paprika doux", "1 c. à café de poudre d'ail", "1 c. à café de poudre d'oignon", "Sel et poivre noir"], prep: "Mélangez les épices. Frottez généreusement un poulet entier, à l'intérieur et à l'extérieur, avec de l'huile d'olive puis ce mélange avant de rôtir." },
+            { name: "BBQ Fumé du Sud", category: "BBQ", icon: "🔥", ingredients: ["2 c. à soupe de paprika fumé", "1 c. à soupe de cassonade", "1 c. à café de poudre de chili", "1 c. à café de moutarde en poudre", "1/2 c. à café de poivre de Cayenne", "Sel"], prep: "Combinez tous les ingrédients. Appliquez généreusement sur les morceaux de poulet avant de les griller au barbecue. Excellent pour les ailes ou les cuisses." },
+            { name: "Méditerranéen Citronné", category: "Rôti", icon: "🍋", ingredients: ["2 c. à soupe d'origan séché", "Zeste d'un citron", "1 c. à café de poudre d'ail", "1/2 c. à café de thym séché", "Sel et poivre"], prep: "Mélangez tous les ingrédients secs. Frottez le poulet avec de l'huile d'olive, puis appliquez le mélange. Parfait pour la cuisson au four." },
+            { name: "Asiatique Sésame-Gingembre", category: "Exotique", icon: "🥢", ingredients: ["1 c. à soupe de graines de sésame grillées", "1 c. à café de gingembre moulu", "1 c. à café de poudre d'ail", "1 c. à soupe de sauce soja en poudre (optionnel)", "Pincée de flocons de piment rouge"], prep: "Idéal pour des sautés. Assaisonnez des lanières de poulet avec ce mélange avant de les cuire rapidement à feu vif." },
+            { name: "Cajun Épicé", category: "Épicé", icon: "🌶️", ingredients: ["1 c. à soupe de paprika", "1 c. à café de poivre de Cayenne", "1 c. à café de poudre d'oignon", "1 c. à café de poudre d'ail", "1 c. à café de thym séché", "Sel"], prep: "Un classique de la Louisiane. Parfait pour noircir le poulet à la poêle ou pour donner un coup de fouet à des poitrines grillées." },
+            { name: "Fajita Tex-Mex", category: "Épicé", icon: "🌮", ingredients: ["2 c. à soupe de poudre de chili", "1 c. à soupe de cumin moulu", "1 c. à café de coriandre moulue", "1/2 c. à café de paprika fumé", "Sel"], prep: "L'assaisonnement parfait pour des lanières de poulet à fajitas. Cuire avec des oignons et des poivrons émincés." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const filtersContainer = document.getElementById('filters');
+            const grid = document.getElementById('recipes-grid');
+            const searchInput = document.getElementById('search-input');
+            const noResults = document.getElementById('no-results');
+            const modal = document.getElementById('recipe-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            let activeFilter = 'Tous';
+
+            const categories = ['Tous', ...new Set(recipesData.map(r => r.category))];
+            const categoryColors = {
+                'Rôti': '#d97706',
+                'BBQ': '#b91c1c',
+                'Exotique': '#047857',
+                'Épicé': '#dc2626'
+            };
+
+            function renderFilters() {
+                filtersContainer.innerHTML = categories.map(cat => `
+                    <button class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === cat ? 'bg-red-800 text-white shadow-md' : 'bg-white text-stone-700 hover:bg-red-100'}" data-filter="${cat}">
+                        ${cat}
+                    </button>
+                `).join('');
+            }
+
+            function renderRecipes(recipes) {
+                grid.innerHTML = '';
+                noResults.classList.toggle('hidden', recipes.length > 0);
+                recipes.forEach(recipe => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 card-enter';
+                    card.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-display text-xl text-red-900 mb-2">${recipe.name}</h3>
+                                <span class="text-3xl">${recipe.icon}</span>
+                            </div>
+                            <p class="text-sm font-medium rounded-full px-3 py-1 inline-block" style="background-color: ${categoryColors[recipe.category] || '#6b7280'}20; color: ${categoryColors[recipe.category] || '#6b7280'}">${recipe.category}</p>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => openModal(recipe));
+                    grid.appendChild(card);
+                });
+            }
+            
+            function filterAndRender() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let filteredRecipes = recipesData;
+
+                if (activeFilter !== 'Tous') {
+                    filteredRecipes = filteredRecipes.filter(r => r.category === activeFilter);
+                }
+
+                if (searchTerm) {
+                    filteredRecipes = filteredRecipes.filter(r => 
+                        r.name.toLowerCase().includes(searchTerm) ||
+                        r.ingredients.some(i => i.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                renderRecipes(filteredRecipes);
+            }
+
+            function openModal(recipe) {
+                modalContent.innerHTML = `
+                    <div class="p-6 md:p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="font-display text-3xl text-red-900">${recipe.name}</h2>
+                            <button id="close-modal" class="text-stone-400 hover:text-stone-800 text-3xl">&times;</button>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-bold text-lg text-stone-700 mb-3 border-b pb-2">Ingrédients</h4>
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    ${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-stone-700 mb-3 border-b pb-2">Préparation & Usage</h4>
+                                <p class="text-stone-600">${recipe.prep}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('opacity-0', 'scale-95');
+                    modalContent.classList.add('opacity-100', 'scale-100');
+                }, 10);
+
+                document.getElementById('close-modal').addEventListener('click', closeModal);
+            }
+
+            function closeModal() {
+                modalContent.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+            
+            function renderChart() {
+                const chartCanvas = document.getElementById('recipesChart');
+                const categoryCounts = recipesData.reduce((acc, recipe) => {
+                    acc[recipe.category] = (acc[recipe.category] || 0) + 1;
+                    return acc;
+                }, {});
+
+                new Chart(chartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(categoryCounts),
+                        datasets: [{
+                            data: Object.values(categoryCounts),
+                            backgroundColor: Object.keys(categoryCounts).map(cat => categoryColors[cat] || '#6b7280'),
+                            borderColor: '#FFF8F0',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { font: { family: "'Inter', sans-serif" }, padding: 15 } } }
+                    }
+                });
+            }
+
+            filtersContainer.addEventListener('click', e => {
+                if (e.target.classList.contains('filter-btn')) {
+                    activeFilter = e.target.dataset.filter;
+                    renderFilters();
+                    filterAndRender();
+                }
+            });
+
+            searchInput.addEventListener('input', filterAndRender);
+            
+            modal.addEventListener('click', e => (e.target === modal) && closeModal());
+            document.addEventListener('keydown', e => (e.key === "Escape" && !modal.classList.contains('hidden')) && closeModal());
+
+            renderFilters();
+            filterAndRender();
+            renderChart();
+        });
+    </script>
+</body>
+</html>
+
