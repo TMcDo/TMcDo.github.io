@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caractères Spéciaux (ALT Codes)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style pour la barre de défilement */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- En-tête -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Bibliothèque de Caractères Spéciaux</h1>
+            <p class="text-md text-gray-600 mt-2">Trouvez et copiez facilement les codes ALT pour les caractères spéciaux.</p>
+        </header>
+
+        <!-- Barre de recherche et catégories -->
+        <div class="sticky top-0 bg-gray-100 py-4 z-10 mb-6">
+            <div class="max-w-4xl mx-auto">
+                <input type="text" id="searchInput" placeholder="Rechercher un caractère (ex: euro, coeur, alpha)..." class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <div id="categories" class="flex flex-wrap justify-center gap-2 mt-4">
+                    <!-- Les boutons de catégories seront insérés ici par JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Grille des caractères -->
+        <main id="charGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <!-- Les cartes de caractères seront insérées ici par JS -->
+        </main>
+
+        <!-- Notification de copie -->
+        <div id="copyNotification" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+            Copié !
+        </div>
+
+    </div>
+
+    <script>
+        const altCodes = {
+            "Symboles Communs": [
+                { char: '©', code: 'Alt + 0169', name: 'Copyright' },
+                { char: '®', code: 'Alt + 0174', name: 'Marque déposée' },
+                { char: '™', code: 'Alt + 0153', name: 'Marque commerciale' },
+                { char: '•', code: 'Alt + 7', name: 'Puce' },
+                { char: '·', code: 'Alt + 250', name: 'Point médian' },
+                { char: '†', code: 'Alt + 0134', name: 'Obèle' },
+                { char: '‡', code: 'Alt + 0135', name: 'Double obèle' },
+                { char: '№', code: 'Alt + 8470', name: 'Numero' },
+            ],
+            "Ponctuation & Typo": [
+                { char: '§', code: 'Alt + 21', name: 'Paragraphe' },
+                { char: '¶', code: 'Alt + 20', name: 'Pied-de-mouche' },
+                { char: '‼', code: 'Alt + 19', name: 'Double exclamation' },
+                { char: '«', code: 'Alt + 174', name: 'Guillemet gauche' },
+                { char: '»', code: 'Alt + 175', name: 'Guillemet droit' },
+                { char: '“', code: 'Alt + 0147', name: 'Guillemet double gauche' },
+                { char: '”', code: 'Alt + 0148', name: 'Guillemet double droit' },
+                { char: '‘', code: 'Alt + 0145', name: 'Guillemet simple gauche' },
+                { char: '’', code: 'Alt + 0146', name: 'Guillemet simple droit' },
+                { char: '–', code: 'Alt + 0150', name: 'Tiret demi-cadratin' },
+                { char: '—', code: 'Alt + 0151', name: 'Tiret cadratin' },
+                { char: '…', code: 'Alt + 0133', name: 'Points de suspension' },
+                { char: '¿', code: 'Alt + 168', name: 'Point d\'interrogation inversé' },
+                { char: '¡', code: 'Alt + 173', name: 'Point d\'exclamation inversé' },
+                { char: '~', code: 'Alt + 126', name: 'Tilde' },
+                { char: '\\', code: 'Alt + 92', name: 'Barre oblique inversée' },
+                { char: ' ', code: 'Alt + 255', name: 'Espace insécable' },
+            ],
+            "Devises": [
+                { char: '€', code: 'Alt + 0128', name: 'Euro' },
+                { char: '¢', code: 'Alt + 155', name: 'Cent' },
+                { char: '£', code: 'Alt + 156', name: 'Livre Sterling' },
+                { char: '¥', code: 'Alt + 157', name: 'Yen' },
+                { char: 'ƒ', code: 'Alt + 159', name: 'Florin' },
+            ],
+            "Maths & Fractions": [
+                { char: '°', code: 'Alt + 248', name: 'Degré' },
+                { char: '±', code: 'Alt + 241', name: 'Plus ou moins' },
+                { char: '÷', code: 'Alt + 246', name: 'Division' },
+                { char: '×', code: 'Alt + 158', name: 'Multiplication' },
+                { char: '≈', code: 'Alt + 247', name: 'Presque égal' },
+                { char: '≠', code: 'Alt + 8800', name: 'Non égal' },
+                { char: '≤', code: 'Alt + 243', name: 'Inférieur ou égal' },
+                { char: '≥', code: 'Alt + 242', name: 'Supérieur ou égal' },
+                { char: '√', code: 'Alt + 251', name: 'Racine carrée' },
+                { char: '∞', code: 'Alt + 236', name: 'Infini' },
+                { char: '∫', code: 'Alt + 244', name: 'Intégrale' },
+                { char: '⌠', code: 'Alt + 245', name: 'Intégrale supérieure' },
+                { char: 'ƒ', code: 'Alt + 159', name: 'Fonction' },
+                { char: '¹', code: 'Alt + 0185', name: 'Exposant 1' },
+                { char: '²', code: 'Alt + 0178', name: 'Exposant 2' },
+                { char: '³', code: 'Alt + 0179', name: 'Exposant 3' },
+                { char: '¼', code: 'Alt + 0188', name: 'Un quart' },
+                { char: '½', code: 'Alt + 0189', name: 'Un demi' },
+                { char: '¾', code: 'Alt + 0190', name: 'Trois quarts' },
+                { char: '⅓', code: 'Alt + 8531', name: 'Un tiers' },
+                { char: '⅔', code: 'Alt + 8532', name: 'Deux tiers' },
+                { char: '⅕', code: 'Alt + 8533', name: 'Un cinquième' },
+                { char: '⅛', code: 'Alt + 8539', name: 'Un huitième' },
+            ],
+             "Alphabet Grec": [
+                { char: 'α', code: 'Alt + 224', name: 'Alpha' },
+                { char: 'β', code: 'Alt + 225', name: 'Beta' },
+                { char: 'Γ', code: 'Alt + 226', name: 'Gamma (maj.)' },
+                { char: 'π', code: 'Alt + 227', name: 'Pi' },
+                { char: 'Σ', code: 'Alt + 228', name: 'Sigma (maj.)' },
+                { char: 'σ', code: 'Alt + 229', name: 'Sigma' },
+                { char: 'µ', code: 'Alt + 230', name: 'Micro' },
+                { char: 'τ', code: 'Alt + 231', name: 'Tau' },
+                { char: 'Φ', code: 'Alt + 232', name: 'Phi (maj.)' },
+                { char: 'θ', code: 'Alt + 233', name: 'Theta' },
+                { char: 'Ω', code: 'Alt + 234', name: 'Omega (maj.)' },
+                { char: 'δ', code: 'Alt + 235', name: 'Delta' },
+                { char: 'φ', code: 'Alt + 237', name: 'Phi' },
+                { char: 'ε', code: 'Alt + 238', name: 'Epsilon' },
+                { char: '∩', code: 'Alt + 239', name: 'Intersection' },
+                { char: '≡', code: 'Alt + 240', name: 'Equivalent à' },
+            ],
+            "Lettres & Accents": [
+                { char: 'á', code: 'Alt + 160', name: 'A accent aigu' },
+                { char: 'à', code: 'Alt + 133', name: 'A accent grave' },
+                { char: 'â', code: 'Alt + 131', name: 'A accent circonflexe' },
+                { char: 'ä', code: 'Alt + 132', name: 'A tréma' },
+                { char: 'ã', code: 'Alt + 198', name: 'A tilde' },
+                { char: 'ç', code: 'Alt + 135', name: 'C cédille' },
+                { char: 'é', code: 'Alt + 130', name: 'E accent aigu' },
+                { char: 'è', code: 'Alt + 138', name: 'E accent grave' },
+                { char: 'ê', code: 'Alt + 136', name: 'E accent circonflexe' },
+                { char: 'ë', code: 'Alt + 137', name: 'E tréma' },
+                { char: 'í', code: 'Alt + 161', name: 'I accent aigu' },
+                { char: 'Ì', code: 'Alt + 222', name: 'I accent grave' },
+                { char: 'î', code: 'Alt + 140', name: 'I accent circonflexe' },
+                { char: 'ï', code: 'Alt + 139', name: 'I tréma' },
+                { char: 'ñ', code: 'Alt + 164', name: 'N tilde' },
+                { char: 'ó', code: 'Alt + 162', name: 'O accent aigu' },
+                { char: 'ô', code: 'Alt + 147', name: 'O accent circonflexe' },
+                { char: 'ö', code: 'Alt + 148', name: 'O tréma' },
+                { char: 'ú', code: 'Alt + 163', name: 'U accent aigu' },
+                { char: 'û', code: 'Alt + 150', name: 'U accent circonflexe' },
+                { char: 'ü', code: 'Alt + 129', name: 'U tréma' },
+                { char: 'æ', code: 'Alt + 145', name: 'AE lié' },
+                { char: 'œ', code: 'Alt + 0156', name: 'OE lié' },
+                { char: 'ß', code: 'Alt + 225', name: 'Eszett allemand' },
+            ],
+            "Flèches": [
+                { char: '←', code: 'Alt + 27', name: 'Flèche gauche' },
+                { char: '→', code: 'Alt + 26', name: 'Flèche droite' },
+                { char: '↑', code: 'Alt + 24', name: 'Flèche haut' },
+                { char: '↓', code: 'Alt + 25', name: 'Flèche bas' },
+                { char: '↔', code: 'Alt + 29', name: 'Flèche gauche-droite' },
+                { char: '↕', code: 'Alt + 18', name: 'Flèche haut-bas' },
+                { char: '►', code: 'Alt + 16', name: 'Pointeur droite' },
+                { char: '◄', code: 'Alt + 17', name: 'Pointeur gauche' },
+                { char: '↨', code: 'Alt + 23', name: 'Flèche H/B avec base' },
+            ],
+            "Cartes & Formes": [
+                { char: '♠', code: 'Alt + 6', name: 'Pique' },
+                { char: '♣', code: 'Alt + 5', name: 'Trèfle' },
+                { char: '♥', code: 'Alt + 3', name: 'Coeur' },
+                { char: '♦', code: 'Alt + 4', name: 'Carreau' },
+                { char: '█', code: 'Alt + 219', name: 'Bloc plein' },
+                { char: '▓', code: 'Alt + 178', name: 'Bloc ombré foncé' },
+                { char: '▒', code: 'Alt + 177', name: 'Bloc ombré moyen' },
+                { char: '░', code: 'Alt + 176', name: 'Bloc ombré clair' },
+                { char: '▀', code: 'Alt + 223', name: 'Bloc moitié supérieure' },
+                { char: '■', code: 'Alt + 254', name: 'Carré noir' },
+                { char: '◘', code: 'Alt + 8', name: 'Carré noir (puce)' },
+                { char: '○', code: 'Alt + 9', name: 'Cercle blanc' },
+                { char: '◙', code: 'Alt + 10', name: 'Carré dans cercle' },
+                { char: '▬', code: 'Alt + 22', name: 'Barre noire' },
+            ],
+            "Symboles de Boîtes": [
+                { char: '─', code: 'Alt + 196', name: 'Ligne simple horizontale' },
+                { char: '│', code: 'Alt + 179', name: 'Ligne simple verticale' },
+                { char: '¦', code: 'Alt + 221', name: 'Barre verticale brisée' },
+                { char: '|', code: 'Alt + 124', name: 'Barre verticale' },
+                { char: '┌', code: 'Alt + 218', name: 'Coin sup. gauche simple' },
+                { char: '┐', code: 'Alt + 191', name: 'Coin sup. droit simple' },
+                { char: '└', code: 'Alt + 192', name: 'Coin inf. gauche simple' },
+                { char: '┘', code: 'Alt + 217', name: 'Coin inf. droit simple' },
+                { char: '├', code: 'Alt + 195', name: 'T simple vers la droite' },
+                { char: '┤', code: 'Alt + 180', name: 'T simple vers la gauche' },
+                { char: '┬', code: 'Alt + 194', name: 'T simple vers le bas' },
+                { char: '┴', code: 'Alt + 193', name: 'T simple vers le haut' },
+                { char: '┼', code: 'Alt + 197', name: 'Croix simple' },
+                { char: '═', code: 'Alt + 205', name: 'Ligne double horizontale' },
+                { char: '║', code: 'Alt + 186', name: 'Ligne double verticale' },
+                { char: '╔', code: 'Alt + 201', name: 'Coin sup. gauche double' },
+                { char: '╗', code: 'Alt + 187', name: 'Coin sup. droit double' },
+                { char: '╚', code: 'Alt + 200', name: 'Coin inf. gauche double' },
+                { char: '╝', code: 'Alt + 188', name: 'Coin inf. droit double' },
+                { char: '╤', code: 'Alt + 209', name: 'T double vers le bas' },
+                { char: '╥', code: 'Alt + 210', name: 'T double vers le bas accentué' },
+                { char: '╙', code: 'Alt + 211', name: 'Coin double inf. gauche' },
+                { char: '╘', code: 'Alt + 212', name: 'Coin double inf. gauche' },
+                { char: '╒', code: 'Alt + 213', name: 'Coin double sup. gauche' },
+                { char: '╓', code: 'Alt + 214', name: 'Coin double sup. gauche' },
+                { char: '╫', code: 'Alt + 215', name: 'Croix double verticale' },
+                { char: '╪', code: 'Alt + 216', name: 'Croix double horizontale' },
+                { char: '╧', code: 'Alt + 207', name: 'T double vers le haut' },
+                { char: '╨', code: 'Alt + 208', name: 'T double vers le haut' },
+            ],
+            "Échecs": [
+                { char: '♔', code: 'Alt + 9812', name: 'Roi blanc' },
+                { char: '♕', code: 'Alt + 9813', name: 'Dame blanche' },
+                { char: '♖', code: 'Alt + 9814', name: 'Tour blanche' },
+                { char: '♗', code: 'Alt + 9815', name: 'Fou blanc' },
+                { char: '♘', code: 'Alt + 9816', name: 'Cavalier blanc' },
+                { char: '♙', code: 'Alt + 9817', name: 'Pion blanc' },
+                { char: '♚', code: 'Alt + 9818', name: 'Roi noir' },
+                { char: '♛', code: 'Alt + 9819', name: 'Dame noire' },
+                { char: '♜', code: 'Alt + 9820', name: 'Tour noire' },
+                { char: '♝', code: 'Alt + 9821', name: 'Fou noir' },
+                { char: '♞', code: 'Alt + 9822', name: 'Cavalier noir' },
+                { char: '♟', code: 'Alt + 9823', name: 'Pion noir' },
+            ],
+            "Astrologie & Planètes": [
+                { char: '♈', code: 'Alt + 9800', name: 'Bélier' },
+                { char: '♉', code: 'Alt + 9801', name: 'Taureau' },
+                { char: '♊', code: 'Alt + 9802', name: 'Gémeaux' },
+                { char: '♋', code: 'Alt + 9803', name: 'Cancer' },
+                { char: '♌', code: 'Alt + 9804', name: 'Lion' },
+                { char: '♍', code: 'Alt + 9805', name: 'Vierge' },
+                { char: '♎', code: 'Alt + 9806', name: 'Balance' },
+                { char: '♏', code: 'Alt + 9807', name: 'Scorpion' },
+                { char: '♐', code: 'Alt + 9808', name: 'Sagittaire' },
+                { char: '♑', code: 'Alt + 9809', name: 'Capricorne' },
+                { char: '♒', code: 'Alt + 9810', name: 'Verseau' },
+                { char: '♓', code: 'Alt + 9811', name: 'Poissons' },
+                { char: '☿', code: 'Alt + 9791', name: 'Mercure' },
+                { char: '♀', code: 'Alt + 12', name: 'Vénus/Féminin' },
+                { char: '♁', code: 'Alt + 9793', name: 'Terre' },
+                { char: '♂', code: 'Alt + 11', name: 'Mars/Masculin' },
+                { char: '♃', code: 'Alt + 9795', name: 'Jupiter' },
+                { char: '♄', code: 'Alt + 9796', name: 'Saturne' },
+            ],
+            "Météo & Étoiles": [
+                { char: '☼', code: 'Alt + 15', name: 'Soleil contour' },
+                { char: '☀', code: 'Alt + 9728', name: 'Soleil plein' },
+                { char: '☁', code: 'Alt + 9729', name: 'Nuage' },
+                { char: '☂', code: 'Alt + 9730', name: 'Parapluie' },
+                { char: '☃', code: 'Alt + 9731', name: 'Bonhomme de neige' },
+                { char: '☄', code: 'Alt + 9732', name: 'Comète' },
+                { char: '★', code: 'Alt + 9733', name: 'Étoile pleine' },
+                { char: '☆', code: 'Alt + 9734', name: 'Étoile vide' },
+            ],
+            "Divers": [
+                { char: '☺', code: 'Alt + 1', name: 'Smiley blanc' },
+                { char: '☻', code: 'Alt + 2', name: 'Smiley noir' },
+                { char: '♪', code: 'Alt + 13', name: 'Note de musique' },
+                { char: '♫', code: 'Alt + 14', name: 'Deux notes de musique' },
+                { char: '⌂', code: 'Alt + 8962', name: 'Maison' },
+                { char: '⌀', code: 'Alt + 8960', name: 'Diamètre' },
+            ],
+        };
+
+        const charGrid = document.getElementById('charGrid');
+        const searchInput = document.getElementById('searchInput');
+        const categoriesContainer = document.getElementById('categories');
+        const copyNotification = document.getElementById('copyNotification');
+        let activeCategory = 'Tous';
+
+        // Fonction pour afficher les caractères
+        function displayChars(filter = '', category = 'Tous') {
+            charGrid.innerHTML = '';
+            const normalizedFilter = filter.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            let hasResults = false;
+
+            for (const catName in altCodes) {
+                if (category === 'Tous' || category === catName) {
+                    const chars = altCodes[catName];
+                    const filteredChars = chars.filter(c => {
+                        const normalizedName = c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        const normalizedChar = c.char.toLowerCase();
+                        return normalizedName.includes(normalizedFilter) || normalizedChar.includes(normalizedFilter);
+                    });
+
+                    if (filteredChars.length > 0) {
+                        hasResults = true;
+                        // Ajouter le titre de la catégorie si on n'est pas dans une catégorie spécifique
+                        if (category === 'Tous' && filter === '') {
+                             const categoryTitle = document.createElement('h2');
+                             categoryTitle.className = 'col-span-full text-xl font-semibold text-gray-700 mt-6 mb-2';
+                             categoryTitle.textContent = catName;
+                             charGrid.appendChild(categoryTitle);
+                        }
+                       
+                        filteredChars.forEach(c => {
+                            const card = document.createElement('div');
+                            card.className = 'card bg-white rounded-lg p-4 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer border border-gray-200';
+                            card.innerHTML = `
+                                <span class="text-5xl mb-2">${c.char}</span>
+                                <span class="font-semibold text-indigo-600">${c.code}</span>
+                                <span class="text-xs text-gray-500 mt-1">${c.name}</span>
+                            `;
+                            card.addEventListener('click', () => copyToClipboard(c.char));
+                            charGrid.appendChild(card);
+                        });
+                    }
+                }
+            }
+             if (!hasResults) {
+                charGrid.innerHTML = `<p class="col-span-full text-center text-gray-500">Aucun caractère trouvé pour "${filter}".</p>`;
+            }
+        }
+
+        // Fonction pour copier dans le presse-papiers
+        function copyToClipboard(text) {
+            // Utilise une méthode de secours pour les iframes
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopyNotification();
+            } catch (err) {
+                console.error('Impossible de copier', err);
+            }
+            document.body.removeChild(textArea);
+        }
+        
+        // Fonction pour afficher la notification
+        function showCopyNotification() {
+            copyNotification.classList.remove('translate-y-20', 'opacity-0');
+            copyNotification.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                copyNotification.classList.add('translate-y-20', 'opacity-0');
+                copyNotification.classList.remove('translate-y-0', 'opacity-100');
+            }, 2000);
+        }
+
+        // Fonction pour créer les boutons de catégorie
+        function createCategoryButtons() {
+            // Bouton "Tous"
+            const allButton = document.createElement('button');
+            allButton.textContent = 'Tous';
+            allButton.className = 'px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 bg-indigo-600 text-white';
+            allButton.dataset.category = 'Tous';
+            allButton.addEventListener('click', () => {
+                activeCategory = 'Tous';
+                updateActiveButton();
+                displayChars(searchInput.value, activeCategory);
+            });
+            categoriesContainer.appendChild(allButton);
+
+            // Boutons pour chaque catégorie
+            for (const catName in altCodes) {
+                const button = document.createElement('button');
+                button.textContent = catName;
+                button.className = 'px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50';
+                button.dataset.category = catName;
+                button.addEventListener('click', () => {
+                    activeCategory = catName;
+                    updateActiveButton();
+                    displayChars(searchInput.value, activeCategory);
+                });
+                categoriesContainer.appendChild(button);
+            }
+        }
+
+        // Mettre à jour le style du bouton actif
+        function updateActiveButton() {
+            const buttons = categoriesContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.dataset.category === activeCategory) {
+                    btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+                    btn.classList.add('bg-indigo-600', 'text-white');
+                } else {
+                    btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                }
+            });
+        }
+        
+        // Événement pour la saisie dans la barre de recherche
+        searchInput.addEventListener('input', (e) => {
+            displayChars(e.target.value, activeCategory);
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            createCategoryButtons();
+            displayChars();
+        });
+    </script>
+</body>
+</html>
