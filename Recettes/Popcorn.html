@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conception de Fumoir DIY (Version 25 Gallons)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Staatliches&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Industrial & Functional -->
+    <!-- Application Structure Plan: A two-column dashboard layout. The left column is dedicated to the interactive 3D model, providing immediate visual context. The right column uses a tabbed interface for "Guide", "Matériaux", and "Conseils", logically separating the core information. This structure allows the user to view the 3D model while reading the corresponding instructions or material list, which is highly effective for a construction project. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Smoker Design -> Goal: Explore/Understand -> Viz/Presentation: Interactive 3D Model -> Interaction: Rotate, Zoom, Pan. Click to highlight parts. -> Justification: A 3D model is vastly superior to 2D diagrams for understanding spatial relationships in a DIY build. -> Library: Three.js/Canvas.
+        - Report Info: Building Steps -> Goal: Inform/Instruct -> Viz/Presentation: Tabbed Text Content -> Interaction: Tab switching -> Justification: Organizes a large amount of text into manageable, sequential steps. -> Library/Method: HTML/CSS/JS.
+        - Report Info: Materials List -> Goal: Inform/Export -> Viz/Presentation: HTML Table -> Interaction: Easy to select and copy -> Justification: A table is the clearest and most portable format for a parts list. -> Library/Method: HTML/CSS/JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background-color: #374151; /* Gray 700 */
+            color: #F3F4F6; /* Gray 100 */
+        }
+        .font-display {
+            font-family: 'Staatliches', cursive;
+        }
+        #viewer-container {
+            cursor: grab;
+        }
+        #viewer-container:active {
+            cursor: grabbing;
+        }
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-btn.active {
+            background-color: #F9A826; /* Amber 500 */
+            color: #1F2937; /* Gray 800 */
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #4B5563;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4B5563;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="font-display text-5xl md:text-7xl text-amber-400 tracking-wider">Fumoir Compact</h1>
+            <p class="text-xl text-gray-300">Conception adaptée pour un baril de 95L (25 gal).</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 3D Viewer Column -->
+            <div class="bg-gray-800 rounded-lg shadow-2xl p-4 flex flex-col h-[60vh] lg:h-auto">
+                <h2 id="part-name" class="text-center text-amber-400 font-bold text-lg mb-2 h-6">SURVOLEZ POUR IDENTIFIER</h2>
+                <div id="viewer-container" class="flex-grow w-full h-full rounded-md overflow-hidden"></div>
+                <p class="text-xs text-center text-gray-400 mt-2">Note : Le modèle 3D est une référence visuelle. Fiez-vous au guide pour les dimensions exactes de la version 25 gallons.</p>
+            </div>
+
+            <!-- Info Column -->
+            <div class="bg-gray-800 rounded-lg shadow-2xl p-4 md:p-6">
+                <div class="border-b border-gray-600 mb-4">
+                    <nav class="flex space-x-2" id="tab-nav">
+                        <button class="tab-btn active font-bold py-2 px-4 rounded-t-lg" data-tab="guide">Guide de Construction</button>
+                        <button class="tab-btn font-bold py-2 px-4 rounded-t-lg" data-tab="materiaux">Matériaux</button>
+                        <button class="tab-btn font-bold py-2 px-4 rounded-t-lg" data-tab="conseils">Conseils</button>
+                    </nav>
+                </div>
+
+                <div id="tab-content-container" class="text-gray-200">
+                    <!-- Guide Tab -->
+                    <div id="guide" class="tab-content active space-y-4">
+                        <div class="bg-amber-900/50 p-3 rounded-lg border border-amber-500">
+                            <h3 class="font-bold text-xl text-amber-300">Note d'Adaptation (25 Gallons)</h3>
+                            <p>Ce guide est ajusté pour un baril plus petit. Les principes sont les mêmes, mais les dimensions et le nombre de certains composants (comme les entrées d'air) sont réduits pour un fonctionnement optimal.</p>
+                        </div>
+
+                        <h3 class="font-bold text-xl text-amber-400">Étape 1 : Préparation du Baril</h3>
+                        <p>Trouvez un baril en acier de 95L (25 gal) de qualité alimentaire. La procédure de brûlage est identique : faites un feu intense à l'intérieur pour décaper toute doublure ou peinture. Poncez ensuite l'intérieur et l'extérieur jusqu'au métal nu.</p>
+                        
+                        <h3 class="font-bold text-xl text-amber-400">Étape 2 : Entrées d'Air</h3>
+                        <p>Pour un baril de cette taille, deux entrées d'air suffisent. Percez deux trous de 3/4" de diamètre à 2" du bas du baril, opposés l'un à l'autre. Vissez un raccord de 3/4" x 3" dans chaque trou, fixez avec des contre-écrous et montez une vanne à bille de 3/4" à l'extérieur.</p>
+
+                        <h3 class="font-bold text-xl text-amber-400">Étape 3 : Panier à Charbon</h3>
+                        <p>Créez un panier circulaire plus petit, d'environ 12" de diamètre et 8" de haut, en utilisant du métal déployé. Fixez 4 boulons de 3" de long comme pieds pour le surélever.</p>
+
+                        <h3 class="font-bold text-xl text-amber-400">Étape 4 : Grilles de Cuisson</h3>
+                        <p>La hauteur du baril étant réduite, une seule grille de cuisson est souvent suffisante et plus facile à gérer. Percez 4 trous à environ 15" du bas pour y insérer des boulons en inox de 3" qui supporteront votre grille de 18.5".</p>
+
+                        <h3 class="font-bold text-xl text-amber-400">Étape 5 : Couvercle et Thermomètre</h3>
+                        <p>Percez un trou de 1.5" au centre du couvercle pour l'échappement. Installez un raccord adapté. Fixez une poignée robuste. Percez un trou sur le côté du baril, à environ 2" au-dessus du niveau de la grille, pour installer votre thermomètre.</p>
+                    </div>
+
+                    <!-- Materials Tab -->
+                    <div id="materiaux" class="tab-content">
+                        <table>
+                            <thead>
+                                <tr><th>Composant</th><th>Matériau</th><th>Quantité</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Baril</td><td>Baril en acier 95L (25 gal), non doublé</td><td>1</td></tr>
+                                <tr><td>Entrées d'air</td><td>Vannes à bille 3/4", Raccords 3/4"x3", Contre-écrous 3/4"</td><td>2 de chaque</td></tr>
+                                <tr><td>Panier</td><td>Feuille de métal déployé (~12"x38")</td><td>1</td></tr>
+                                <tr><td>Pieds de panier</td><td>Boulons, écrous, rondelles (1/4" x 3")</td><td>4</td></tr>
+                                <tr><td>Grille</td><td>Grille de cuisson circulaire 18.5"</td><td>1</td></tr>
+                                <tr><td>Supports de grille</td><td>Boulons, écrous, rondelles en inox (1/4" x 3")</td><td>4</td></tr>
+                                <tr><td>Échappement</td><td>Raccord de tuyau 1.5"</td><td>1</td></tr>
+                                <tr><td>Thermomètre</td><td>Thermomètre de fumoir/BBQ</td><td>1</td></tr>
+                                <tr><td>Poignées</td><td>Poignées en métal robustes</td><td>2</td></tr>
+                                <tr><td>Visserie</td><td>Boulons, écrous, rondelles divers</td><td>Assortiment</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tips Tab -->
+                    <div id="conseils" class="tab-content space-y-4">
+                        <h3 class="font-bold text-xl text-amber-400">Allumage (Méthode Minion)</h3>
+                        <p>La méthode reste la même, mais vous aurez besoin de moins de charbon. Remplissez votre panier plus petit, creusez un puits, et déposez 6-8 briquettes allumées au centre.</p>
+                        
+                        <h3 class="font-bold text-xl text-amber-400">Contrôle de la Température</h3>
+                        <p>Un plus petit volume chauffe et réagit plus vite. Commencez avec une vanne d'air ouverte et l'autre à moitié. Les ajustements auront un effet plus rapide que sur un grand fumoir. Soyez patient et visez la stabilité.</p>
+
+                        <h3 class="font-bold text-xl text-amber-400">Sécurité</h3>
+                        <p>Les règles de sécurité sont universelles. Gardez le fumoir sur une surface non inflammable, loin de tout, et manipulez-le toujours avec des gants résistants à la chaleur.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let highlightedPart = null;
+        const partNameEl = document.getElementById('part-name');
+
+        const parts = {};
+
+        function init3D() {
+            const container = document.getElementById('viewer-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x374151);
+
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            const barrelMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8, roughness: 0.4 });
+            const intakeMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.6, roughness: 0.5 });
+            const grateMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 1.0, roughness: 0.2, wireframe: true });
+            const basketMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.5, roughness: 0.6, wireframe: true });
+            const handleMat = new THREE.MeshStandardMaterial({ color: 0xf9a826 });
+
+            // Barrel
+            const barrelGeom = new THREE.CylinderGeometry(2, 2, 7, 32);
+            const barrel = new THREE.Mesh(barrelGeom, barrelMat);
+            barrel.name = "Baril en Acier";
+            scene.add(barrel);
+            parts['Baril'] = barrel;
+
+            // Lid
+            const lidGeom = new THREE.CylinderGeometry(2, 2, 0.2, 32);
+            const lid = new THREE.Mesh(lidGeom, barrelMat);
+            lid.position.y = 3.6;
+            lid.name = "Couvercle";
+            scene.add(lid);
+            parts['Couvercle'] = lid;
+            
+            // Exhaust
+            const exhaustGeom = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 16);
+            const exhaust = new THREE.Mesh(exhaustGeom, handleMat);
+            exhaust.position.y = 4.1;
+            exhaust.name = "Échappement";
+            scene.add(exhaust);
+            parts['Échappement'] = exhaust;
+
+            // Intakes
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2;
+                const intake = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.8, 16), intakeMat);
+                intake.position.set(Math.cos(angle) * 2.2, -3, Math.sin(angle) * 2.2);
+                intake.rotation.z = Math.PI / 2;
+                intake.name = "Entrée d'Air";
+                scene.add(intake);
+                parts[`Intake${i}`] = intake;
+            }
+
+            // Grates
+            const grateGeom = new THREE.CircleGeometry(1.9, 32);
+            const grate1 = new THREE.Mesh(grateGeom, grateMat);
+            grate1.position.y = 1.5;
+            grate1.rotation.x = -Math.PI / 2;
+            grate1.name = "Grille de Cuisson Supérieure";
+            scene.add(grate1);
+            parts['Grille1'] = grate1;
+
+            const grate2 = new THREE.Mesh(grateGeom, grateMat);
+            grate2.position.y = 0;
+            grate2.rotation.x = -Math.PI / 2;
+            grate2.name = "Grille de Cuisson Inférieure";
+            scene.add(grate2);
+            parts['Grille2'] = grate2;
+
+            // Fire Basket
+            const basketGeom = new THREE.CylinderGeometry(1.5, 1.5, 2, 32, 1, true);
+            const fireBasket = new THREE.Mesh(basketGeom, basketMat);
+            fireBasket.position.y = -2;
+            fireBasket.name = "Panier à Charbon";
+            scene.add(fireBasket);
+            parts['Panier'] = fireBasket;
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.target.set(0, 0, 0);
+
+            window.addEventListener('resize', onWindowResize);
+            container.addEventListener('mousemove', onMouseMove);
+            animate();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('viewer-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function onMouseMove(event) {
+            const container = document.getElementById('viewer-container');
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                if (highlightedPart !== intersects[0].object) {
+                    if (highlightedPart) {
+                        highlightedPart.material.emissive.setHex(0x000000);
+                    }
+                    highlightedPart = intersects[0].object;
+                    highlightedPart.material.emissive.setHex(0x555555);
+                    partNameEl.textContent = highlightedPart.name.toUpperCase();
+                }
+            } else {
+                if (highlightedPart) {
+                    highlightedPart.material.emissive.setHex(0x000000);
+                }
+                highlightedPart = null;
+                partNameEl.textContent = "SURVOLEZ POUR IDENTIFIER";
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        const tabNav = document.getElementById('tab-nav');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        tabNav.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const tab = e.target.dataset.tab;
+                
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tab) {
+                        content.classList.add('active');
+                    }
+                });
+            }
+        });
+
+        init3D();
+    </script>
+</body>
+</html>
+
