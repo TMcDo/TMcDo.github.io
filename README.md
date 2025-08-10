@@ -11,7 +11,7 @@ TMcDo.github.io/Three.js.Canvas.html
 TMcDo.github.io/index.html	
 TMcDo.github.io/index.php	
 TMcDo.github.io/soundz.html	
-TMcDo.github.io/visualisation.html	
+TMcDo.github.io/visualisation.html
 	
-TMcDo.github.io/Pages	
-TMcDo.github.io/Docs	
+TMcDo.github.io/Pages
+TMcDo.github.io/Docs
