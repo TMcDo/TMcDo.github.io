@@ -90,7 +90,11 @@
 
     <script>
         const recipesData = [
-            { name: "Curry Indien Doux", category: "Exotique", icon: "🍛", ingredients: ["2 c. à soupe de poudre de curry doux", "1 c. à café de curcuma", "1 c. à café de cumin moulu", "1/2 c. à café de gingembre moulu", "1/2 c. à café de coriandre moulue", "Sel et poivre"], prep: "Mélangez toutes les épices. Idéal pour mariner des morceaux de poulet dans du yogourt nature ou comme assaisonnement à sec avant de poêler." },
+            { name: "Curry Indien Doux", category: "Curry", icon: "🍛", ingredients: ["2 c. à soupe de poudre de curry doux", "1 c. à café de curcuma", "1 c. à café de cumin moulu", "1/2 c. à café de gingembre moulu", "1/2 c. à café de coriandre moulue", "Sel et poivre"], prep: "Mélangez toutes les épices. Idéal pour mariner des morceaux de poulet dans du yogourt nature ou comme assaisonnement à sec avant de poêler." },
+            { name: "Curry Vert Thaï", category: "Curry", icon: "🌿", ingredients: ["1 c. à soupe de poudre de citronnelle", "1 c. à soupe de coriandre moulue", "1 c. à café de cumin", "1/2 c. à café de poivre blanc", "1/2 c. à café de poudre de piment vert", "1 c. à soupe de lait de coco en poudre"], prep: "Un mélange frais et parfumé. Frottez sur des brochettes de poulet avant de griller ou mélangez avec du lait de coco pour une marinade express." },
+            { name: "Curry Rouge de Madras", category: "Curry", icon: "🔥", ingredients: ["2 c. à soupe de poudre de curry de Madras (piquant)", "1 c. à café de flocons de piment rouge", "1 c. à café de graines de fenugrec moulues", "1/2 c. à café de moutarde en poudre"], prep: "Pour les amateurs de sensations fortes. Un assaisonnement puissant, parfait pour des cuisses de poulet grillées ou saisies à la poêle." },
+            { name: "Curry Japonais Katsu", category: "Curry", icon: "🇯🇵", ingredients: ["2 c. à soupe de poudre de curry doux japonais", "1 c. à café de curcuma", "1/2 c. à café de cannelle", "1/2 c. à café de muscade", "1 c. à café de poudre d'ail"], prep: "Un curry doux et réconfortant. Idéal pour assaisonner la farine ou la chapelure panko avant de paner des escalopes de poulet." },
+            { name: "Curry des Caraïbes", category: "Curry", icon: "🏝️", ingredients: ["2 c. à soupe de poudre de curry", "1 c. à soupe de piment de la Jamaïque (allspice)", "1 c. à café de thym séché", "1/2 c. à café de poudre de piment Scotch Bonnet (optionnel)", "Sel"], prep: "Un mélange chaud et aromatique. Fantastique pour les plats de poulet mijotés, comme un colombo de poulet." },
             { name: "Classique du Rôtisseur", category: "Rôti", icon: "🍗", ingredients: ["2 c. à soupe d'herbes de Provence", "1 c. à soupe de paprika doux", "1 c. à café de poudre d'ail", "1 c. à café de poudre d'oignon", "Sel et poivre noir"], prep: "Mélangez les épices. Frottez généreusement un poulet entier, à l'intérieur et à l'extérieur, avec de l'huile d'olive puis ce mélange avant de rôtir." },
             { name: "BBQ Fumé du Sud", category: "BBQ", icon: "🔥", ingredients: ["2 c. à soupe de paprika fumé", "1 c. à soupe de cassonade", "1 c. à café de poudre de chili", "1 c. à café de moutarde en poudre", "1/2 c. à café de poivre de Cayenne", "Sel"], prep: "Combinez tous les ingrédients. Appliquez généreusement sur les morceaux de poulet avant de les griller au barbecue. Excellent pour les ailes ou les cuisses." },
             { name: "Méditerranéen Citronné", category: "Rôti", icon: "🍋", ingredients: ["2 c. à soupe d'origan séché", "Zeste d'un citron", "1 c. à café de poudre d'ail", "1/2 c. à café de thym séché", "Sel et poivre"], prep: "Mélangez tous les ingrédients secs. Frottez le poulet avec de l'huile d'olive, puis appliquez le mélange. Parfait pour la cuisson au four." },
@@ -114,7 +118,8 @@
                 'Rôti': '#d97706',
                 'BBQ': '#b91c1c',
                 'Exotique': '#047857',
-                'Épicé': '#dc2626'
+                'Épicé': '#dc2626',
+                'Curry': '#ca8a04'
             };
 
             function renderFilters() {
