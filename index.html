@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Homepage</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div id="readme-content">
+        <!-- README content will be loaded here -->
+    </div>
+
+    <h2>Other Pages</h2>
+    <ul>
+        <li><a href="AIOS.html">AIOS</a></li>
+        <li><a href="3DDDs.html">3DDDs</a></li>
+        <li><a href="Cibles.html">Cibles</a></li>
+        <li><a href="Chakra.html">Chakra</a></li>
+        <li><a href="Fumoir.html">Fumoir</a></li>
+        <li><a href="Fumoir55G.html">Fumoir55G</a></li>
+        <li><a href="Gemini.html">Gemini</a></li>
+        <li><a href="Sounds.html">Sounds</a></li>
+        <li><a href="Three.js.Canvas.html">Three.js.Canvas</a></li>
+        <li><a href="soundz.html">soundz</a></li>
+        <li><a href="visualisation.html">visualisation</a></li>
+        <!-- Add other links as needed -->
+    </ul>
+
+    <script>
+        async function loadReadme() {
+            try {
+                const response = await fetch('README.md');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const readmeText = await response.text();
+                const htmlContent = marked.parse(readmeText);
+                document.getElementById('readme-content').innerHTML = htmlContent;
+            } catch (error) {
+                console.error('Could not load README:', error);
+                document.getElementById('readme-content').innerText = 'Failed to load README. Please check the console for details.';
+            }
+        }
+
+        window.onload = loadReadme;
+    </script>
+</body>
+</html>
