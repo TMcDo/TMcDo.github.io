@@ -16,14 +16,21 @@ https://TMcDo.github.io/Fumoir55G.html
 https://TMcDo.github.io/Gemini.html	
 
 https://TMcDo.github.io/Sounds.html	
+
 https://TMcDo.github.io/Three.js.Canvas.html	
+
 https://TMcDo.github.io/index.html	
+
 https://TMcDo.github.io/index.php	
+
 https://TMcDo.github.io/soundz.html	
+
 https://TMcDo.github.io/visualisation.html
 	
 https://TMcDo.github.io/Pages
+
 https://TMcDo.github.io/Docs
+
 https://github.com/TMcDo/TMcDo.github.io/tree/main
 
 
