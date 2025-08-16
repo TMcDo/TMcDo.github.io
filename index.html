@@ -83,7 +83,23 @@
                 <p class="mt-2 text-gray-600">Création de prototypes pour tester et itérer rapidement sur vos innovations.</p>
             </div>
         </section>
-
+ <script>
+        async function loadReadme() {
+            try {
+                const response = await fetch('README.md');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`)
+                }
+                const readmeText = await response.text();
+                const htmlContent = marked.parse(readmeText);
+                document.getElementById('readme-content').innerHTML = htmlContent;
+            } catch (error) {
+                console.error('Could not load README:', error);
+                document.getElementById('readme-content').innerText = 'Failed to load README. Please check the console for details.';
+            }
+        }
+        window.onload = loadReadme;
+    </script>
         <!-- Pied de page -->
         <footer class="text-center mt-12 text-gray-500">
             <p>&copy; 2025 Monsieur Minutieux. Tous droits réservés.</p>
