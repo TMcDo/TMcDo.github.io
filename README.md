@@ -1,3 +1,71 @@
+# Monsieur Minutieux - Site Web Personnel
+
+## 📋 À propos
+
+Ce site web est la vitrine professionnelle de Monsieur Minutieux, spécialisé dans la création sur mesure, l'ingénierie et le design. Le site présente nos services de conception 3D, fabrication sur mesure et prototypage rapide.
+
+## 🚀 Fonctionnalités
+
+- **Visualisation 3D Interactive**: Démonstration de projets en 3D utilisant Three.js
+- **Interface Responsive**: Design adaptatif pour tous les appareils
+- **Générateur d'Idées IA**: Outil de brainstorming alimenté par l'IA Gemini
+- **Design Modern**: Utilisation de Tailwind CSS pour une interface élégante
+
+## 🛠️ Technologies Utilisées
+
+- HTML5
+- Tailwind CSS
+- JavaScript
+- Three.js pour la visualisation 3D
+- Google Fonts (Inter)
+- API Gemini pour la génération d'idées
+
+## 🎨 Design
+
+Le site utilise une palette de couleurs professionnelle et moderne :
+- Fond principal : Gris clair (bg-gray-100)
+- Éléments d'interface : Blanc (bg-white)
+- Accents : Bleu (bg-blue-600)
+- Texte : Nuances de gris (text-gray-800, text-gray-600)
+
+## 📱 Responsive Design
+
+Le site est entièrement responsive avec :
+- Navigation adaptative (menu hamburger sur mobile)
+- Mise en page flexible
+- Visualisation 3D responsive
+- Typographie adaptative
+
+## 🔧 Installation et Développement
+
+1. Clonez le repository
+```bash
+git clone https://github.com/TMcDo/TMcDo.github.io.git
+```
+
+2. Ouvrez index.html dans votre navigateur
+
+Pour le développement, il est recommandé d'utiliser un serveur local pour éviter les problèmes CORS avec Three.js.
+
+## 📝 Maintenance
+
+Pour mettre à jour le site :
+1. Modifiez les fichiers nécessaires
+2. Testez localement
+3. Committez et poussez vers la branche principale
+
+## 🔒 Sécurité
+
+- Utilisation de CDN sécurisés
+- Validation des entrées utilisateur
+- Protection contre les injections XSS
+
+## 📄 Licence
+
+© 2025 Monsieur Minutieux. Tous droits réservés.
+
+
+
 Quelques unes des application que je n'ai pas codé. 
 Tout le mérite và à la version de Gemennuie qui fait tout mon travail en un claquement de cuillère.
 
