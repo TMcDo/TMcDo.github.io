@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-device-width, initial-scale=1.0">
     <title>Accueil - Monsieur Minutieux</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,11 +18,22 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Assurer que le canvas 3D remplit son conteneur */
+        /* Styling for the 3D container and canvas */
+        #3d-container {
+            position: relative; /* Needed for positioning the overlay text */
+        }
         #3d-container canvas {
             display: block;
             width: 100%;
             height: 100%;
+        }
+        /* Fade-out animation for the interaction hint */
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .fade-out {
+            animation: fadeOut 2s ease-in-out 3s forwards;
         }
     </style>
 </head>
@@ -38,16 +49,24 @@
                     <h1 class="text-3xl md:text-4xl font-black text-gray-900">Monsieur Minutieux</h1>
                     <p class="text-gray-500">Créations sur mesure | Ingénierie & Design</p>
                 </div>
-                <nav class="hidden md:block">
-                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-md">Projets</a>
-                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-md">Services</a>
-                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-md">Contact</a>
+                <!-- Navigation pour bureau -->
+                <nav id="desktop-nav" class="hidden md:flex items-center space-x-2">
+                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-md transition-colors">Projets</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-md transition-colors">Services</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 font-medium px-3 py-2 rounded-md transition-colors">Contact</a>
                 </nav>
+                <!-- Bouton du menu mobile -->
                 <div class="md:hidden">
-                    <button class="text-gray-900 focus:outline-none">
+                    <button id="mobile-menu-button" class="text-gray-900 focus:outline-none">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                     </button>
                 </div>
+            </div>
+            <!-- Menu mobile (caché par défaut) -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4">
+                <a href="#" class="block text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-md">Projets</a>
+                <a href="#" class="block text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-md">Services</a>
+                <a href="#" class="block text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-md">Contact</a>
             </div>
         </header>
 
@@ -62,23 +81,26 @@
                     </div>
                 </div>
                 <!-- Conteneur pour la visualisation 3D -->
-                <div id="3d-container" class="md:w-1/2 h-80 md:h-auto bg-gray-900 cursor-grab active:cursor-grabbing">
+                <div id="3d-container" class="md:w-1/2 h-80 md:h-auto bg-gray-200 cursor-grab active:cursor-grabbing">
                     <!-- Le canvas Three.js sera injecté ici par le script -->
+                    <div id="3d-overlay" class="absolute inset-0 flex items-center justify-center text-white text-center p-4 pointer-events-none fade-out bg-black bg-opacity-25">
+                        <p class="text-lg font-semibold">Cliquez et glissez pour explorer</p>
+                    </div>
                 </div>
             </div>
         </main>
 
         <!-- Section des fonctionnalités -->
         <section class="mt-8 grid md:grid-cols-3 gap-8">
-            <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="bg-white rounded-xl shadow-md p-6 transform hover:-translate-y-1 transition-transform duration-300">
                 <h3 class="text-xl font-bold text-gray-900">Conception 3D</h3>
                 <p class="mt-2 text-gray-600">Modélisation précise pour visualiser et valider chaque détail avant la fabrication.</p>
             </div>
-            <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="bg-white rounded-xl shadow-md p-6 transform hover:-translate-y-1 transition-transform duration-300">
                 <h3 class="text-xl font-bold text-gray-900">Fabrication sur mesure</h3>
                 <p class="mt-2 text-gray-600">Utilisation de bois, métal et plastique pour créer des pièces uniques et fonctionnelles.</p>
             </div>
-            <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="bg-white rounded-xl shadow-md p-6 transform hover:-translate-y-1 transition-transform duration-300">
                 <h3 class="text-xl font-bold text-gray-900">Prototypage rapide</h3>
                 <p class="mt-2 text-gray-600">Création de prototypes pour tester et itérer rapidement sur vos innovations.</p>
             </div>
@@ -116,9 +138,19 @@
     </div>
 
     <script>
-        // --- Script pour la fonctionnalité de génération d'idées par IA ---
+    // S'assurer que tout le script s'exécute après le chargement du DOM
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- SECTION 1: FONCTIONNALITÉ DU MENU MOBILE ---
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // --- SECTION 2: FONCTIONNALITÉ DE GÉNÉRATION D'IDÉES PAR IA ---
         const generateButton = document.getElementById('generate-button');
-        // ... (le reste du script de l'IA reste inchangé) ...
         const ideaInput = document.getElementById('idea-input');
         const resultContainer = document.getElementById('result-container');
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -147,29 +179,7 @@
                         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
                     ],
                 };
-                let response;
-                let attempts = 0;
-                const maxAttempts = 5;
-                let delay = 1000;
-                while (attempts < maxAttempts) {
-                    try {
-                        response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                        if (response.ok) break;
-                        if (response.status === 429 || response.status >= 500) {
-                           attempts++;
-                           if (attempts >= maxAttempts) throw new Error(`Échec de la requête API après ${maxAttempts} tentatives avec le statut : ${response.status}`);
-                           await new Promise(resolve => setTimeout(resolve, delay));
-                           delay *= 2;
-                        } else {
-                           throw new Error(`Erreur client, la requête ne sera pas relancée. Statut : ${response.status}`);
-                        }
-                    } catch (error) {
-                        attempts++;
-                        if (attempts >= maxAttempts) throw error;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2;
-                    }
-                }
+                let response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!response.ok) throw new Error(`Erreur HTTP! Statut: ${response.status}`);
                 const result = await response.json();
                 if (result.candidates && result.candidates.length > 0) {
@@ -180,100 +190,119 @@
                 }
             } catch (error) {
                 console.error("Erreur lors de l'appel à l'API Gemini:", error);
-                resultContainer.innerHTML = '<p class="text-red-500 font-semibold">Désolé, une erreur est survenue. Le service est peut-être momentanément indisponible. Veuillez réessayer plus tard.</p>';
+                resultContainer.innerHTML = '<p class="text-red-500 font-semibold">Désolé, une erreur est survenue. Veuillez réessayer plus tard.</p>';
             } finally {
                 loadingSpinner.classList.add('hidden');
                 buttonText.textContent = '✨ Générer une Idée';
                 generateButton.disabled = false;
             }
         });
-    </script>
 
-    <script>
-        // --- Script pour la visualisation 3D avec Three.js ---
+        // --- SECTION 3: VISUALISATION 3D AVEC THREE.JS ---
+        const container = document.getElementById('3d-container');
+        if (!container) return;
+
+        // 1. Initialisation de la scène, de la caméra et du moteur de rendu
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0); // Fond de scène plus clair
+
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(2, 2, 4); // Position de caméra améliorée
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        // Activation des ombres
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Ombres plus douces
+        container.appendChild(renderer.domElement);
+
+        // 2. Contrôles de la caméra (OrbitControls)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 2;
+        controls.maxDistance = 15;
+        controls.target.set(0, 0.5, 0); // Cible la caméra légèrement plus haut
+
+        // 3. Éclairage amélioré
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        directionalLight.position.set(5, 10, 7.5);
+        // Configuration de la lumière pour qu'elle projette des ombres
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        scene.add(directionalLight);
         
-        // S'assurer que le script s'exécute après le chargement du DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('3d-container');
-            if (!container) return;
+        // 4. Création d'un sol pour recevoir les ombres
+        const groundGeometry = new THREE.PlaneGeometry(20, 20);
+        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.8 });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2; // Orienter le plan à l'horizontale
+        ground.receiveShadow = true; // Le sol reçoit les ombres
+        scene.add(ground);
 
-            // 1. Initialisation de la scène, de la caméra et du moteur de rendu
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.z = 5;
+        // 5. Création des objets 3D avec ombres
+        const objects = [];
 
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
+        // Objet "Bois" (Cube aplati)
+        const woodGeometry = new THREE.BoxGeometry(1.5, 0.2, 1);
+        const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8, metalness: 0.1 });
+        const woodCube = new THREE.Mesh(woodGeometry, woodMaterial);
+        woodCube.position.set(-1.5, 0.6, 0);
+        woodCube.castShadow = true;
+        woodCube.receiveShadow = true;
+        scene.add(woodCube);
+        objects.push(woodCube);
+
+        // Objet "Métal" (TorusKnot - forme plus complexe)
+        const metalGeometry = new THREE.TorusKnotGeometry(0.5, 0.15, 100, 16);
+        const metalMaterial = new THREE.MeshStandardMaterial({ color: 0xaaa9ad, roughness: 0.2, metalness: 0.9 });
+        const metalKnot = new THREE.Mesh(metalGeometry, metalMaterial);
+        metalKnot.position.set(0, 1, 0);
+        metalKnot.castShadow = true;
+        metalKnot.receiveShadow = true;
+        scene.add(metalKnot);
+        objects.push(metalKnot);
+
+        // Objet "Plastique" (Sphère)
+        const plasticGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const plasticMaterial = new THREE.MeshStandardMaterial({ color: 0x0077be, roughness: 0.4, metalness: 0.2 });
+        const plasticSphere = new THREE.Mesh(plasticGeometry, plasticMaterial);
+        plasticSphere.position.set(1.5, 0.6, 0);
+        plasticSphere.castShadow = true;
+        plasticSphere.receiveShadow = true;
+        scene.add(plasticSphere);
+        objects.push(plasticSphere);
+
+        // 6. Boucle d'animation
+        function animate() {
+            requestAnimationFrame(animate);
+            // Animation subtile des objets
+            const time = Date.now() * 0.0005;
+            metalKnot.rotation.y = time;
+            woodCube.rotation.y = time * 0.5;
+            plasticSphere.position.y = 0.6 + Math.sin(time * 2) * 0.1;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // 7. Gestion du redimensionnement
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
+        }
+        window.addEventListener('resize', onWindowResize);
 
-            // 2. Ajout des contrôles de la caméra (OrbitControls)
-            const controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; // Effet d'inertie
-            controls.dampingFactor = 0.05;
-            controls.screenSpacePanning = false;
-            controls.minDistance = 2;
-            controls.maxDistance = 10;
-
-            // 3. Ajout de l'éclairage
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(5, 10, 7.5);
-            scene.add(directionalLight);
-
-            // 4. Création des objets 3D (exemples de matériaux)
-            const objects = [];
-
-            // Objet "Bois" (Cube)
-            const woodGeometry = new THREE.BoxGeometry(1, 1, 1);
-            const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8, metalness: 0.1 });
-            const woodCube = new THREE.Mesh(woodGeometry, woodMaterial);
-            woodCube.position.x = -2;
-            scene.add(woodCube);
-            objects.push(woodCube);
-
-            // Objet "Métal" (Cylindre)
-            const metalGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 32);
-            const metalMaterial = new THREE.MeshStandardMaterial({ color: 0xaaa9ad, roughness: 0.2, metalness: 0.9 });
-            const metalCylinder = new THREE.Mesh(metalGeometry, metalMaterial);
-            scene.add(metalCylinder);
-            objects.push(metalCylinder);
-
-            // Objet "Plastique" (Sphère)
-            const plasticGeometry = new THREE.SphereGeometry(0.6, 32, 32);
-            const plasticMaterial = new THREE.MeshStandardMaterial({ color: 0x0077be, roughness: 0.4, metalness: 0.2 });
-            const plasticSphere = new THREE.Mesh(plasticGeometry, plasticMaterial);
-            plasticSphere.position.x = 2;
-            scene.add(plasticSphere);
-            objects.push(plasticSphere);
-
-            // 5. Boucle d'animation
-            function animate() {
-                requestAnimationFrame(animate);
-
-                // Animation des objets
-                objects.forEach(obj => {
-                    obj.rotation.x += 0.005;
-                    obj.rotation.y += 0.005;
-                });
-
-                controls.update(); // Mettre à jour les contrôles
-                renderer.render(scene, camera);
-            }
-
-            // 6. Gestion du redimensionnement de la fenêtre
-            function onWindowResize() {
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-            }
-            window.addEventListener('resize', onWindowResize);
-
-            // Démarrer l'animation
-            animate();
-        });
+        animate();
+    });
     </script>
 </body>
 </html>
