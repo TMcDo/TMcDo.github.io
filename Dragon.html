@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Complet du Dragon Barbu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #fdfae_f4; /* Sandy beige background */
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+            white-space: nowrap;
+        }
+        .tab-button.active {
+            border-bottom-color: #f59e0b; /* Amber 500 */
+            color: #d97706; /* Amber 600 */
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .compatible { border-left: 5px solid #22c55e; /* Green 500 */ }
+        .incompatible { border-left: 5px solid #ef4444; /* Red 500 */ }
+        .info { border-left: 5px solid #3b82f6; /* Blue 500 */ }
+        
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .bg-green-100 { background-color: #dcfce7; }
+        .text-green-600 { color: #16a34a; }
+        .bg-red-100 { background-color: #fee2e2; }
+        .text-red-600 { color: #dc2626; }
+        .bg-blue-100 { background-color: #dbeafe; }
+        .text-blue-600 { color: #2563eb; }
+        .bg-yellow-100 { background-color: #fef9c3; }
+        .text-yellow-600 { color: #ca8a04; }
+        .bg-purple-100 { background-color: #f3e8ff; }
+        .text-purple-600 { color: #9333ea; }
+        .bg-gray-100 { background-color: #f3f4f6; }
+        .text-gray-600 { color: #4b5563; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-yellow-50 min-h-screen text-gray-800 p-2 sm:p-6 lg:p-8">
+
+    <div class="max-w-6xl mx-auto main-container p-4 sm:p-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-amber-700">Guide Complet du Dragon Barbu</h1>
+            <p class="text-gray-600 mt-2 text-lg">Alimentation, environnement, santé et suivi de votre reptile.</p>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <div class="overflow-x-auto no-scrollbar">
+            <nav class="flex justify-center border-b-2 border-gray-200 mb-8 space-x-2 sm:space-x-8">
+                <button id="btn-nourriture" class="main-tab-button tab-button active text-base sm:text-xl font-semibold py-4 px-2 sm:px-6"><i class="fas fa-utensils mr-2"></i>Nourriture</button>
+                <button id="btn-environnement" class="main-tab-button tab-button text-base sm:text-xl font-semibold py-4 px-2 sm:px-6"><i class="fas fa-home mr-2"></i>Environnement</button>
+                <button id="btn-sante" class="main-tab-button tab-button text-base sm:text-xl font-semibold py-4 px-2 sm:px-6"><i class="fas fa-heartbeat mr-2"></i>Santé & Suivi</button>
+            </nav>
+        </div>
+
+        <main>
+            <!-- Sections principales -->
+            <section id="content-nourriture" class="main-content"></section>
+            <section id="content-environnement" class="main-content hidden"></section>
+            <section id="content-sante" class="main-content hidden"></section>
+        </main>
+    </div>
+
+    <!-- Templates pour le contenu des onglets -->
+    <template id="template-nourriture">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-bold text-amber-600">Alimentation</h2>
+            <p class="text-gray-500 mt-1">Ce que votre dragon barbu peut et ne peut pas manger.</p>
+        </div>
+        <div class="flex justify-center border-b border-gray-200 mb-6">
+            <button data-target="nourriture-compatible" class="sub-tab-button food-tab-button tab-button active font-semibold py-2 px-4">Compatible</button>
+            <button data-target="nourriture-incompatible" class="sub-tab-button food-tab-button tab-button font-semibold py-2 px-4">Incompatible (Toxique)</button>
+        </div>
+        <div id="nourriture-compatible" class="sub-content food-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-green-100 text-green-600"><i class="fas fa-bug fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Insectes</h3></div><ul class="space-y-2 list-disc list-inside text-gray-700"><li><strong>Grillons :</strong> Base de l'alimentation.</li><li><strong>Blattes Dubia :</strong> Excellente valeur nutritive.</li><li><strong>Vers à soie :</strong> Riches en calcium.</li><li><strong>Vers Phoenix :</strong> Également riches en calcium.</li><li><strong>Vers de Goliaths (Hornworms) :</strong> Très hydratants (en friandise).</li></ul></div>
+                <div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-green-100 text-green-600"><i class="fas fa-leaf fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Légumes</h3></div><ul class="space-y-2 list-disc list-inside text-gray-700"><li><strong>Feuilles de pissenlit :</strong> Tous les jours.</li><li><strong>Feuilles de navet / moutarde :</strong> Tous les jours.</li><li><strong>Courge butternut :</strong> Souvent.</li><li><strong>Poivron :</strong> Occasionnellement.</li><li><strong>Endive, roquette :</strong> Souvent.</li><li><strong>Carottes (râpées) :</strong> Occasionnellement.</li></ul></div>
+                <div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-yellow-100 text-yellow-600"><i class="fas fa-apple-alt fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Fruits (en friandise)</h3></div><p class="text-sm text-gray-500 mb-3">À donner avec modération (10% de la diète max).</p><ul class="space-y-2 list-disc list-inside text-gray-700"><li><strong>Papaye, Mangue :</strong> Très bons.</li><li><strong>Figues :</strong> Riches en calcium.</li><li><strong>Baies (fraises, bleuets) :</strong> Occasionnellement.</li><li><strong>Pomme (sans pépins) :</strong> Rarement.</li><li><strong>Pêche, poire :</strong> Rarement.</li></ul></div>
+            </div>
+        </div>
+        <div id="nourriture-incompatible" class="sub-content food-content hidden"><div class="card p-5 incompatible"><div class="flex items-center mb-4"><div class="icon-circle bg-red-100 text-red-600"><i class="fas fa-skull-crossbones fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">À ne JAMAIS donner</h3></div><ul class="space-y-3 list-disc list-inside text-gray-700"><li><strong>Avocat :</strong> Très toxique, peut être mortel.</li><li><strong>Rhubarbe :</strong> Très toxique.</li><li><strong>Oignon, ail, poireau :</strong> Toxiques.</li><li><strong>Laitue Iceberg :</strong> Aucune valeur nutritive, cause des diarrhées.</li><li><strong>Épinards, bette à carde :</strong> Bloquent l'absorption du calcium (à donner très rarement).</li><li><strong>Champignons sauvages :</strong> Potentiellement toxiques.</li><li><strong>Agrumes (orange, citron) :</strong> Trop acides.</li><li><strong>Lucioles (vers luisants) :</strong> Mortellement toxiques.</li></ul></div></div>
+    </template>
+    
+    <template id="template-environnement">
+        <div class="text-center mb-6"><h2 class="text-3xl font-bold text-amber-600">Environnement Idéal</h2><p class="text-gray-500 mt-1">Comment créer un habitat parfait pour votre dragon.</p></div>
+        <div class="flex justify-center border-b border-gray-200 mb-6"><button data-target="environnement-compatible" class="sub-tab-button env-tab-button tab-button active font-semibold py-2 px-4">Éléments Compatibles</button><button data-target="environnement-incompatible" class="sub-tab-button env-tab-button tab-button font-semibold py-2 px-4">À Éviter</button></div>
+        <div id="environnement-compatible" class="sub-content env-content"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-blue-100 text-blue-600"><i class="fas fa-igloo fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Terrarium</h3></div><ul class="space-y-2 list-disc list-inside text-gray-700"><li><strong>Bébé (0-6 mois) :</strong> 75 litres (20 gal) minimum.</li><li><strong>Juvénile (6-12 mois) :</strong> 150 litres (40 gal) minimum.</li><li><strong>Adulte :</strong> 450L (120 gal) est idéal.</li></ul></div><div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-yellow-100 text-yellow-600"><i class="fas fa-thermometer-half fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Température</h3></div><ul class="space-y-2 list-disc list-inside text-gray-700"><li><strong>Point chaud :</strong> 38-43°C (100-110°F).</li><li><strong>Côté frais :</strong> 24-29°C (75-85°F).</li><li><strong>Nuit :</strong> Pas en dessous de 18°C (65°F).</li></ul></div><div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-yellow-100 text-yellow-600"><i class="fas fa-sun fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Éclairage UVB</h3></div><p class="text-gray-700">Essentiel pour la synthèse de la vitamine D3.</p><ul class="space-y-2 list-disc list-inside text-gray-700 mt-2"><li>Utiliser un tube néon UVB 10.0 ou 12.0.</li><li>Couvrir 2/3 de la longueur du terrarium.</li><li>Remplacer tous les 6 à 12 mois.</li></ul></div><div class="card p-5 compatible"><div class="flex items-center mb-4"><div class="icon-circle bg-blue-100 text-blue-600"><i class="fas fa-layer-group fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Substrat Sûr</h3></div><ul class="space-y-2 list-disc list-inside text-gray-700"><li><strong>Papier essuie-tout ou journal :</strong> Idéal pour les bébés.</li><li><strong>Tapis de reptile :</strong> Facile à nettoyer.</li><li><strong>Carrelage en céramique ou ardoise :</strong> Retient la chaleur.</li></ul></div></div></div>
+        <div id="environnement-incompatible" class="sub-content env-content hidden"><div class="card p-5 incompatible"><div class="flex items-center mb-4"><div class="icon-circle bg-red-100 text-red-600"><i class="fas fa-ban fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Éléments à Éviter</h3></div><ul class="space-y-3 list-disc list-inside text-gray-700"><li><strong>Sable, copeaux de bois, substrat de noyer :</strong> Risque d'impaction intestinale fatale.</li><li><strong>Rochers chauffants :</strong> Risque de brûlures graves.</li><li><strong>Cohabitation :</strong> Les dragons barbus sont solitaires. Le stress peut causer des blessures graves.</li><li><strong>Manque d'UVB :</strong> Mène à la maladie métabolique des os.</li></ul></div></div>
+    </template>
+
+    <template id="template-sante">
+        <div class="text-center mb-6"><h2 class="text-3xl font-bold text-purple-600">Santé & Suivi</h2><p class="text-gray-500 mt-1">Outils pour veiller au bien-être de votre dragon.</p></div>
+        <div class="flex justify-center border-b border-gray-200 mb-6 overflow-x-auto no-scrollbar"><button data-target="sante-maladies" class="sub-tab-button sante-tab-button tab-button active font-semibold py-2 px-4">Maladies</button><button data-target="sante-calculateur" class="sub-tab-button sante-tab-button tab-button font-semibold py-2 px-4">Calculateur</button><button data-target="sante-journal" class="sub-tab-button sante-tab-button tab-button font-semibold py-2 px-4">Journal</button></div>
+        
+        <div id="sante-maladies" class="sub-content sante-content"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="card p-5 incompatible"><div class="flex items-center mb-4"><div class="icon-circle bg-red-100 text-red-600"><i class="fas fa-bone-break fa-lg"></i></div><h3 class="text-xl font-semibold ml-4">Maladie Métabolique Osseuse</h3></div><p class="text-sm text-gray-600 mb-2"><strong>Symptômes:</strong> Léthargie, tremblements, membres déformés, mâchoire molle.</p><p class="text-sm text-gray-600"><strong>Prévention:</strong> Éclairage UVB adéquat, supplémentation en calcium/D3.</p></div><div class="card p-5 incompatible"><div class="flex items-center mb-4"><div class="icon-circle bg-red-100 text-red-600"><i class="fas fa-bacteria fa-lg"></i></div><h3 class="text-xl font-semibold ml-4">Impaction Intestinale</h3></div><p class="text-sm text-gray-600 mb-2"><strong>Symptômes:</strong> Constipation, perte d'appétit, ventre gonflé, léthargie.</p><p class="text-sm text-gray-600"><strong>Prévention:</strong> Utiliser un substrat sûr, bonne hydratation, température adéquate.</p></div><div class="card p-5 incompatible"><div class="flex items-center mb-4"><div class="icon-circle bg-red-100 text-red-600"><i class="fas fa-lungs-virus fa-lg"></i></div><h3 class="text-xl font-semibold ml-4">Infection Respiratoire</h3></div><p class="text-sm text-gray-600 mb-2"><strong>Symptômes:</strong> Respiration bouche ouverte, mucus, éternuements.</p><p class="text-sm text-gray-600"><strong>Prévention:</strong> Maintenir une bonne température et une faible humidité.</p></div><div class="card p-5 incompatible"><div class="flex items-center mb-4"><div class="icon-circle bg-red-100 text-red-600"><i class="fas fa-mouth-guard fa-lg"></i></div><h3 class="text-xl font-semibold ml-4">Stomatite (Pourriture de la bouche)</h3></div><p class="text-sm text-gray-600 mb-2"><strong>Symptômes:</strong> Rougeurs, gonflement ou pus autour de la bouche.</p><p class="text-sm text-gray-600"><strong>Prévention:</strong> Hygiène, alimentation variée, éviter les blessures buccales.</p></div></div></div>
+        
+        <div id="sante-calculateur" class="sub-content sante-content hidden"><div class="card p-6 info"><div class="flex items-center mb-4"><div class="icon-circle bg-blue-100 text-blue-600"><i class="fas fa-calculator fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Calculateur Ratio Ca:P</h3></div><p class="text-gray-600 mb-4">Le ratio idéal Calcium:Phosphore se situe entre <strong>1.5:1</strong> et <strong>2:1</strong>. Entrez les valeurs d'un aliment pour vérifier son ratio.</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"><input id="calcium-input" type="number" placeholder="Calcium (mg)" class="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"><input id="phosphore-input" type="number" placeholder="Phosphore (mg)" class="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></div><button id="calculate-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Calculer</button><div id="result-text" class="mt-4 text-center text-xl font-semibold"></div></div></div>
+
+        <div id="sante-journal" class="sub-content sante-content hidden"><div class="card p-6 info"><div class="flex items-center mb-4"><div class="icon-circle bg-purple-100 text-purple-600"><i class="fas fa-book-medical fa-lg"></i></div><h3 class="text-2xl font-semibold ml-4">Journal de Bord</h3></div><form id="log-form" class="space-y-4 mb-6"><input type="date" id="log-date" class="w-full p-2 border rounded-lg" required><input type="number" id="log-weight" placeholder="Poids (grammes)" class="w-full p-2 border rounded-lg"><textarea id="log-food" placeholder="Nourriture mangée..." class="w-full p-2 border rounded-lg" rows="2"></textarea><textarea id="log-notes" placeholder="Notes (comportement, mue...)" class="w-full p-2 border rounded-lg" rows="2"></textarea><button type="submit" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition">Ajouter l'entrée</button></form><div id="log-list" class="space-y-4"></div></div></div>
+    </template>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const mainContents = {
+            nourriture: document.getElementById('content-nourriture'),
+            environnement: document.getElementById('content-environnement'),
+            sante: document.getElementById('content-sante'),
+        };
+        const templates = {
+            nourriture: document.getElementById('template-nourriture').innerHTML,
+            environnement: document.getElementById('template-environnement').innerHTML,
+            sante: document.getElementById('template-sante').innerHTML,
+        };
+
+        function setupSubTabs(container) {
+            const tabButtons = container.querySelectorAll('.sub-tab-button');
+            const tabContents = container.querySelectorAll('.sub-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const targetId = button.getAttribute('data-target');
+                    tabContents.forEach(content => {
+                        content.classList.toggle('hidden', content.id !== targetId);
+                    });
+                });
+            });
+        }
+
+        function loadMainTabContent(tabName) {
+            Object.values(mainContents).forEach(content => content.classList.add('hidden'));
+            
+            const activeContent = mainContents[tabName];
+            activeContent.innerHTML = templates[tabName];
+            activeContent.classList.remove('hidden');
+            
+            setupSubTabs(activeContent);
+
+            if (tabName === 'sante') {
+                initCalculator();
+                initLogbook();
+            }
+        }
+
+        const mainTabButtons = document.querySelectorAll('.main-tab-button');
+        mainTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                mainTabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.id.split('-')[1];
+                loadMainTabContent(tabId);
+            });
+        });
+
+        // Load initial tab
+        loadMainTabContent('nourriture');
+
+        // --- CALCULATOR LOGIC ---
+        function initCalculator() {
+            const calculateBtn = document.getElementById('calculate-btn');
+            const calciumInput = document.getElementById('calcium-input');
+            const phosphoreInput = document.getElementById('phosphore-input');
+            const resultText = document.getElementById('result-text');
+
+            calculateBtn.addEventListener('click', () => {
+                const calcium = parseFloat(calciumInput.value);
+                const phosphore = parseFloat(phosphoreInput.value);
+
+                if (isNaN(calcium) || isNaN(phosphore) || calcium <= 0 || phosphore <= 0) {
+                    resultText.textContent = "Veuillez entrer des valeurs valides.";
+                    resultText.className = 'mt-4 text-center text-xl font-semibold text-red-600';
+                    return;
+                }
+
+                const ratio = calcium / phosphore;
+                const ratioFormatted = ratio.toFixed(2);
+                
+                resultText.textContent = `Ratio Ca:P = ${ratioFormatted}:1`;
+                if (ratio >= 1.5 && ratio <= 2.0) {
+                    resultText.className = 'mt-4 text-center text-xl font-semibold text-green-600';
+                } else {
+                    resultText.className = 'mt-4 text-center text-xl font-semibold text-red-600';
+                }
+            });
+        }
+
+        // --- LOGBOOK LOGIC ---
+        function initLogbook() {
+            const logForm = document.getElementById('log-form');
+            const logList = document.getElementById('log-list');
+            let logs = JSON.parse(localStorage.getItem('beardedDragonLogs')) || [];
+
+            function renderLogs() {
+                logList.innerHTML = '';
+                if(logs.length === 0) {
+                    logList.innerHTML = `<p class="text-center text-gray-500">Aucune entrée dans le journal.</p>`;
+                    return;
+                }
+                
+                // Sort logs by date, newest first
+                logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                logs.forEach((log, index) => {
+                    const logElement = document.createElement('div');
+                    logElement.className = 'bg-gray-100 p-4 rounded-lg shadow';
+                    
+                    const displayDate = new Date(log.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+                    logElement.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold text-lg text-purple-700">${displayDate}</p>
+                                ${log.weight ? `<p class="text-sm text-gray-600"><strong>Poids:</strong> ${log.weight}g</p>` : ''}
+                                ${log.food ? `<p class="text-sm text-gray-600"><strong>Nourriture:</strong> ${log.food.replace(/\n/g, '<br>')}</p>` : ''}
+                                ${log.notes ? `<p class="text-sm text-gray-600"><strong>Notes:</strong> ${log.notes.replace(/\n/g, '<br>')}</p>` : ''}
+                            </div>
+                            <button class="delete-log-btn text-red-500 hover:text-red-700" data-index="${index}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    `;
+                    logList.appendChild(logElement);
+                });
+
+                document.querySelectorAll('.delete-log-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const indexToDelete = parseInt(e.currentTarget.getAttribute('data-index'));
+                        logs.splice(indexToDelete, 1);
+                        saveLogs();
+                        renderLogs();
+                    });
+                });
+            }
+
+            function saveLogs() {
+                localStorage.setItem('beardedDragonLogs', JSON.stringify(logs));
+            }
+
+            logForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newLog = {
+                    date: document.getElementById('log-date').value,
+                    weight: document.getElementById('log-weight').value,
+                    food: document.getElementById('log-food').value,
+                    notes: document.getElementById('log-notes').value
+                };
+                logs.push(newLog);
+                saveLogs();
+                renderLogs();
+                logForm.reset();
+            });
+
+            renderLogs();
+        }
+    });
+    </script>
+</body>
+</html>
+
+
