@@ -6,12 +6,19 @@
     <title>Projet Minutieux - Visionneuse README</title>
     <!-- Tailwind CSS pour un design robuste et rapide -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configuration Tailwind pour activer le Dark Mode via une classe
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <!-- Marked.js pour parser le Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Three.js pour la visualisation 3D -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        /* Styles de base pour le contenu Markdown rendu */
+        /* Styles de base pour le contenu Markdown rendu (Clair & Sombre) */
+        .markdown-body { transition: color 0.3s; }
         .markdown-body h1 { font-size: 2em; font-weight: bold; margin-bottom: 0.5em; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.25em; }
         .markdown-body h2 { font-size: 1.5em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
         .markdown-body p { margin-bottom: 1em; line-height: 1.6; }
@@ -20,16 +27,33 @@
         .markdown-body code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 0.25em; font-family: monospace; }
         .markdown-body pre { background-color: #1f2937; color: #f3f4f6; padding: 1em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 1em; }
         
-        #canvas-container canvas { border-radius: 0.5rem; width: 100% !important; height: auto !important; aspect-ratio: 1 / 1; }
+        /* Ajustements Dark Mode pour le Markdown */
+        .dark .markdown-body { color: #d1d5db; }
+        .dark .markdown-body h1 { border-bottom-color: #374151; color: #f3f4f6; }
+        .dark .markdown-body h2 { color: #e5e7eb; }
+        .dark .markdown-body a { color: #60a5fa; }
+        .dark .markdown-body code { background-color: #374151; color: #e5e7eb; }
+
+        #canvas-container canvas { border-radius: 0.5rem; width: 100% !important; height: auto !important; aspect-ratio: 1 / 1; outline: none; }
+        
+        /* Transition douce pour le changement de thème */
+        body { transition: background-color 0.3s, color 0.3s; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+<body class="bg-gray-100 dark:bg-slate-900 text-gray-800 dark:text-gray-200 font-sans min-h-screen">
 
     <!-- En-tête -->
-    <header class="bg-slate-800 text-white p-4 shadow-md">
+    <header class="bg-slate-800 dark:bg-slate-950 text-white p-4 shadow-md border-b-4 border-slate-700">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">🛠️ Monsieur Minutieux</h1>
-            <span class="text-sm bg-slate-700 px-3 py-1 rounded-full border border-slate-600">DIY & Design Robuste</span>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold tracking-tight">🛠️ Monsieur Minutieux</h1>
+                <span class="hidden sm:inline-block text-xs bg-slate-700 px-3 py-1 rounded-full border border-slate-600">DIY & Design Robuste</span>
+            </div>
+            
+            <!-- Piton Dark Mode -->
+            <button id="theme-toggle" class="bg-slate-700 hover:bg-slate-600 border border-slate-500 text-xl p-2 rounded-full transition-colors focus:outline-none" aria-label="Basculer le thème">
+                🌙
+            </button>
         </div>
     </header>
 
@@ -37,17 +61,20 @@
     <main class="max-w-7xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
         
         <!-- Colonne Gauche : Le README rendu -->
-        <section class="flex-1 bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 class="text-xl font-bold text-gray-700">Documentation du Projet</h2>
-                <a href="https://tmcdo.github.io/README.md" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    Source brute
-                </a>
+        <section class="flex-1 bg-white dark:bg-slate-800 p-6 md:p-8 rounded-xl shadow-lg border-t-4 border-blue-600 transition-colors">
+            <div class="flex justify-between items-center mb-6 border-b dark:border-slate-700 pb-4">
+                <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200">Documentation du Projet</h2>
+                <div class="flex items-center gap-3">
+                    <span id="offline-badge" class="hidden text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-1 rounded shadow">⚡ Mode Garage (Cache)</span>
+                    <a href="https://tmcdo.github.io/README.md" target="_blank" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        Source brute
+                    </a>
+                </div>
             </div>
             
             <div id="readme-content" class="markdown-body">
-                <div class="flex items-center justify-center p-12 text-gray-500">
+                <div class="flex items-center justify-center p-12 text-gray-500 dark:text-gray-400">
                     <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -61,23 +88,23 @@
         <aside class="w-full lg:w-96 flex flex-col gap-8">
             
             <!-- Widget 3D -->
-            <div class="bg-white p-4 rounded-xl shadow-lg border-t-4 border-slate-800">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Visualisation 3D (Composant)</h3>
-                <p class="text-xs text-gray-500 mb-4">Aperçu interactif d'un boulon d'assemblage robuste. (Glisse la souris pour tourner)</p>
-                <div id="canvas-container" class="bg-gray-50 rounded-lg overflow-hidden cursor-move border border-gray-200"></div>
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg border-t-4 border-slate-800 dark:border-slate-500 transition-colors">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">Assemblage 3D (Composants)</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Aperçu interactif : Boulon et écrou. (Glisse la souris pour tourner)</p>
+                <div id="canvas-container" class="bg-gray-50 dark:bg-slate-700 rounded-lg overflow-hidden cursor-move border border-gray-200 dark:border-slate-600 transition-colors"></div>
             </div>
 
             <!-- Base de données exportable -->
-            <div class="bg-white p-4 rounded-xl shadow-lg border-t-4 border-green-600">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg border-t-4 border-green-600 transition-colors">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">Base de Matériaux</h3>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">Inventaire Matériaux</h3>
                     <button id="export-btn" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 px-3 rounded shadow transition-colors">
                         ↓ Exporter CSV
                     </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 dark:text-gray-300 uppercase bg-gray-50 dark:bg-slate-700 transition-colors">
                             <tr>
                                 <th class="px-3 py-2">Objet</th>
                                 <th class="px-3 py-2">Matériau</th>
@@ -94,33 +121,76 @@
         </aside>
     </main>
 
-    <footer class="bg-slate-800 text-slate-400 text-center p-6 mt-8">
+    <footer class="bg-slate-800 dark:bg-slate-950 text-slate-400 text-center p-6 mt-8 transition-colors">
         <p class="text-sm">© 2026 Monsieur Minutieux - Design robuste, fabrication "low-cost" et sur-mesure.</p>
     </footer>
 
     <!-- Scripts de l'application -->
     <script>
-        // --- 1. CHARGEMENT DU README.MD ---
+        // --- 0. GESTION DU MODE SOMBRE ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        
+        // Vérifie la préférence système ou le choix sauvegardé
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlElement.classList.add('dark');
+            themeToggleBtn.innerText = '☀️';
+        } else {
+            htmlElement.classList.remove('dark');
+            themeToggleBtn.innerText = '🌙';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            if (htmlElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+                themeToggleBtn.innerText = '☀️';
+            } else {
+                localStorage.theme = 'light';
+                themeToggleBtn.innerText = '🌙';
+            }
+        });
+
+        // --- 1. CHARGEMENT DU README.MD AVEC CACHE ---
         const urlToFetch = 'https://tmcdo.github.io/README.md';
         const readmeContainer = document.getElementById('readme-content');
+        const offlineBadge = document.getElementById('offline-badge');
+        const CACHE_KEY = 'mrminutieux_readme_cache';
 
+        // Fonction pour afficher le markdown
+        const renderMarkdown = (text) => {
+            if(text.trim().toLowerCase().startsWith('<!doctype html>')) {
+                readmeContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500">Oups! L'URL a retourné une page web au lieu d'un fichier Markdown brut. Assure-toi que le fichier existe bien à cette adresse.</div>`;
+            } else {
+                readmeContainer.innerHTML = marked.parse(text);
+            }
+        };
+
+        // On vérifie d'abord s'il y a quelque chose dans le cache pour affichage instantané
+        const cachedReadme = localStorage.getItem(CACHE_KEY);
+        if(cachedReadme) {
+            renderMarkdown(cachedReadme);
+            offlineBadge.classList.remove('hidden'); // On assume cache au début
+        }
+
+        // On fetch la nouvelle version
         fetch(urlToFetch)
             .then(response => {
                 if (!response.ok) throw new Error(`Erreur réseau: ${response.status}`);
                 return response.text();
             })
             .then(markdownText => {
-                // Parse le markdown en HTML avec marked.js
-                // On vérifie si on n'a pas reçu une page HTML par erreur (fréquent avec Github Pages si le fichier n'existe pas)
-                if(markdownText.trim().toLowerCase().startsWith('<!doctype html>')) {
-                     readmeContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500">Oups! L'URL a retourné une page web au lieu d'un fichier Markdown brut. Assure-toi que le fichier existe bien à cette adresse.</div>`;
-                } else {
-                    readmeContainer.innerHTML = marked.parse(markdownText);
-                }
+                // Succès ! On met à jour l'affichage et le cache
+                renderMarkdown(markdownText);
+                localStorage.setItem(CACHE_KEY, markdownText);
+                offlineBadge.classList.add('hidden'); // On est live
             })
             .catch(error => {
-                console.error('Erreur lors du fetch:', error);
-                readmeContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 border-l-4 border-red-500 font-bold">Ayoye! Impossible de charger le fichier. Vérifie que le lien est bon ou qu'il n'y a pas de restriction CORS. Erreur: ${error.message}</div>`;
+                console.warn('Impossible de charger la nouvelle version, utilisation du cache si disponible.', error);
+                if(!cachedReadme) {
+                    readmeContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 border-l-4 border-red-500 font-bold">Ayoye! Impossible de charger le fichier et rien en mémoire. Connecte-toi à Internet pour le premier chargement. Erreur: ${error.message}</div>`;
+                }
+                // Si on a le cache, il est déjà affiché, on laisse le badge "Mode Garage"
             });
 
         // --- 2. BASE DE DONNÉES EXPORTABLE (DIY & Matériaux) ---
@@ -129,18 +199,20 @@
             { id: 'M02', objet: 'Boulon Hex 3/8', materiau: 'Acier Grade 5', cout: '$', usage: 'Assemblage' },
             { id: 'M03', objet: 'Contreplaqué 3/4', materiau: 'Bois (Érable)', cout: '$$', usage: 'Surfaces' },
             { id: 'M04', objet: 'Tube Carré 1"', materiau: 'Aluminium 6061', cout: '$$', usage: 'Structure légère' },
-            { id: 'M05', objet: 'Écrou Frein (Nylon)', materiau: 'Acier Zingué', cout: '$', usage: 'Anti-vibration' }
+            { id: 'M05', objet: 'Écrou Frein', materiau: 'Acier & Nylon', cout: '$', usage: 'Anti-vibration' },
+            { id: 'M06', objet: 'Vis auto-perceuse', materiau: 'Acier Zingué', cout: '$', usage: 'Fixation métal' },
+            { id: 'M07', objet: 'Plaque 1/4"', materiau: 'Acier Doux', cout: '$$$', usage: 'Ancrage' }
         ];
 
         // Remplir la table
         const tbody = document.getElementById('db-table-body');
         materialsDB.forEach(item => {
             const tr = document.createElement('tr');
-            tr.className = "bg-white border-b";
+            tr.className = "bg-white dark:bg-slate-800 border-b dark:border-slate-700 transition-colors";
             tr.innerHTML = `
-                <td class="px-3 py-2 font-medium text-gray-900">${item.objet}</td>
+                <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">${item.objet}</td>
                 <td class="px-3 py-2">${item.materiau}</td>
-                <td class="px-3 py-2 font-bold">${item.cout}</td>
+                <td class="px-3 py-2 font-bold text-green-600 dark:text-green-400">${item.cout}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -167,38 +239,56 @@
             const height = width; // Carré
             
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf9fafb); // gris très pâle pour s'agencer au design
+            // Fond transparent pour s'adapter au Dark/Light mode
+            scene.background = null; 
 
             const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
             camera.position.z = 5;
             camera.position.y = 2;
             camera.lookAt(0, 0, 0);
 
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            // Alpha: true permet la transparence
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setClearColor( 0x000000, 0 ); // Transparent
             renderer.setSize(width, height);
             container.appendChild(renderer.domElement);
 
-            // Création d'un boulon "low-cost" stylisé
-            const boltGroup = new THREE.Group();
+            // Création de l'assemblage
+            const assemblyGroup = new THREE.Group();
 
-            // Tête hexagonale
-            const headGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.5, 6);
             const metalMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0x9ca3af, // Gris métallique
-                roughness: 0.4,
+                roughness: 0.3,
                 metalness: 0.8
             });
+
+            // 1. Tête hexagonale du boulon
+            const headGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.5, 6);
             const head = new THREE.Mesh(headGeometry, metalMaterial);
             head.position.y = 1;
-            boltGroup.add(head);
+            assemblyGroup.add(head);
 
-            // Tige du boulon
-            const shaftGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 16);
+            // 2. Tige du boulon
+            const shaftGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2.5, 16);
             const shaft = new THREE.Mesh(shaftGeometry, metalMaterial);
-            shaft.position.y = -0.25;
-            boltGroup.add(shaft);
+            shaft.position.y = -0.5;
+            assemblyGroup.add(shaft);
 
-            scene.add(boltGroup);
+            // 3. Écrou (Hexagone avec un trou au milieu simulé en empilant)
+            // Pour faire low-cost sans calculs complexes (CSG), on fait un cylindre hex un peu plus large
+            const nutGeometry = new THREE.CylinderGeometry(0.9, 0.9, 0.4, 6);
+            const nutMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xcbd5e1, // Un peu plus clair pour le contraste
+                roughness: 0.4,
+                metalness: 0.7
+            });
+            const nut = new THREE.Mesh(nutGeometry, nutMaterial);
+            nut.position.y = -1.2; // Vissé sur la tige
+            // Rotation légère pour pas être aligné parfaitement avec la tête (plus réaliste)
+            nut.rotation.y = Math.PI / 12; 
+            assemblyGroup.add(nut);
+
+            scene.add(assemblyGroup);
 
             // Lumières pour un effet métallique
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -212,7 +302,7 @@
             pointLight.position.set(-2, 0, 2);
             scene.add(pointLight);
 
-            // Interaction souris pour tourner le boulon
+            // Interaction souris pour tourner l'assemblage
             let isDragging = false;
             let previousMousePosition = { x: 0, y: 0 };
 
@@ -220,7 +310,7 @@
             container.addEventListener('mouseup', () => isDragging = false);
             container.addEventListener('mouseleave', () => isDragging = false);
             
-            // Support tactile de base
+            // Support tactile
             container.addEventListener('touchstart', (e) => {
                 isDragging = true;
                 previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -233,8 +323,8 @@
                         x: clientX - previousMousePosition.x,
                         y: clientY - previousMousePosition.y
                     };
-                    boltGroup.rotation.y += deltaMove.x * 0.01;
-                    boltGroup.rotation.x += deltaMove.y * 0.01;
+                    assemblyGroup.rotation.y += deltaMove.x * 0.01;
+                    assemblyGroup.rotation.x += deltaMove.y * 0.01;
                 }
                 previousMousePosition = { x: clientX, y: clientY };
             };
@@ -247,14 +337,13 @@
             // Boucle d'animation
             function animate() {
                 requestAnimationFrame(animate);
-                // Petite rotation automatique lente si on ne touche à rien
                 if(!isDragging){
-                    boltGroup.rotation.y += 0.005;
+                    assemblyGroup.rotation.y += 0.005; // Rotation lente automatique
                 }
                 renderer.render(scene, camera);
             }
 
-            // Gérer le redimensionnement de la fenêtre
+            // Gérer le redimensionnement
             window.addEventListener('resize', () => {
                 const newWidth = container.clientWidth;
                 renderer.setSize(newWidth, newWidth);
