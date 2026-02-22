@@ -33,6 +33,7 @@ https://TMcDo.github.io/PogonaPalace.html
 https://TMcDo.github.io/Sounds.html    
 https://TMcDo.github.io/soundz.html    
 https://TMcDo.github.io/Three.js.Canvas.html    
+https://TMcDo.github.io/Verger3D.html  
 https://TMcDo.github.io/visualisation.html    
 https://TMcDo.github.io/tennis.html    
 https://github.com/TMcDo/TMcDo.github.io/tree/main    
