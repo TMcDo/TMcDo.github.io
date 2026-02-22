@@ -43,7 +43,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s ease, top 0.2s, left 0.2s, width 0.2s, height 0.2s; /* Ajout transition pour maximize */
         }
         .window:active, .window:focus-within {
             border-color: #0ea5e9;
@@ -63,6 +63,11 @@
         }
         .window-header:active { cursor: grabbing; }
         
+        .window-controls {
+            display: flex;
+            align-items: center;
+        }
+        
         .window-controls span {
             display: inline-block;
             width: 14px;
@@ -71,7 +76,9 @@
             margin-left: 8px;
             cursor: pointer;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
         }
+        .window-controls span:active { transform: scale(0.9); }
         .close { background-color: #ef4444; }
         .minimize { background-color: #f59e0b; }
         .maximize { background-color: #10b981; }
@@ -178,7 +185,7 @@
         <div class="window-header">
             <span>[VUE 3D] G-Core Mk.II</span>
             <div class="window-controls">
-                <span class="minimize"></span><span class="maximize"></span><span class="close"></span>
+                <span class="minimize" title="Réduire"></span><span class="maximize" title="Agrandir"></span><span class="close" title="Fermer"></span>
             </div>
         </div>
         <div id="three-canvas-container" class="flex-grow bg-black relative">
@@ -191,7 +198,7 @@
         <div class="window-header">
             <span>[BDD] Inventaire de Fabrication Custom</span>
              <div class="window-controls">
-                <span class="minimize"></span><span class="maximize"></span><span class="close"></span>
+                <span class="minimize" title="Réduire"></span><span class="maximize" title="Agrandir"></span><span class="close" title="Fermer"></span>
             </div>
         </div>
         <div class="flex-grow overflow-y-auto bg-slate-900 p-1">
@@ -223,14 +230,14 @@
         <div class="window-header">
             <span>[LOGS] M. Minutieux</span>
              <div class="window-controls">
-                <span class="minimize"></span><span class="maximize"></span><span class="close"></span>
+                <span class="minimize" title="Réduire"></span><span class="maximize" title="Agrandir"></span><span class="close" title="Fermer"></span>
             </div>
         </div>
         <div class="flex-grow p-4 overflow-y-auto">
-            <h4 class="text-sky-400 font-bold mb-2">Build Log - v2.0</h4>
+            <h4 class="text-sky-400 font-bold mb-2">Build Log - v2.1</h4>
             <ul class="list-disc pl-5 text-sm space-y-2">
+                <li>Boutons de fenêtre (Fermer, Réduire, Agrandir) maintenant 100% fonctionnels.</li>
                 <li>Ajout du support tactile (Touch) pour mobile. Les fenêtres se "draggent" sua coche.</li>
-                <li>Système de grille réactif implanté.</li>
                 <li>Noyau 3D (G-Core) mis à jour avec une géométrie de noeud complexe (métal texturé).</li>
                 <li>Le bouton d'exportation génère un vrai fichier .csv prêt pour le magasin quincaillerie.</li>
             </ul>
@@ -246,19 +253,68 @@
         <div class="taskbar-item" title="Base de données" onclick="bringToFront('win-db')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
         </div>
+        <div class="taskbar-item" title="Logs & Notes" onclick="bringToFront('win-notes')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </div>
         <div class="taskbar-item flex items-center justify-center clock" id="clock">--:--</div>
     </div>
 
     <script>
-        // --- Z-Index Management ---
+        // --- Z-Index Management & Window Toggling ---
         let highestZ = 20;
         function bringToFront(id) {
             const el = document.getElementById(id);
             if(el) {
+                // Si la fenêtre est cachée (fermée/minimisée), on la réaffiche
+                if(el.style.display === 'none') {
+                    el.style.display = 'flex';
+                }
                 highestZ++;
                 el.style.zIndex = highestZ;
             }
         }
+
+        // --- Logique des boutons de la fenêtre (Agrandir/Réduire/Fermer) ---
+        const windowControls = document.querySelectorAll('.window-controls span');
+        windowControls.forEach(btn => {
+            // Empêcher le "drag" quand on clique sur les boutons
+            btn.addEventListener('mousedown', (e) => e.stopPropagation());
+            btn.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: false});
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Bloque l'événement pour pas déplacer la fenêtre
+                const win = this.closest('.window');
+                
+                if (this.classList.contains('close') || this.classList.contains('minimize')) {
+                    // Fermer ou minimiser = cacher la fenêtre. (Rouvrable via la barre des tâches)
+                    win.style.display = 'none';
+                } 
+                else if (this.classList.contains('maximize')) {
+                    if (!win.dataset.isMaximized) {
+                        // Sauvegarder l'état actuel
+                        win.dataset.top = win.style.top || win.offsetTop + 'px';
+                        win.dataset.left = win.style.left || win.offsetLeft + 'px';
+                        win.dataset.width = win.style.width || win.offsetWidth + 'px';
+                        win.dataset.height = win.style.height || win.offsetHeight + 'px';
+                        
+                        // Mettre en plein écran
+                        win.style.top = '0px';
+                        win.style.left = '0px';
+                        win.style.width = '100%';
+                        win.style.height = 'calc(100% - 65px)'; // Laisse de l'espace pour la barre des tâches
+                        win.style.zIndex = ++highestZ;
+                        win.dataset.isMaximized = 'true';
+                    } else {
+                        // Restaurer la taille d'avant
+                        win.style.top = win.dataset.top;
+                        win.style.left = win.dataset.left;
+                        win.style.width = win.dataset.width;
+                        win.style.height = win.dataset.height;
+                        delete win.dataset.isMaximized;
+                    }
+                }
+            });
+        });
 
         // --- Rendre les fenêtres déplaçables (Desktop & Mobile) ---
         const windows = document.querySelectorAll('.window');
@@ -273,14 +329,15 @@
             const header = elmnt.querySelector(".window-header");
             
             if (header) {
-                // Mouse events
                 header.onmousedown = dragMouseDown;
-                // Touch events
                 header.addEventListener('touchstart', dragTouchStart, {passive: false});
             }
 
             function dragMouseDown(e) {
                 e = e || window.event;
+                // Si on a cliqué sur un bouton, on ne commence pas à "dragger"
+                if(e.target.tagName.toLowerCase() === 'span') return;
+                
                 e.preventDefault();
                 pos3 = e.clientX;
                 pos4 = e.clientY;
@@ -291,6 +348,10 @@
             function elementDrag(e) {
                 e = e || window.event;
                 e.preventDefault();
+                
+                // On empêche le déplacement si la fenêtre est "maximisée"
+                if (elmnt.dataset.isMaximized === 'true') return;
+
                 pos1 = pos3 - e.clientX;
                 pos2 = pos4 - e.clientY;
                 pos3 = e.clientX;
@@ -300,7 +361,9 @@
             }
 
             function dragTouchStart(e) {
-                if (window.innerWidth <= 768) return; // Désactiver drag sur mobile pour garder le layout fixe
+                if (window.innerWidth <= 768) return; // Désactiver drag sur mobile
+                if(e.target.tagName.toLowerCase() === 'span') return;
+
                 e.preventDefault();
                 const touch = e.touches[0];
                 pos3 = touch.clientX;
@@ -310,6 +373,8 @@
             }
 
             function elementTouchDrag(e) {
+                if (elmnt.dataset.isMaximized === 'true') return;
+
                 e.preventDefault();
                 const touch = e.touches[0];
                 pos1 = pos3 - touch.clientX;
@@ -344,7 +409,6 @@
             for (let i = 0; i < table.rows.length; i++) {
                 let row = [], cols = table.rows[i].querySelectorAll("td, th");
                 for (let j = 0; j < cols.length; j++) {
-                    // Escape double quotes and enclose in quotes
                     let data = cols[j].innerText.replace(/"/g, '""');
                     row.push('"' + data + '"');
                 }
@@ -380,22 +444,19 @@
             renderer.setPixelRatio(window.devicePixelRatio);
             container.appendChild(renderer.domElement);
 
-            // Lumières dramatiques
             const ambientLight = new THREE.AmbientLight(0x222233, 1.5);
             scene.add(ambientLight);
             
-            const light1 = new THREE.DirectionalLight(0x0ea5e9, 2); // Sky blue
+            const light1 = new THREE.DirectionalLight(0x0ea5e9, 2); 
             light1.position.set(5, 5, 2);
             scene.add(light1);
             
-            const light2 = new THREE.DirectionalLight(0xef4444, 1); // Red accent
+            const light2 = new THREE.DirectionalLight(0xef4444, 1); 
             light2.position.set(-5, -5, -2);
             scene.add(light2);
 
-            // Création du noyau (TorusKnot = look d'os/structure complexe)
             const geometry = new THREE.TorusKnotGeometry(1, 0.3, 128, 32);
             
-            // Matériel de base (Métal)
             const material = new THREE.MeshStandardMaterial({
                 color: 0x94a3b8,
                 metalness: 0.8,
@@ -404,15 +465,13 @@
             coreMesh = new THREE.Mesh(geometry, material);
             scene.add(coreMesh);
 
-            // Fil de fer superposé (Look tech)
             const wireMaterial = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.3 });
             const wireGeometry = new THREE.WireframeGeometry(geometry);
             wireframeMesh = new THREE.LineSegments(wireGeometry, wireMaterial);
-            coreMesh.add(wireframeMesh); // Attache au mesh principal
+            coreMesh.add(wireframeMesh);
 
             window.addEventListener('resize', onWindowResize, false);
             
-            // Touch & Mouse Controls pour la rotation
             let isDragging = false;
             let previousPosition = { x: 0, y: 0 };
 
@@ -463,7 +522,6 @@
         function animate() {
             requestAnimationFrame(animate);
             if (coreMesh && !document.hidden) {
-                // Rotation lente automatique
                 coreMesh.rotation.y += 0.003;
                 coreMesh.rotation.z += 0.001;
             }
@@ -474,22 +532,3 @@
     </script>
 </body>
 </html>
-```eof
-
-### Quoi de neuf dans c'te version là :
-* **100% *Ready* pour GitHub Pages :** Y'a pu de scripts bizarres ou de dépendances externes brisées. Tu dompes ça dans un fichier `index.html` sur ton dépôt GitHub pis ça roule!
-* **Vraie base de données :** J'ai mis tes items de fabrication DIY (Bois, métal, vis, *grinder*, etc.). Le bouton **Exporter CSV** marche *pour vrai* pis va te télécharger ton inventaire.
-* **Design Responsive (Mobile/Desktop) :** Sur un ordi, les fenêtres se déplacent. Sur un cell, la grille change, les fenêtres s'adaptent à l'écran pis j'ai bloqué le "drag" pour pas que l'interface parte en peur sous tes doigts.
-* **Modèle 3D "G-Core Mk.II" :** J'ai changé les cylindres de base pour un "TorusKnot" métallique avec un grillage (*wireframe*) néon. Ça donne vraiment l'effet d'une articulation cybernétique complexe!
-
----
-
-**English Summary (Quick Read):**
-*Hey buddy! This is a GitHub Pages-ready, single-file deployment. Improvements include: true responsive design (stacks nicely on mobile, draggable on desktop), a working CSV export button with your requested DIY materials (wood, metal, screws, tools), and an upgraded 3D core (TorusKnot with neon wireframe) that responds to both mouse and touch.*
-
-**💡 Mes suggestions d'amélioration pour la suite (Monsieur Minutieux) :**
-1.  **Sauvegarde Locale (*Local Storage*) :** On pourrait faire en sorte que ton fureteur se rappelle où t'as placé tes fenêtres et du contenu de ta BDD même si tu *refresh* la page.
-2.  **Menu "Démarrer" style Colonne Vertébrale :** Le bouton avec le "G" en bas à gauche pourrait ouvrir un menu animé qui se déploie comme des côtes métalliques avec des liens vers tes sites *mrminutieux.ca*.
-3.  **Mode "Plan de travail" (WebXR) :** Si tu veux aller loin, on ajoute un bouton pour voir ton noyau 3D en réalité augmentée directement dans ton garage avec ton cell!
-
-Laisse-moi savoir si on *tweak* la base de données ou si tu veux que je te code le menu "Colonne Vertébrale"!
