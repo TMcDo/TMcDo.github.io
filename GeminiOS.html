@@ -155,11 +155,49 @@
             font-size: 0.8rem;
             font-weight: bold;
             transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         .btn-metal:active {
             background: #1e293b;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
             transform: translateY(1px);
+        }
+        .btn-metal:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ai-input {
+            background: #0f172a;
+            border: 1px solid #38bdf8;
+            color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            width: 100%;
+            outline: none;
+        }
+        .ai-input:focus {
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+        }
+        
+        .chat-msg { margin-bottom: 8px; font-size: 0.85rem; line-height: 1.4; }
+        .msg-user { color: #e2e8f0; border-left: 2px solid #94a3b8; padding-left: 8px; }
+        .msg-ai { color: #38bdf8; border-left: 2px solid #38bdf8; padding-left: 8px; background: rgba(56, 189, 248, 0.05); }
+        .msg-sys { color: #f59e0b; font-style: italic; }
+
+        .pulsing-text {
+            animation: pulse-text 1.5s infinite;
+        }
+        @keyframes pulse-text {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; text-shadow: 0 0 8px #38bdf8; }
+            100% { opacity: 0.5; }
         }
 
         /* --- RESPONSIVE DESIGN POUR MOBILE --- */
@@ -168,9 +206,9 @@
                 width: 96% !important;
                 left: 2% !important;
             }
-            #win-3d { top: 2% !important; height: 40% !important; }
-            #win-db { top: 44% !important; height: 40% !important; }
-            #win-notes { display: none; } /* Caché sur mobile pour sauver de l'espace */
+            #win-3d { top: 2% !important; height: 30% !important; }
+            #win-db { top: 34% !important; height: 30% !important; }
+            #win-notes { top: 66% !important; height: 30% !important; display: flex !important; }
             .taskbar { width: 90%; justify-content: space-between; }
         }
     </style>
@@ -193,54 +231,61 @@
         </div>
     </div>
 
-    <!-- Fenêtre 2: Base de données Exportable -->
+    <!-- Fenêtre 2: Base de données Exportable + IA -->
     <div id="win-db" class="window" style="top: 8%; left: 52%; width: 43%; height: 80%; z-index: 11;">
         <div class="window-header">
-            <span>[BDD] Inventaire de Fabrication Custom</span>
+            <span>[BDD] Inventaire & Ingénierie IA</span>
              <div class="window-controls">
                 <span class="minimize" title="Réduire"></span><span class="maximize" title="Agrandir"></span><span class="close" title="Fermer"></span>
             </div>
         </div>
+        
+        <!-- Section IA Gemini pour générer des matériaux -->
+        <div class="p-3 bg-slate-800 border-b border-slate-700">
+            <label class="text-xs text-sky-400 font-bold mb-1 block">RÉQUISITION DE MATÉRIAUX ASSISTÉE PAR G-CORE</label>
+            <div class="flex gap-2">
+                <input type="text" id="ai-project-input" class="ai-input flex-grow" placeholder="Ex: Je veux fabriquer un établi en bois..." onkeypress="handleProjectEnter(event)">
+                <button id="btn-generate-mats" class="btn-metal" onclick="generateMaterials()">✨ Générer</button>
+            </div>
+            <div id="ai-loading-db" class="text-xs text-sky-400 mt-2 pulsing-text hidden">Calcul des spécifications structurelles en cours...</div>
+        </div>
+
         <div class="flex-grow overflow-y-auto bg-slate-900 p-1">
             <table class="db-table" id="materials-table">
                 <thead>
                     <tr><th>Catégorie</th><th>Article</th><th>Qté</th><th>État</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="materials-tbody">
                     <tr><td>Outil</td><td>Perceuse à colonne</td><td>1</td><td>Robuste</td></tr>
                     <tr><td>Outil</td><td>Meuleuse d'angle (Grinder)</td><td>2</td><td>Actif</td></tr>
                     <tr><td>Organique</td><td>Contreplaqué (Wood) 3/4"</td><td>5</td><td>En stock</td></tr>
                     <tr><td>Métal</td><td>Fer-angle 2x2x1/4"</td><td>10</td><td>En stock</td></tr>
                     <tr><td>Métal</td><td>Tube acier carré 1"</td><td>8</td><td>En stock</td></tr>
-                    <tr><td>Plastique</td><td>Feuille Acrylique 1/8"</td><td>3</td><td>Fragile</td></tr>
-                    <tr><td>Plastique</td><td>Filament PETG (Imprimante 3D)</td><td>4</td><td>En stock</td></tr>
                     <tr><td>Fixation</td><td>Vis à bois #8 x 2"</td><td>500</td><td>Vrac</td></tr>
-                    <tr><td>Fixation</td><td>Boulons hexagonaux 3/8"</td><td>50</td><td>Robuste</td></tr>
-                    <tr><td>Fixation</td><td>Écrous (Nuts) 3/8"</td><td>50</td><td>Robuste</td></tr>
                 </tbody>
             </table>
         </div>
-        <div class="p-3 bg-slate-800 border-t border-slate-700 flex justify-end">
+        <div class="p-3 bg-slate-800 border-t border-slate-700 flex justify-between items-center">
+            <span class="text-xs text-slate-400" id="db-status">Système prêt.</span>
             <button class="btn-metal" onclick="exportCSV()">Exporter CSV</button>
         </div>
     </div>
     
-    <!-- Fenêtre 3: Notes -->
+    <!-- Fenêtre 3: Terminal IA (Remplaçant les Notes) -->
     <div id="win-notes" class="window" style="top: 62%; left: 5%; width: 45%; height: 26%; z-index: 9;">
         <div class="window-header">
-            <span>[LOGS] M. Minutieux</span>
+            <span>[TERMINAL] G-Core Intelligence</span>
              <div class="window-controls">
                 <span class="minimize" title="Réduire"></span><span class="maximize" title="Agrandir"></span><span class="close" title="Fermer"></span>
             </div>
         </div>
-        <div class="flex-grow p-4 overflow-y-auto">
-            <h4 class="text-sky-400 font-bold mb-2">Build Log - v2.1</h4>
-            <ul class="list-disc pl-5 text-sm space-y-2">
-                <li>Boutons de fenêtre (Fermer, Réduire, Agrandir) maintenant 100% fonctionnels.</li>
-                <li>Ajout du support tactile (Touch) pour mobile. Les fenêtres se "draggent" sua coche.</li>
-                <li>Noyau 3D (G-Core) mis à jour avec une géométrie de noeud complexe (métal texturé).</li>
-                <li>Le bouton d'exportation génère un vrai fichier .csv prêt pour le magasin quincaillerie.</li>
-            </ul>
+        <div class="flex-grow p-3 overflow-y-auto" id="chat-history">
+            <div class="chat-msg msg-sys">Connexion au réseau neuronal Gemini établie.</div>
+            <div class="chat-msg msg-ai"><strong>[G-Core]:</strong> Salutations. Je suis l'intelligence artificielle de cet OS. Comment puis-je assister vos protocoles de conception aujourd'hui ?</div>
+        </div>
+        <div class="p-2 bg-slate-800 border-t border-slate-700 flex gap-2">
+            <input type="text" id="ai-chat-input" class="ai-input flex-grow" placeholder="Entrez votre commande ou question..." onkeypress="handleChatEnter(event)">
+            <button id="btn-send-chat" class="btn-metal" onclick="sendChatMessage()">✨ Envoyer</button>
         </div>
     </div>
 
@@ -253,19 +298,201 @@
         <div class="taskbar-item" title="Base de données" onclick="bringToFront('win-db')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
         </div>
-        <div class="taskbar-item" title="Logs & Notes" onclick="bringToFront('win-notes')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <div class="taskbar-item" title="Terminal IA ✨" onclick="bringToFront('win-notes')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M22 12A10 10 0 0 0 12 2v10z" fill="currentColor"></path><circle cx="12" cy="12" r="3" fill="#0f172a"></circle></svg>
         </div>
         <div class="taskbar-item flex items-center justify-center clock" id="clock">--:--</div>
     </div>
 
     <script>
+        // --- Configuration API Gemini ---
+        const apiKey = ""; // L'environnement d'exécution fournira la clé au runtime.
+
+        // Fonction d'appel API avec Backoff Exponentiel (Tolérance aux pannes)
+        async function fetchGeminiAPI(prompt, systemInstruction, jsonSchema = null) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            if (jsonSchema) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: jsonSchema
+                };
+            }
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.candidates[0].content.parts[0].text;
+                    
+                } catch (error) {
+                    if (i === 4) {
+                        console.error("Échec de l'API après 5 tentatives.", error);
+                        throw error;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
+        // --- Feature 1: Générateur de Matériaux IA ---
+        function handleProjectEnter(e) {
+            if (e.key === 'Enter') generateMaterials();
+        }
+
+        async function generateMaterials() {
+            const inputEl = document.getElementById('ai-project-input');
+            const projectText = inputEl.value.trim();
+            if (!projectText) return;
+
+            const btn = document.getElementById('btn-generate-mats');
+            const loading = document.getElementById('ai-loading-db');
+            const status = document.getElementById('db-status');
+            
+            btn.disabled = true;
+            inputEl.disabled = true;
+            loading.classList.remove('hidden');
+            status.textContent = "Lien uplink Gemini en cours...";
+
+            const systemPrompt = "Tu es l'ingénieur système de G-Core. L'utilisateur décrit un projet de fabrication physique (DIY, menuiserie, métallurgie, etc.). Tu dois générer la liste des matériaux et outils nécessaires. Sois exhaustif mais réaliste.";
+            
+            const schema = {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        categorie: { type: "STRING", description: "Outil, Organique, Métal, Plastique, ou Fixation" },
+                        article: { type: "STRING", description: "Nom de l'outil ou du matériau (ex: Planche de chêne 2x4, Vis 2 pouces)" },
+                        qte: { type: "INTEGER", description: "Quantité recommandée" },
+                        etat: { type: "STRING", description: "Toujours mettre 'Requis (IA)'" }
+                    },
+                    required: ["categorie", "article", "qte", "etat"]
+                }
+            };
+
+            try {
+                const responseText = await fetchGeminiAPI(`Projet: ${projectText}`, systemPrompt, schema);
+                const materialsList = JSON.parse(responseText);
+                
+                const tbody = document.getElementById('materials-tbody');
+                
+                materialsList.forEach(item => {
+                    const tr = document.createElement('tr');
+                    // Style spécial pour les items générés par l'IA
+                    tr.style.backgroundColor = "rgba(56, 189, 248, 0.05)";
+                    tr.innerHTML = `
+                        <td class="text-sky-300">${item.categorie}</td>
+                        <td class="text-sky-100">${item.article} ✨</td>
+                        <td class="text-sky-300">${item.qte}</td>
+                        <td class="text-fuchsia-400">${item.etat}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                status.textContent = `${materialsList.length} spécifications ajoutées.`;
+                inputEl.value = "";
+                
+                // Auto-scroll to bottom of table
+                const tableContainer = tbody.parentElement.parentElement;
+                tableContainer.scrollTop = tableContainer.scrollHeight;
+
+            } catch (error) {
+                status.textContent = "Erreur de connexion au réseau IA.";
+            } finally {
+                btn.disabled = false;
+                inputEl.disabled = false;
+                loading.classList.add('hidden');
+            }
+        }
+
+        // --- Feature 2: Terminal IA Chatbot ---
+        function handleChatEnter(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function appendMessage(text, type) {
+            const chatHistory = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            
+            if (type === 'user') {
+                div.className = 'chat-msg msg-user';
+                div.innerHTML = `<strong>[Utilisateur]:</strong> ${text}`;
+            } else if (type === 'ai') {
+                div.className = 'chat-msg msg-ai';
+                // Formater le texte (retours à la ligne basiques)
+                const formattedText = text.replace(/\n/g, '<br>');
+                div.innerHTML = `<strong>[G-Core]:</strong> ${formattedText}`;
+            } else if (type === 'loading') {
+                div.className = 'chat-msg msg-sys pulsing-text';
+                div.id = 'chat-loading';
+                div.textContent = text;
+            } else if (type === 'error') {
+                div.className = 'chat-msg msg-sys text-red-400';
+                div.textContent = text;
+            }
+            
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        async function sendChatMessage() {
+            const inputEl = document.getElementById('ai-chat-input');
+            const btn = document.getElementById('btn-send-chat');
+            const message = inputEl.value.trim();
+            
+            if (!message) return;
+
+            // Bloquer l'input pendant l'appel
+            inputEl.value = "";
+            inputEl.disabled = true;
+            btn.disabled = true;
+
+            appendMessage(message, 'user');
+            appendMessage('Analyse en cours...', 'loading');
+
+            const systemPrompt = "Tu es G-Core, l'intelligence artificielle intégrée à un système d'exploitation de conception industrielle et de fabrication (Gemini OS). Ton ton est robotique, précis, froid mais extrêmement serviable et expert en ingénierie, mécanique, et développement logiciel. Sois concis.";
+
+            try {
+                const responseText = await fetchGeminiAPI(message, systemPrompt);
+                
+                // Retirer le message de chargement
+                const loadingMsg = document.getElementById('chat-loading');
+                if (loadingMsg) loadingMsg.remove();
+
+                appendMessage(responseText, 'ai');
+
+            } catch (error) {
+                const loadingMsg = document.getElementById('chat-loading');
+                if (loadingMsg) loadingMsg.remove();
+                appendMessage("ERREUR: Impossible de contacter le serveur central Gemini.", 'error');
+            } finally {
+                inputEl.disabled = false;
+                btn.disabled = false;
+                inputEl.focus();
+            }
+        }
+
         // --- Z-Index Management & Window Toggling ---
         let highestZ = 20;
         function bringToFront(id) {
             const el = document.getElementById(id);
             if(el) {
-                // Si la fenêtre est cachée (fermée/minimisée), on la réaffiche
                 if(el.style.display === 'none') {
                     el.style.display = 'flex';
                 }
@@ -277,35 +504,30 @@
         // --- Logique des boutons de la fenêtre (Agrandir/Réduire/Fermer) ---
         const windowControls = document.querySelectorAll('.window-controls span');
         windowControls.forEach(btn => {
-            // Empêcher le "drag" quand on clique sur les boutons
             btn.addEventListener('mousedown', (e) => e.stopPropagation());
             btn.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: false});
 
             btn.addEventListener('click', function(e) {
-                e.stopPropagation(); // Bloque l'événement pour pas déplacer la fenêtre
+                e.stopPropagation();
                 const win = this.closest('.window');
                 
                 if (this.classList.contains('close') || this.classList.contains('minimize')) {
-                    // Fermer ou minimiser = cacher la fenêtre. (Rouvrable via la barre des tâches)
                     win.style.display = 'none';
                 } 
                 else if (this.classList.contains('maximize')) {
                     if (!win.dataset.isMaximized) {
-                        // Sauvegarder l'état actuel
                         win.dataset.top = win.style.top || win.offsetTop + 'px';
                         win.dataset.left = win.style.left || win.offsetLeft + 'px';
                         win.dataset.width = win.style.width || win.offsetWidth + 'px';
                         win.dataset.height = win.style.height || win.offsetHeight + 'px';
                         
-                        // Mettre en plein écran
                         win.style.top = '0px';
                         win.style.left = '0px';
                         win.style.width = '100%';
-                        win.style.height = 'calc(100% - 65px)'; // Laisse de l'espace pour la barre des tâches
+                        win.style.height = 'calc(100% - 65px)';
                         win.style.zIndex = ++highestZ;
                         win.dataset.isMaximized = 'true';
                     } else {
-                        // Restaurer la taille d'avant
                         win.style.top = win.dataset.top;
                         win.style.left = win.dataset.left;
                         win.style.width = win.dataset.width;
@@ -335,7 +557,6 @@
 
             function dragMouseDown(e) {
                 e = e || window.event;
-                // Si on a cliqué sur un bouton, on ne commence pas à "dragger"
                 if(e.target.tagName.toLowerCase() === 'span') return;
                 
                 e.preventDefault();
@@ -349,7 +570,6 @@
                 e = e || window.event;
                 e.preventDefault();
                 
-                // On empêche le déplacement si la fenêtre est "maximisée"
                 if (elmnt.dataset.isMaximized === 'true') return;
 
                 pos1 = pos3 - e.clientX;
@@ -361,7 +581,7 @@
             }
 
             function dragTouchStart(e) {
-                if (window.innerWidth <= 768) return; // Désactiver drag sur mobile
+                if (window.innerWidth <= 768) return;
                 if(e.target.tagName.toLowerCase() === 'span') return;
 
                 e.preventDefault();
@@ -401,7 +621,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- Fonction d'Exportation CSV (Réelle) ---
+        // --- Fonction d'Exportation CSV ---
         function exportCSV() {
             const table = document.getElementById('materials-table');
             let csvContent = "";
@@ -409,7 +629,9 @@
             for (let i = 0; i < table.rows.length; i++) {
                 let row = [], cols = table.rows[i].querySelectorAll("td, th");
                 for (let j = 0; j < cols.length; j++) {
-                    let data = cols[j].innerText.replace(/"/g, '""');
+                    // Retirer le texte d'étoile pour l'exportation
+                    let rawText = cols[j].innerText.replace('✨', '').trim();
+                    let data = rawText.replace(/"/g, '""');
                     row.push('"' + data + '"');
                 }
                 csvContent += row.join(",") + "\r\n";
@@ -428,7 +650,7 @@
             }
         }
 
-        // --- Scène 3D Avancée (Noyau Métallique Complexe) ---
+        // --- Scène 3D Avancée ---
         let scene, camera, renderer, coreMesh, wireframeMesh;
         
         function initThree() {
