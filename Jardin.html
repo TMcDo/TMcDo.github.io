@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue de Jardin Interactif v1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .plant-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .plant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .filter-btn.active {
+            background-color: #4f46e5;
+            color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-gray-800">Votre Catalogue de Jardin</h1>
+            <p class="mt-2 text-lg text-gray-600">Toutes les informations sur vos plantes, à portée de main.</p>
+        </header>
+
+        <!-- Filtres -->
+        <div id="filters" class="flex flex-wrap justify-center gap-2 mb-8">
+            <button data-filter="all" class="filter-btn active px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-full shadow-sm hover:bg-gray-100 transition">Toutes</button>
+            <button data-filter="pommier" class="filter-btn px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-full shadow-sm hover:bg-gray-100 transition">Pommier</button>
+            <button data-filter="cerisier" class="filter-btn px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-full shadow-sm hover:bg-gray-100 transition">Cerisiers</button>
+            <button data-filter="prunus-autres" class="filter-btn px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-full shadow-sm hover:bg-gray-100 transition">Autres fruits à noyau</button>
+            <button data-filter="combo" class="filter-btn px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-full shadow-sm hover:bg-gray-100 transition">Multi-greffes</button>
+        </div>
+
+        <!-- Grille des plantes -->
+        <div id="plant-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Les fiches de plantes seront injectées ici par JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const plantData = [
+            {
+                id: 'pommier_gala',
+                name: "Pommier 'Royal Gala'",
+                scientific_name: "Malus domestica 'Royal Gala'",
+                type: 'pommier',
+                characteristics: {
+                    taille: '4-6m de haut et de large',
+                    recolte: 'Fin août / Début septembre',
+                    fruit: 'Peau rouge-orangé sur fond jaune. Chair croquante, juteuse et très sucrée.',
+                    rusticite: 'Zone 4b. Sensible aux grands froids sans protection.'
+                },
+                needs: {
+                    soleil: 'Plein soleil (6-8h+)',
+                    sol: 'Riche, profond et bien drainé',
+                    ph: '6.0 - 7.0 (Neutre)',
+                    eau: 'Arrosage régulier, surtout les 3 premières années et en période de sécheresse.'
+                },
+                care: {
+                    pollinisation: 'NON auto-fertile. Nécessite un autre pommier (ex: Honeycrisp, Fuji, Granny Smith) à proximité.',
+                    taille: 'Annuelle, en période de dormance (fin hiver) pour maintenir une structure aérée.',
+                    vulnerabilites: 'Tavelure, feu bactérien, carpocapse.'
+                }
+            },
+            {
+                id: 'cerisier_lapin',
+                name: "Cerisier 'Lapin'",
+                scientific_name: "Prunus avium 'Lapins'",
+                type: 'cerisier',
+                characteristics: {
+                    taille: '5-6m de haut, 4-5m de large',
+                    recolte: 'Mi-juillet',
+                    fruit: 'Grosses cerises rouge foncé, fermes, sucrées et juteuses. Excellente qualité.',
+                    rusticite: 'Zone 5a. Assez rustique pour le sud du Québec.'
+                },
+                needs: {
+                    soleil: 'Plein soleil (6-8h+)',
+                    sol: 'Léger, sablonneux et très bien drainé. Craint l\'eau stagnante.',
+                    ph: '6.0 - 7.5',
+                    eau: 'Modéré. Tolère mieux la sécheresse une fois établi que les autres fruitiers.'
+                },
+                care: {
+                    pollinisation: 'Auto-fertile. N\'a pas besoin d\'un autre cerisier, mais est un excellent pollinisateur pour les autres (comme \'Rainier\').',
+                    taille: 'Taille légère après la récolte pour enlever le bois mort et aérer le centre.',
+                    vulnerabilites: 'Mouche de la cerise, pourriture brune.'
+                }
+            },
+            {
+                id: 'cerisier_rainier',
+                name: "Cerisier 'Rainier'",
+                scientific_name: "Prunus avium 'Rainier'",
+                type: 'cerisier',
+                characteristics: {
+                    taille: '5-6m de haut, 4-5m de large',
+                    recolte: 'Début à mi-juillet',
+                    fruit: 'Très grosses cerises bicolores (jaune et rouge). Chair blonde, très sucrée, peu acide. Un délice !',
+                    rusticite: 'Zone 5a. Similaire au \'Lapin\'.'
+                },
+                needs: {
+                    soleil: 'Plein soleil (6-8h+)',
+                    sol: 'Léger, sablonneux et très bien drainé.',
+                    ph: '6.0 - 7.5',
+                    eau: 'Modéré. Attention aux excès d\'eau qui peuvent faire éclater les fruits.'
+                },
+                care: {
+                    pollinisation: 'NON auto-fertile. Doit être pollinisé par un autre cerisier (votre \'Lapin\' est parfait pour ça !).',
+                    taille: 'Taille légère après la récolte.',
+                    vulnerabilites: 'Très sensible à la pourriture brune par temps de pluie. Les oiseaux adorent ses fruits clairs.'
+                }
+            },
+            {
+                id: 'pecher_frost',
+                name: "Pêcher 'Frost'",
+                scientific_name: "Prunus persica 'Frost'",
+                type: 'prunus-autres',
+                characteristics: {
+                    taille: '3-4m de haut et de large (semi-nain)',
+                    recolte: 'Mi à fin août',
+                    fruit: 'Pêches de bonne taille, peau veloutée jaune-rouge. Chair jaune, juteuse et savoureuse.',
+                    rusticite: 'Zone 5b. Un des plus rustiques. A besoin d\'un site protégé (mur sud).'
+                },
+                needs: {
+                    soleil: 'Plein soleil (8h+ indispensable)',
+                    sol: 'Riche, profond et bien drainé.',
+                    ph: '6.0 - 7.0',
+                    eau: 'Régulier, surtout pendant la formation des fruits.'
+                },
+                care: {
+                    pollinisation: 'Auto-fertile.',
+                    taille: 'Importante. En fin d\'hiver, en forme de "gobelet" pour maximiser la lumière. Fructifie sur le bois de l\'année précédente.',
+                    vulnerabilites: 'Variété résistante à la cloque du pêcher, mais pas immunisée. Pourriture brune.'
+                }
+            },
+             {
+                id: 'abricotier_puget',
+                name: "Abricotier 'Puget Gold'",
+                scientific_name: "Prunus armeniaca 'Puget Gold'",
+                type: 'prunus-autres',
+                characteristics: {
+                    taille: '4-5m de haut et de large',
+                    recolte: 'Fin juillet / Début août',
+                    fruit: 'Abricots de taille moyenne, orange. Chair douce et parfumée.',
+                    rusticite: 'Zone 5b. Un des plus fiables pour climat frais. Floraison tardive qui évite souvent les gels.'
+                },
+                needs: {
+                    soleil: 'Plein soleil (8h+ indispensable)',
+                    sol: 'Bien drainé, même pauvre ou caillouteux.',
+                    ph: '6.5 - 8.0',
+                    eau: 'Tolère bien la sécheresse une fois établi.'
+                },
+                care: {
+                    pollinisation: 'Auto-fertile.',
+                    taille: 'Légère, après la récolte, pour aérer et former.',
+                    vulnerabilites: 'Sensible à la pourriture brune si le temps est humide à la récolte.'
+                }
+            },
+            {
+                id: 'prunier_italian',
+                name: "Prunier 'Italian Prune'",
+                scientific_name: "Prunus domestica 'Italian'",
+                type: 'prunus-autres',
+                characteristics: {
+                    taille: '4-5m de haut et de large',
+                    recolte: 'Septembre',
+                    fruit: 'Prune ovale, bleu-violacé. Chair jaune-vert, très sucrée, parfaite pour sécher (pruneaux) ou manger fraîche.',
+                    rusticite: 'Zone 4b. Très rustique et fiable.'
+                },
+                needs: {
+                    soleil: 'Plein soleil (6-8h+)',
+                    sol: 'Tolère les sols un peu plus lourds et humides que les autres Prunus, mais préfère un bon drainage.',
+                    ph: '6.0 - 7.0',
+                    eau: 'Régulier.'
+                },
+                care: {
+                    pollinisation: 'Auto-fertile.',
+                    taille: 'Peu de taille nécessaire. Enlever le bois mort et les branches qui se croisent en dormance.',
+                    vulnerabilites: 'Nœud noir (maladie fongique), puceron.'
+                }
+            },
+            {
+                id: 'arbre_combo',
+                name: "Arbre Combo 5-en-1",
+                scientific_name: "Prunus spp.",
+                type: 'combo',
+                characteristics: {
+                    taille: 'Varie selon la vigueur du porte-greffe et des variétés. Visez 4-6m.',
+                    recolte: 'Étalée de juillet à septembre, selon les variétés greffées.',
+                    fruit: 'Un mélange de pêches, prunes, abricots, nectarines et cerises sur le même arbre !',
+                    rusticite: 'Dépend de la variété la plus fragile greffée. Généralement Zone 5b.'
+                },
+                needs: {
+                    soleil: 'Plein soleil (8h+). Crucial pour que toutes les variétés mûrissent bien.',
+                    sol: 'Un sol riche et bien drainé est le meilleur compromis pour toutes les variétés.',
+                    ph: '6.0 - 7.0',
+                    eau: 'Besoins constants et réguliers.'
+                },
+                care: {
+                    pollinisation: 'Auto-fertile car les variétés se pollinisent entre elles.',
+                    taille: 'CRUCIAL. La taille d\'équilibre est la clé du succès. Il faut tailler plus sévèrement les branches des variétés les plus vigoureuses pour ne pas qu\'elles étouffent les plus faibles.',
+                    vulnerabilites: 'Peut potentiellement cumuler les vulnérabilités de chaque espèce. Surveillance accrue nécessaire.'
+                }
+            },
+            // Note: Nectarinier non ajouté car très similaire au pêcher. On peut l'ajouter sur demande.
+        ];
+
+        const grid = document.getElementById('plant-grid');
+        const filters = document.getElementById('filters');
+
+        function createIcon(svgPath, text) {
+            return `
+                <div class="flex items-center space-x-2 text-gray-600">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${svgPath}</svg>
+                    <span class="text-sm">${text}</span>
+                </div>
+            `;
+        }
+
+        function renderPlants(filter = 'all') {
+            grid.innerHTML = '';
+            const filteredData = plantData.filter(p => filter === 'all' || p.type === filter);
+            
+            filteredData.forEach(plant => {
+                const card = document.createElement('div');
+                card.className = 'plant-card bg-white rounded-lg shadow-md overflow-hidden p-6 space-y-4';
+                card.dataset.type = plant.type;
+
+                card.innerHTML = `
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">${plant.name}</h2>
+                        <p class="text-sm text-gray-500 italic">${plant.scientific_name}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-lg font-semibold text-gray-700">Caractéristiques</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                            <li><strong>Taille adulte:</strong> ${plant.characteristics.taille}</li>
+                            <li><strong>Récolte:</strong> ${plant.characteristics.recolte}</li>
+                            <li><strong>Rusticité:</strong> ${plant.characteristics.rusticite}</li>
+                            <li><strong>Fruit:</strong> ${plant.characteristics.fruit}</li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-lg font-semibold text-gray-700">Besoins</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${createIcon('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>', plant.needs.soleil)}
+                            ${createIcon('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.737 9.5l.263-1.315a2 2 0 012.228-1.445H14.5a2 2 0 012.228 1.445L17 9.5M12 21v-6m0 0l-3-3m3 3l3-3"></path>', plant.needs.sol)}
+                            ${createIcon('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>', `pH ${plant.needs.ph}`)}
+                            ${createIcon('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 10a1 1 0 11-2 0 1 1 0 012 0z"></path>', plant.needs.eau)}
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-lg font-semibold text-gray-700">Entretien & Spécificités</h3>
+                         <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                            <li><strong>Pollinisation:</strong> ${plant.care.pollinisation}</li>
+                            <li><strong>Taille:</strong> ${plant.care.taille}</li>
+                            <li><strong>Vulnérabilités:</strong> ${plant.care.vulnerabilites}</li>
+                        </ul>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        filters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                renderPlants(e.target.dataset.filter);
+            }
+        });
+
+        // Initial render
+        renderPlants();
+
+    </script>
+</body>
+</html>
