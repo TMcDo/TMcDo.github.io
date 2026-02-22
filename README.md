@@ -25,6 +25,7 @@ https://TMcDo.github.io/Gemini.html
 https://TMcDo.github.io/Loto.html    
 https://TMcDo.github.io/Materioss.html        
 https://TMcDo.github.io/MrMinutieux.html        
+https://TMcDo.github.io/PogonaPalace.html        
 https://TMcDo.github.io/Sounds.html	      
 https://TMcDo.github.io/soundz.html	    
 https://TMcDo.github.io/Three.js.Canvas.html	    
