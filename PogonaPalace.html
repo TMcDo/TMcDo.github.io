@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palace Suspendu pour Dragon Barbu | MrMinutieux</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- NOUVEAU: Import Marked.js pour formater les réponses de l'IA en Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { margin: 0; overflow-x: hidden; }
+        #canvas-container { width: 100%; height: 100%; min-height: 400px; border-radius: 0.5rem; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+                <i data-lucide="hammer"></i>
+                Projet: Palace Suspendu (MrMinutieux.ca)
+            </h1>
+            <span class="bg-green-500 text-xs px-2 py-1 rounded-full uppercase tracking-wide font-bold">DIY Cost-Effective</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+        
+        <!-- 3D Viewer Section -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+            <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                <i data-lucide="box"></i> Visualisation 3D Interactive
+            </h2>
+            <p class="text-sm text-slate-500 mb-4">Utilise ta souris ou ton doigt pour tourner, zoomer et inspecter la structure robuste suspendue au plafond.</p>
+            <div id="canvas-container" class="bg-slate-100 flex-grow relative cursor-move">
+                <!-- ThreeJS Canvas will be injected here -->
+            </div>
+            <div class="mt-4 text-xs text-slate-400">
+                * Idée d'amélioration: Intégrer une rampe d'accès douce depuis le mur.
+            </div>
+        </section>
+
+        <!-- Database & Materials Section -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold flex items-center gap-2">
+                    <i data-lucide="database"></i> Base de données Quincaillerie
+                </h2>
+                <button onclick="exportToCSV()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> Exporter CSV
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-medium text-slate-500">Item</th>
+                            <th class="px-4 py-3 text-left font-medium text-slate-500">Type</th>
+                            <th class="px-4 py-3 text-left font-medium text-slate-500">Qté</th>
+                            <th class="px-4 py-3 text-left font-medium text-slate-500">Coût Est.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="material-table-body" class="bg-white divide-y divide-slate-200">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                <h3 class="font-semibold text-yellow-800 flex items-center gap-2 mb-2">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i> Note de Sécurité (Dragon Barbu)
+                </h3>
+                <p class="text-sm text-yellow-700">
+                    Les barbus n'ont pas de coussinets pour s'agripper. Assure-toi de recouvrir le contreplaqué de tapis à reptile ou de liège pour éviter les glissades. Ajoute des rebords de 1" à 2" autour des plateformes pour éviter les chutes en dormant.
+                </p>
+            </div>
+        </section>
+
+        <!-- NOUVEAU: Section Assistant IA -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col lg:col-span-2">
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="bot" class="text-purple-600"></i>
+                <h2 class="text-lg font-semibold text-purple-800">Assistant de Conception IA ✨</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Guide Generator -->
+                <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                    <h3 class="font-medium text-purple-900 mb-2">Générer un plan de match sur mesure</h3>
+                    <p class="text-xs text-purple-700 mb-3">Dis-nous en plus sur ton espace pour obtenir un guide d'assemblage personnalisé.</p>
+                    <div class="flex flex-col sm:flex-row gap-2 mb-3">
+                        <input type="text" id="ceiling-height" placeholder="Hauteur plafond (ex: 8 pi)" class="px-3 py-2 border border-purple-200 rounded-lg text-sm w-full sm:w-1/2 focus:outline-none focus:border-purple-500">
+                        <select id="diy-level" class="px-3 py-2 border border-purple-200 rounded-lg text-sm w-full sm:w-1/2 focus:outline-none focus:border-purple-500">
+                            <option value="Débutant">Niveau: Débutant</option>
+                            <option value="Intermédiaire">Niveau: Intermédiaire</option>
+                            <option value="Expert">Niveau: Expert</option>
+                        </select>
+                    </div>
+                    <button onclick="generateCustomGuide()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2">
+                        Créer mon guide d'assemblage ✨
+                    </button>
+                </div>
+
+                <!-- Material Checker -->
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 flex flex-col justify-center">
+                    <h3 class="font-medium text-blue-900 mb-2">Audit de sécurité des matériaux</h3>
+                    <p class="text-xs text-blue-700 mb-3">L'IA de MrMinutieux va analyser la liste de quincaillerie ci-dessus pour s'assurer qu'elle est 100% "Beardie-safe" (toxicité, résistance à la chaleur).</p>
+                    <button onclick="checkMaterialsSafety()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2">
+                        Vérifier les matériaux avec l'IA ✨
+                    </button>
+                </div>
+                
+                <!-- NOUVEAU: Behavior Translator -->
+                <div class="bg-amber-50 p-4 rounded-lg border border-amber-100 flex flex-col justify-center">
+                    <h3 class="font-medium text-amber-900 mb-2">Traducteur de Lézard</h3>
+                    <p class="text-xs text-amber-700 mb-3">Ton dragon fait des trucs bizarres sur son palace ? Décris-le, et l'IA te dira ce qu'il "dit".</p>
+                    <div class="flex flex-col gap-2 mb-3">
+                        <input type="text" id="beardie-behavior" placeholder="Ex: Il hoche la tête très vite" class="px-3 py-2 border border-amber-200 rounded-lg text-sm w-full focus:outline-none focus:border-amber-500">
+                    </div>
+                    <button onclick="translateBehavior()" class="w-full bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2">
+                        Traduire son comportement ✨
+                    </button>
+                </div>
+
+                <!-- NOUVEAU: AI Decorator -->
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 flex flex-col justify-center">
+                    <h3 class="font-medium text-emerald-900 mb-2">Décorateur d'Intérieur IA</h3>
+                    <p class="text-xs text-emerald-700 mb-3">Trouve des idées de décoration sécuritaires pour pimper la structure selon un thème.</p>
+                    <div class="flex flex-col gap-2 mb-3">
+                        <select id="decor-theme" class="px-3 py-2 border border-emerald-200 rounded-lg text-sm w-full focus:outline-none focus:border-emerald-500">
+                            <option value="Jungle Tropicale">Thème: Jungle Tropicale</option>
+                            <option value="Désert Australien">Thème: Désert Australien</option>
+                            <option value="Ruines Antiques">Thème: Ruines Antiques</option>
+                            <option value="Vaisseau Spatial">Thème: Vaisseau Spatial</option>
+                        </select>
+                    </div>
+                    <button onclick="generateDecor()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex justify-center items-center gap-2">
+                        Inspirer ma déco ✨
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Output Area -->
+            <div id="ai-loading" class="hidden mt-6 flex justify-center items-center text-purple-600 py-8">
+                <i data-lucide="loader-2" class="animate-spin mr-2 w-6 h-6"></i> 
+                <span class="font-medium">L'IA réfléchit (et consulte ses manuels de reptiles)...</span>
+            </div>
+            <div id="ai-output-container" class="hidden mt-6 bg-slate-50 border border-slate-200 p-6 rounded-lg prose prose-slate max-w-none text-sm">
+                <!-- LLM response injected here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- NOUVEAU: GEMINI API LOGIC ---
+        const apiKey = ""; // API Key fournie par l'environnement
+        
+        async function fetchGeminiWithRetry(prompt, retries = 5) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { 
+                    parts: [{ 
+                        text: "Tu es l'assistant IA de MrMinutieux, un expert en bricolage (DIY) et en herpétologie (spécialiste des dragons barbus). Tu donnes des conseils pratiques, ultra-sécuritaires et précis. Tu utilises le format Markdown pour bien structurer tes réponses (listes, gras). Ton ton est enthousiaste, amical et tu réponds en français." 
+                    }] 
+                }
+            };
+
+            // Implémentation du backoff exponentiel tel que requis
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`Erreur HTTP! statut: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Erreur : Aucune réponse générée.";
+                } catch (error) {
+                    if (i === retries - 1) return "**Oups!** L'intelligence artificielle est indisponible pour le moment. Veuillez réessayer plus tard.";
+                    await new Promise(res => setTimeout(res, [1000, 2000, 4000, 8000, 16000][i]));
+                }
+            }
+        }
+
+        async function showAILoading() {
+            document.getElementById('ai-output-container').classList.add('hidden');
+            document.getElementById('ai-loading').classList.remove('hidden');
+        }
+
+        function displayAIOutput(markdownText) {
+            document.getElementById('ai-loading').classList.add('hidden');
+            const outputContainer = document.getElementById('ai-output-container');
+            outputContainer.classList.remove('hidden');
+            // Utilisation de Marked.js pour transformer le Markdown de l'IA en HTML propre
+            outputContainer.innerHTML = marked.parse(markdownText);
+        }
+
+        async function generateCustomGuide() {
+            const height = document.getElementById('ceiling-height').value || "standard (environ 8 pieds)";
+            const level = document.getElementById('diy-level').value;
+            
+            await showAILoading();
+            const prompt = `Génère un guide de construction par étapes pour le "Palace Suspendu" (un arbre à chat inversé accroché au plafond pour un dragon barbu). \n\nContexte : La hauteur du plafond du client est de ${height} et il a un niveau d'expérience "${level}" en bricolage.\n\nInstructions : Le guide doit être adapté à son niveau, très motivant, et inclure les précautions de sécurité critiques pour le lézard (risques de chute, aménagement sous la lampe chauffante). Rends cela facile à lire avec des puces.`;
+            const response = await fetchGeminiWithRetry(prompt);
+            displayAIOutput(response);
+        }
+
+        async function checkMaterialsSafety() {
+            await showAILoading();
+            // On envoie la base de données actuelle à l'IA
+            const materialsList = materials.map(m => `- ${m.name} (Type: ${m.type})`).join('\n');
+            const prompt = `Voici la liste des matériaux que le client prévoit utiliser pour construire un habitat suspendu pour son dragon barbu :\n\n${materialsList}\n\nEn tant qu'expert, fais un audit de sécurité rapide de cette liste. Y a-t-il des matériaux toxiques ? Y a-t-il des précautions spéciales à prendre (par exemple, les émanations du plexiglass s'il est placé trop près de la lampe chauffante, ou le lavage de la corde de sisal) ? Donne ton avis d'expert et des recommandations pour sécuriser le tout.`;
+            const response = await fetchGeminiWithRetry(prompt);
+            displayAIOutput(response);
+        }
+
+        // --- NOUVELLES FONCTIONS IA ---
+
+        async function translateBehavior() {
+            const behavior = document.getElementById('beardie-behavior').value || "Il me regarde fixement depuis le haut de sa rampe avec la bouche grande ouverte.";
+            await showAILoading();
+            const prompt = `Le client observe son dragon barbu sur son nouveau palace suspendu. Le comportement observé est : "${behavior}". \n\nEn tant qu'expert en herpétologie (et avec un brin d'humour), explique ce que ce comportement signifie. Que veut dire le lézard ? (Parle des comportements typiques comme le "head bobbing", "arm waving", "gaping" pour réguler sa température, etc.). Formate ta réponse en Markdown.`;
+            const response = await fetchGeminiWithRetry(prompt);
+            displayAIOutput(response);
+        }
+
+        async function generateDecor() {
+            const theme = document.getElementById('decor-theme').value;
+            await showAILoading();
+            const prompt = `Le client a construit un palace suspendu en bois et corde pour son dragon barbu. Il veut le décorer avec le thème : "${theme}". \n\nGénère 3 idées créatives de décorations qui sont 100% SÉCURITAIRES pour un reptile (non-toxiques, pas de risque de se coincer les griffes, pas de risque d'ingestion ou de fonte sous la lampe chauffante). Explique comment les intégrer au palace suspendu. Formate ta réponse en Markdown avec des puces et des emojis.`;
+            const response = await fetchGeminiWithRetry(prompt);
+            displayAIOutput(response);
+        }
+
+        // --- DATABASE LOGIC ---
+        const materials = [
+            { id: 1, name: "Contreplaqué (Plywood) 1/2 po", type: "Bois", qty: "1 feuille", cost: "$25.00" },
+            { id: 2, name: "Corde de Sisal épaisse (3/4 po)", type: "Accessoire", qty: "20 pieds", cost: "$15.00" },
+            { id: 3, name: "Ancrages pour plafond (Toggle bolts)", type: "Quincaillerie", qty: "4 unités", cost: "$8.00" },
+            { id: 4, name: "Vis à bois #8 x 1-1/4 po", type: "Quincaillerie", qty: "1 boîte", cost: "$6.00" },
+            { id: 5, name: "Tapis pour reptile (Grip)", type: "Plastique/Tissu", qty: "2 rouleaux", cost: "$20.00" },
+            { id: 6, name: "Angle irons (Petites équerres 2 po)", type: "Métal", qty: "8 unités", cost: "$12.00" },
+            { id: 7, name: "Crochets en O (Heavy duty)", type: "Métal", qty: "4 unités", cost: "$10.00" },
+            { id: 8, name: "Feuille de Plexiglass (Acrylique) 1/8 po", type: "Plastique", qty: "1 demi-feuille", cost: "$18.00" },
+            { id: 9, name: "Moulures de bois 1x2 (Pour le cadre)", type: "Bois", qty: "3 unités", cost: "$9.00" },
+            { id: 10, name: "Planche de Pin 1x6 (Rampe d'accès au sol)", type: "Bois", qty: "1 unité (8 pi)", cost: "$14.00" },
+            { id: 11, name: "Plaques d'assemblage plates (Mending plates)", type: "Métal", qty: "4 unités", cost: "$5.00" }
+        ];
+
+        function renderTable() {
+            const tbody = document.getElementById('material-table-body');
+            tbody.innerHTML = materials.map(item => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 font-medium text-slate-800">${item.name}</td>
+                    <td class="px-4 py-3 text-slate-600">
+                        <span class="bg-slate-100 px-2 py-1 rounded text-xs">${item.type}</span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-600">${item.qty}</td>
+                    <td class="px-4 py-3 text-green-600 font-medium">${item.cost}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportToCSV() {
+            const headers = ["Item", "Type", "Quantite", "Cout Estime"];
+            const rows = materials.map(m => `"${m.name}","${m.type}","${m.qty}","${m.cost}"`);
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "mrminutieux_quincaillerie_palace.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- THREE.JS LOGIC ---
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf1f5f9); // slate-100
+
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, -2, 12);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Ceiling (Plafond)
+            const ceilingGeo = new THREE.PlaneGeometry(10, 10);
+            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.y = 4;
+            ceiling.receiveShadow = true;
+            scene.add(ceiling);
+
+            // --- NOUVEAU: Plancher (Floor) pour contexte ---
+            const floorGeo = new THREE.PlaneGeometry(20, 20);
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 }); // slate-400
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -4;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Platform Material (Wood-ish)
+            const woodMat = new THREE.MeshLambertMaterial({ color: 0xd4a373 }); // Plywood color
+            
+            // --- MODIFIÉ: Platform 1 avec une encoche (trou) pour la rampe ---
+            // On la construit en deux morceaux pour simuler le trou dans le coin avant gauche
+            
+            // Morceau arrière (Prend toute la largeur, mais arrête avant le trou)
+            const plat1BackGeo = new THREE.BoxGeometry(4, 0.2, 2);
+            const plat1Back = new THREE.Mesh(plat1BackGeo, woodMat);
+            plat1Back.position.set(0, 1, -0.5);
+            plat1Back.castShadow = true;
+            scene.add(plat1Back);
+
+            // Morceau avant droit (Laisse un trou de 1x1 à gauche pour la rampe)
+            const plat1FrontGeo = new THREE.BoxGeometry(3, 0.2, 1);
+            const plat1Front = new THREE.Mesh(plat1FrontGeo, woodMat);
+            plat1Front.position.set(0.5, 1, 1);
+            plat1Front.castShadow = true;
+            scene.add(plat1Front);
+
+            // Group pour cibler la lumière plus tard
+            const plat1Group = new THREE.Group();
+            plat1Group.add(plat1Back);
+            plat1Group.add(plat1Front);
+            scene.add(plat1Group);
+
+            // --- NOUVEAU: Garde-corps pour Plat1 (Style Plexiglass pour pas bloquer la vue) ---
+            const guardMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, transmission: 0.6, opacity: 0.5, transparent: true, roughness: 0.1
+            });
+
+            const g1Geo = new THREE.BoxGeometry(4, 0.6, 0.1);
+            const g1 = new THREE.Mesh(g1Geo, guardMat);
+            g1.position.set(0, 1.4, -1.45);
+            scene.add(g1);
+            
+            // Corrigé : On raccourcit le garde-corps avant pour laisser un passage (ouverture de 1 unité de large)
+            const g2Geo = new THREE.BoxGeometry(3, 0.6, 0.1);
+            const g2 = new THREE.Mesh(g2Geo, guardMat);
+            g2.position.set(0.5, 1.4, 1.45);
+            scene.add(g2);
+            
+            const g3Geo = new THREE.BoxGeometry(0.1, 0.6, 3);
+            const g3 = new THREE.Mesh(g3Geo, guardMat);
+            g3.position.set(-1.95, 1.4, 0);
+            scene.add(g3);
+            
+            const g4 = new THREE.Mesh(g3Geo, guardMat);
+            g4.position.set(1.95, 1.4, 0);
+            scene.add(g4);
+
+            // Platform 2 (Lower step)
+            const plat2Geo = new THREE.BoxGeometry(2, 0.2, 2);
+            const plat2 = new THREE.Mesh(plat2Geo, woodMat);
+            plat2.position.set(-2, -0.5, 2);
+            plat2.castShadow = true;
+            scene.add(plat2);
+
+            // --- NOUVEAU: Garde-corps pour Plat2 ---
+            // Corrigé : On raccourcit le garde-corps arrière pour laisser atterrir la rampe
+            const g5Geo = new THREE.BoxGeometry(1, 0.6, 0.1);
+            const g5 = new THREE.Mesh(g5Geo, guardMat);
+            g5.position.set(-2.5, -0.1, 1.05); // Arrière (moitié gauche)
+            scene.add(g5);
+            
+            // MODIFIÉ : On coupe le garde-corps avant en deux pour laisser descendre la grande rampe
+            const g6aGeo = new THREE.BoxGeometry(0.5, 0.6, 0.1);
+            const g6a = new THREE.Mesh(g6aGeo, guardMat);
+            g6a.position.set(-2.75, -0.1, 2.95); // Coin avant gauche
+            scene.add(g6a);
+
+            const g6b = new THREE.Mesh(g6aGeo, guardMat);
+            g6b.position.set(-1.25, -0.1, 2.95); // Coin avant droit
+            scene.add(g6b);
+            
+            const g7Geo = new THREE.BoxGeometry(0.1, 0.6, 2);
+            const g7 = new THREE.Mesh(g7Geo, guardMat);
+            g7.position.set(-2.95, -0.1, 2); // Côté gauche
+            scene.add(g7);
+            
+            const g8 = new THREE.Mesh(g7Geo, guardMat);
+            g8.position.set(-1.05, -0.1, 2); // Côté droit
+            scene.add(g8);
+
+            // Rope Material
+            const ropeMat = new THREE.MeshLambertMaterial({ color: 0xcdb4db });
+
+            // Ropes for Plat1
+            const ropeGeo = new THREE.CylinderGeometry(0.05, 0.05, 3);
+            const positions = [
+                [-1.8, 2.5, -1.3], [1.8, 2.5, -1.3],
+                [-1.8, 2.5, 1.3], [1.8, 2.5, 1.3]
+            ];
+            
+            positions.forEach(pos => {
+                const rope = new THREE.Mesh(ropeGeo, ropeMat);
+                rope.position.set(pos[0], pos[1], pos[2]);
+                rope.castShadow = true;
+                scene.add(rope);
+            });
+
+            // Ramp connecting Plat1 and Plat2
+            const rampGeo = new THREE.BoxGeometry(1, 0.1, 2.5);
+            const ramp = new THREE.Mesh(rampGeo, woodMat);
+            ramp.position.set(-1.5, 0.25, 1.0);
+            ramp.rotation.x = Math.PI / 5; // Corrigé : Angle positif pour descendre
+            ramp.castShadow = true;
+            scene.add(ramp);
+
+            // NOUVEAU: Ajout des petites "straps" (lattes) anti-dérapantes sur la rampe
+            const slatGeo = new THREE.BoxGeometry(0.8, 0.05, 0.1);
+            for(let i = 0; i < 6; i++) {
+                const slat = new THREE.Mesh(slatGeo, woodMat);
+                slat.position.set(0, 0.05, -1.0 + (i * 0.4));
+                ramp.add(slat); 
+            }
+
+            // --- NOUVEAU: Grande rampe d'accès vers le sol ---
+            const mainRampGeo = new THREE.BoxGeometry(1, 0.1, 7.5);
+            const mainRamp = new THREE.Mesh(mainRampGeo, woodMat);
+            mainRamp.position.set(-2, -2.1, 6);
+            mainRamp.rotation.x = Math.PI / 4.5; // Angle de descente vers le plancher
+            mainRamp.castShadow = true;
+            scene.add(mainRamp);
+
+            // Lattes (straps) pour la grande rampe
+            for(let i = 0; i < 16; i++) {
+                const slat = new THREE.Mesh(slatGeo, woodMat);
+                slat.position.set(0, 0.05, -3.2 + (i * 0.4));
+                mainRamp.add(slat); 
+            }
+
+            // Add a little box to represent the heat lamp fixture hanging from ceiling
+            const lampGeo = new THREE.CylinderGeometry(0.3, 0.5, 0.8);
+            const lampMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+            const lamp = new THREE.Mesh(lampGeo, lampMat);
+            lamp.position.set(0, 3.6, 0);
+            scene.add(lamp);
+            
+            // Simulated light from lamp
+            const spotLight = new THREE.SpotLight(0xffa95c, 1);
+            spotLight.position.set(0, 3.5, 0);
+            spotLight.angle = Math.PI / 6;
+            spotLight.penumbra = 0.5;
+            spotLight.target = plat1Back; // Pointé vers le morceau principal
+            scene.add(spotLight);
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            animate();
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            renderTable();
+            init3D();
+        };
+    </script>
+</body>
+</html>
