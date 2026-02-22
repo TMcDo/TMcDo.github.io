@@ -3,37 +3,36 @@
 Quelques unes des application que je n'ai pas codé. 
 Tout le mérite và à la version de Gemennuie qui fait tout mon travail en un claquement de cuillères en bois virtuelles.
 
-https://TMcDo.github.io/index.html     
+https://TMcDo.github.io/index.html    
 https://TMcDo.github.io/README.md    
 (###) ###-####        
-https://TMcDo.github.io/OS/index.html        
-https://TMcDo.github.io/Recettes/Feves.html        
+https://TMcDo.github.io/OS/index.html    
+https://TMcDo.github.io/Recettes/Feves.html    
 https://TMcDo.github.io/Recettes/Popcorn.html    
 https://TMcDo.github.io/Recettes/Poulet.html    
-https://TMcDo.github.io/docs/ALTkeys.html     
+https://TMcDo.github.io/docs/ALTkeys.html    
 https://TMcDo.github.io/pages    
-(###) ###-####        
+(###) ###-####    
 https://TMcDo.github.io/3DDDs.html    
 https://TMcDo.github.io/AIOS.html    
 https://TMcDo.github.io/Chakra.html    
-https://TMcDo.github.io/Cibles.html	    
+https://TMcDo.github.io/Cibles.html    
 https://TMcDo.github.io/Dragon.html    
 https://TMcDo.github.io/Erable.html    
-https://TMcDo.github.io/Fumoir.html	    
-https://TMcDo.github.io/Fumoir55G.html	    
-https://TMcDo.github.io/Gemini.html	    
-https://TMcDo.github.io/GeminiOS.html	   
+https://TMcDo.github.io/Fumoir.html    
+https://TMcDo.github.io/Fumoir55G.html    
+https://TMcDo.github.io/Gemini.html    
+https://TMcDo.github.io/GeminiOS.html    
 https://TMcDo.github.io/Loto.html    
-https://TMcDo.github.io/Materioss.html        
-https://TMcDo.github.io/MrMinutieux.html        
-https://TMcDo.github.io/Planificateur.html        
-https://TMcDo.github.io/PogonaPalace.html        
-https://TMcDo.github.io/Sounds.html	      
-https://TMcDo.github.io/soundz.html	    
-https://TMcDo.github.io/Three.js.Canvas.html	    
+https://TMcDo.github.io/Materioss.html    
+https://TMcDo.github.io/MrMinutieux.html    
+https://TMcDo.github.io/Planificateur.html    
+https://TMcDo.github.io/PogonaPalace.html    
+https://TMcDo.github.io/Sounds.html    
+https://TMcDo.github.io/soundz.html    
+https://TMcDo.github.io/Three.js.Canvas.html    
 https://TMcDo.github.io/visualisation.html    
 https://TMcDo.github.io/tennis.html    
-    
 https://github.com/TMcDo/TMcDo.github.io/tree/main    
 
 
