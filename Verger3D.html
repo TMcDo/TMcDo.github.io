@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificateur de Verger 3D v5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.156.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.156.1/examples/jsm/"
+        }
+    }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #ui-panel {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 320px;
+            max-width: 90vw;
+            height: auto;
+            max-height: calc(100vh - 2rem);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            resize: both;
+            overflow: auto;
+            min-width: 280px;
+            min-height: 200px;
+        }
+        #ui-panel.collapsed {
+            transform: translateX(-110%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        #toggle-button {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 11;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease-in-out;
+        }
+        #toggle-button.collapsed {
+             transform: translateX(calc(-1rem - 100%));
+        }
+        .danger-box {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border-radius: 0.25rem;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+            max-width: 90%;
+            box-sizing: border-box;
+        }
+        #save-status {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <button id="toggle-button">
+        <svg id="toggle-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </button>
+
+    <div id="ui-panel">
+        <div class="flex-grow overflow-y-auto pr-2">
+            <h1 class="text-xl font-bold text-gray-800">Planificateur de Verger</h1>
+            <p class="text-sm text-gray-600 mb-4">Concevez votre verger idéal.</p>
+
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label for="tree-select" class="block text-sm font-medium text-gray-700">1. Choisissez un arbre</label>
+                    <select id="tree-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                </div>
+
+                <div>
+                    <button id="add-tree-btn" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                        Ajouter l'arbre
+                    </button>
+                    <p id="add-mode-text" class="text-xs text-center text-indigo-700 font-semibold mt-1 hidden">Mode Ajout activé: Cliquez sur le sol pour planter.</p>
+                </div>
+                
+                <div id="planted-trees-list" class="space-y-2">
+                    <h2 class="text-lg font-semibold text-gray-700">Arbres Plantés</h2>
+                    <ul id="tree-list-items" class="list-inside text-gray-600 text-sm space-y-1">
+                        <li class="text-gray-500">Aucun arbre planté.</li>
+                    </ul>
+                </div>
+
+                <div id="pollinator-warning" class="hidden"></div>
+            </div>
+        </div>
+        <div class="flex-shrink-0 pt-4">
+             <button id="reset-btn" class="w-full bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
+                Réinitialiser le Plan
+            </button>
+        </div>
+    </div>
+    
+    <div id="instructions">
+        <b>Contrôles :</b> Clic gauche pour tourner, Clic droit pour déplacer, Molette pour zoomer. Cliquez et glissez un arbre pour le déplacer.
+    </div>
+    <div id="save-status">Plan sauvegardé !</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { DragControls } from 'three/addons/controls/DragControls.js';
+
+        // --- CONFIGURATION ---
+        const SAVE_KEY = 'verger3DPlan_v1';
+        const TREE_DATA = {
+            pommier_gala: { name: "Pommier 'Royal Gala'", type: "pommier", radius: 3, color: 0xff6347 },
+            pommier_pollinisateur: { name: "Pommier Pollinisateur", type: "pommier", radius: 3, color: 0xffa07a },
+            cerisier_lapin: { name: "Cerisier 'Lapin'", type: "cerisier", radius: 2.75, color: 0xdc143c },
+            cerisier_rainier: { name: "Cerisier 'Rainier'", type: "cerisier", radius: 2.75, color: 0xffd700 },
+            pecher_frost: { name: "Pêcher 'Frost'", type: "pecher", radius: 2.25, color: 0xffb6c1 },
+            nectarinier_fantasia: { name: "Nectarinier 'Fantasia'", type: "nectarinier", radius: 2.25, color: 0xfa8072 },
+            prunier_italian: { name: "Prunier 'Italian'", type: "prunier", radius: 2.5, color: 0x8a2be2 },
+            abricotier_puget: { name: "Abricotier 'Puget Gold'", type: "abricotier", radius: 2.75, color: 0xffa500 },
+            arbre_combo: { name: "Arbre Combo 5-en-1", type: "combo", radius: 3, color: 0xadd8e6 }
+        };
+
+        // --- VARIABLES GLOBALES ---
+        let scene, camera, renderer, orbitControls, dragControls;
+        let ground, raycaster, mouse;
+        let plantedTrees = [];
+        let draggableObjects = [];
+        let isAddMode = false;
+        let saveStatusTimeout;
+
+        // --- ÉLÉMENTS UI ---
+        const uiPanel = document.getElementById('ui-panel');
+        const toggleButton = document.getElementById('toggle-button');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const treeSelect = document.getElementById('tree-select');
+        const addTreeBtn = document.getElementById('add-tree-btn');
+        const addModeText = document.getElementById('add-mode-text');
+        const resetBtn = document.getElementById('reset-btn');
+        const treeListItems = document.getElementById('tree-list-items');
+        const pollinatorWarningDiv = document.getElementById('pollinator-warning');
+        const saveStatus = document.getElementById('save-status');
+
+        // --- INITIALISATION ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.Fog(0x87ceeb, 10, 100);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(10, 15, 20);
+            camera.lookAt(0, 0, 0);
+
+            const container = document.getElementById('container');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            orbitControls = new OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.maxPolarAngle = Math.PI / 2.1;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(30, 50, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x559020 });
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            const gridHelper = new THREE.GridHelper(100, 100, 0xcccccc, 0xcccccc);
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            Object.keys(TREE_DATA).forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = TREE_DATA[key].name;
+                treeSelect.appendChild(option);
+            });
+            
+            initDragControls();
+
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onSceneClick);
+            addTreeBtn.addEventListener('click', toggleAddMode);
+            resetBtn.addEventListener('click', resetSceneAndSave);
+            toggleButton.addEventListener('click', toggleUIPanel);
+
+            loadPlan(); // Charger le plan au démarrage
+            animate();
+        }
+
+        // --- FONCTIONS DE GESTION DES ARBRES ---
+        function createTree(key, position) {
+            const data = TREE_DATA[key];
+            const treeGroup = new THREE.Group();
+            treeGroup.position.copy(position);
+
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 1.5, 8), new THREE.MeshLambertMaterial({ color: 0x8B4513 }));
+            trunk.position.y = 0.75;
+            trunk.castShadow = true;
+            treeGroup.add(trunk);
+
+            const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2, 0), new THREE.MeshLambertMaterial({ color: data.color }));
+            foliage.position.y = 2.5;
+            foliage.castShadow = true;
+            treeGroup.add(foliage);
+            
+            const radiusCircle = new THREE.Mesh(new THREE.CylinderGeometry(data.radius, data.radius, 0.05, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }));
+            radiusCircle.name = 'radiusCircle';
+            treeGroup.add(radiusCircle);
+
+            treeGroup.userData = { id: THREE.MathUtils.generateUUID(), key: key, ...data };
+            scene.add(treeGroup);
+            plantedTrees.push(treeGroup);
+            draggableObjects.push(treeGroup);
+            
+            updateAndCheck();
+        }
+        
+        function initDragControls() {
+            dragControls = new DragControls(draggableObjects, camera, renderer.domElement);
+            dragControls.addEventListener('dragstart', () => orbitControls.enabled = false);
+            dragControls.addEventListener('drag', (event) => {
+                event.object.position.y = 0;
+                checkAllDistances();
+            });
+            dragControls.addEventListener('dragend', () => {
+                orbitControls.enabled = true;
+                savePlan(); // Sauvegarder après avoir déplacé un arbre
+            });
+        }
+        
+        function updateAndCheck() {
+            updatePlantedTreesList();
+            checkAllDistances();
+            checkPollination();
+            savePlan();
+        }
+
+        // --- FONCTIONS DE SAUVEGARDE / CHARGEMENT ---
+        function savePlan() {
+            const planData = plantedTrees.map(tree => ({
+                key: tree.userData.key,
+                position: tree.position.clone()
+            }));
+            localStorage.setItem(SAVE_KEY, JSON.stringify(planData));
+            
+            // Afficher la confirmation de sauvegarde
+            clearTimeout(saveStatusTimeout);
+            saveStatus.style.opacity = '1';
+            saveStatusTimeout = setTimeout(() => {
+                saveStatus.style.opacity = '0';
+            }, 2000);
+        }
+
+        function loadPlan() {
+            const savedData = localStorage.getItem(SAVE_KEY);
+            if (savedData) {
+                const planData = JSON.parse(savedData);
+                planData.forEach(data => {
+                    createTree(data.key, new THREE.Vector3(data.position.x, data.position.y, data.position.z));
+                });
+            }
+        }
+
+        function resetScene() {
+            dragControls.dispose();
+            plantedTrees.forEach(tree => scene.remove(tree));
+            plantedTrees.length = 0;
+            draggableObjects.length = 0;
+            initDragControls();
+            updatePlantedTreesList();
+            checkPollination();
+            if (isAddMode) toggleAddMode();
+        }
+        
+        function resetSceneAndSave() {
+            resetScene();
+            localStorage.removeItem(SAVE_KEY);
+        }
+
+        // --- FONCTIONS UI ET VÉRIFICATIONS ---
+        function checkAllDistances() {
+            plantedTrees.forEach(tree => tree.getObjectByName('radiusCircle').material.color.set(0xffffff));
+            for (let i = 0; i < plantedTrees.length; i++) {
+                for (let j = i + 1; j < plantedTrees.length; j++) {
+                    const treeA = plantedTrees[i];
+                    const treeB = plantedTrees[j];
+                    const distance = treeA.position.distanceTo(treeB.position);
+                    const minDistance = treeA.userData.radius + treeB.userData.radius;
+                    if (distance < minDistance) {
+                        treeA.getObjectByName('radiusCircle').material.color.set(0xff0000);
+                        treeB.getObjectByName('radiusCircle').material.color.set(0xff0000);
+                    }
+                }
+            }
+        }
+        
+        function checkPollination() {
+            const hasGala = plantedTrees.some(t => t.userData.key === 'pommier_gala');
+            const hasPollinator = plantedTrees.some(t => t.userData.type === 'pommier' && t.userData.key !== 'pommier_gala');
+            if (hasGala && !hasPollinator) {
+                pollinatorWarningDiv.innerHTML = `<div class="danger-box"><p class="font-bold text-red-800">Alerte Pollinisation!</p><p class="text-sm text-red-700">Votre pommier 'Royal Gala' a besoin d'un autre type de pommier à proximité pour produire des fruits.</p></div>`;
+                pollinatorWarningDiv.classList.remove('hidden');
+            } else {
+                pollinatorWarningDiv.classList.add('hidden');
+            }
+        }
+
+        function updatePlantedTreesList() {
+            treeListItems.innerHTML = '';
+            if (plantedTrees.length === 0) {
+                 treeListItems.innerHTML = '<li class="text-gray-500">Aucun arbre planté.</li>';
+            } else {
+                plantedTrees.forEach(tree => {
+                    const li = document.createElement('li');
+                    li.textContent = tree.userData.name;
+                    li.style.color = '#' + new THREE.Color(tree.userData.color).getHexString();
+                    treeListItems.appendChild(li);
+                });
+            }
+        }
+        
+        function toggleAddMode() {
+            isAddMode = !isAddMode;
+            addModeText.classList.toggle('hidden', !isAddMode);
+            addTreeBtn.textContent = isAddMode ? "Annuler l'ajout" : "Ajouter l'arbre";
+            addTreeBtn.classList.toggle('bg-yellow-500', isAddMode);
+            addTreeBtn.classList.toggle('hover:bg-yellow-600', isAddMode);
+        }
+
+        function toggleUIPanel() {
+            const isCollapsed = uiPanel.classList.toggle('collapsed');
+            toggleButton.classList.toggle('collapsed');
+            if (isCollapsed) {
+                toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>`;
+                toggleButton.style.transform = 'translateX(0)';
+            } else {
+                toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>`;
+                toggleButton.style.transform = `translateX(${uiPanel.offsetWidth}px)`;
+            }
+        }
+        
+        const resizeObserver = new ResizeObserver(() => {
+            if (!uiPanel.classList.contains('collapsed')) {
+                 toggleButton.style.transform = `translateX(${uiPanel.offsetWidth}px)`;
+            }
+        });
+        resizeObserver.observe(uiPanel);
+
+        // --- GESTION DES ÉVÉNEMENTS ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onSceneClick(event) {
+            if (isAddMode) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersectsGround = raycaster.intersectObject(ground);
+                if (intersectsGround.length > 0) {
+                    createTree(treeSelect.value, intersectsGround[0].point);
+                    toggleAddMode();
+                }
+            }
+        }
+
+        // --- BOUCLE D'ANIMATION ---
+        function animate() {
+            requestAnimationFrame(animate);
+            orbitControls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- DÉMARRAGE ---
+        init();
+    </script>
+</body>
+</html>
