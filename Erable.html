@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Acériculture DIY | Mr Minutieux</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f8f5f0; 
+            color: #2d3748; 
+            /* Motif texturé pour un look premium */
+            background-image: radial-gradient(#d9770622 1px, transparent 1px); 
+            background-size: 20px 20px; 
+        }
+        .tab-content { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #canvas-container { 
+            width: 100%; 
+            height: 400px; 
+            background: radial-gradient(circle at top, #e0f2fe, #94a3b8); 
+            border-radius: 0.75rem; 
+            overflow: hidden; 
+            cursor: grab; 
+            box-shadow: inset 0 2px 15px rgba(0,0,0,0.1); 
+            border: 2px solid #cbd5e1; 
+        }
+        #canvas-container:active { cursor: grabbing; }
+        
+        /* Barres de défilement custom */
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #b45309; border-radius: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background-color: #fef3c7; border-radius: 6px; }
+        
+        /* Effet Glassmorphism pour les panneaux */
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.90); 
+            backdrop-filter: blur(12px); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.8); 
+        }
+    </style>
+</head>
+<body class="antialiased custom-scrollbar">
+
+    <!-- Header Pimpé -->
+    <header class="bg-gradient-to-r from-amber-900 via-amber-700 to-amber-800 text-white p-6 shadow-2xl border-b-4 border-amber-500 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+')]"></div>
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center relative z-10">
+            <h1 class="text-4xl font-extrabold tracking-tight drop-shadow-lg flex items-center gap-3">
+                <span class="text-amber-300">🍁</span> Le Guide du Sucrier Minutieux
+            </h1>
+            <p class="text-amber-100 mt-3 md:mt-0 font-medium tracking-wide bg-black/20 px-4 py-1.5 rounded-full backdrop-blur-sm border border-amber-500/30 shadow-inner">
+                Bricolage, Érables & Sirop | DIY
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Content Tabs -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Navigation Tabs Modernisées -->
+            <div class="flex space-x-2 p-2 bg-amber-100/80 rounded-2xl border border-amber-200 shadow-inner overflow-x-auto custom-scrollbar whitespace-nowrap backdrop-blur-sm">
+                <button onclick="openTab('id-arbres')" class="tab-btn bg-amber-600 text-white shadow-md px-5 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition transform hover:-translate-y-0.5">1. Identifier</button>
+                <button onclick="openTab('fabrication')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">2. Fabrication</button>
+                <button onclick="openTab('suggestions')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">3. Idées</button>
+                <button onclick="openTab('assistant-ia')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">4. Assistant ✨</button>
+                <button onclick="openTab('inventeur-diy')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">5. Inventeur ✨</button>
+                <button onclick="openTab('analyseur-coulee')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">6. Bilan ✨</button>
+                <button onclick="openTab('calibrateur')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">7. Calibrateur</button>
+                <button onclick="openTab('docteur-sirop')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">8. Docteur ✨</button>
+                <button onclick="openTab('bois-chauffage')" class="tab-btn text-amber-900 px-5 py-2.5 rounded-xl font-bold hover:bg-amber-200 transition hover:-translate-y-0.5">9. Bois 🪵</button>
+            </div>
+
+            <!-- Tab 1: Identification -->
+            <div id="id-arbres" class="tab-content active glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-amber-800 mb-6 border-b-2 border-amber-200 pb-3">🍁 Identifier les Érables en Hiver (sans feuilles)</h2>
+                
+                <div class="space-y-6">
+                    <!-- Érable à Sucre -->
+                    <div class="bg-amber-50/80 p-5 rounded-2xl border-l-4 border-amber-600 shadow-sm transition hover:shadow-md">
+                        <h3 class="font-bold text-xl text-amber-900 mb-3 flex items-center gap-2"><span>🥇</span> Érable à sucre (Le meilleur!)</h3>
+                        <div class="flex flex-col lg:flex-row gap-4 items-center">
+                            <div class="w-full lg:w-1/4">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Acer_saccharum_1-jgreenlee_5095.jpg/320px-Acer_saccharum_1-jgreenlee_5095.jpg" alt="[Image de Érable à sucre]" onerror="this.onerror=null; this.src='https://placehold.co/320x160/fef3c7/92400e?text=Photo+Internet+Bloquee';" class="w-full h-40 object-cover rounded-xl border-2 border-amber-300 shadow-sm">
+                            </div>
+                            <div class="w-full lg:w-2/4 text-gray-700 leading-relaxed">
+                                <p><strong>Bourgeons :</strong> Bruns, pointus, en forme de cône. Ils sont opposés sur la branche (un en face de l'autre).<br>
+                                <strong>Écorce :</strong> Les jeunes ont l'écorce grise et lisse. Les vieux (ceux qu'on entaille) ont une écorce foncée avec des crevasses verticales profondes, souvent qui lèvent un peu sur les côtés.</p>
+                                <p class="mt-3 text-sm bg-white p-2 rounded-lg inline-block shadow-sm border border-gray-100"><strong class="text-amber-700">Concentration en sucre :</strong> ~2.0% à 3.0%+ (Ratio approx. 40:1). <em class="text-gray-500">Le top du top, ça bouille vite!</em></p>
+                            </div>
+                            <div class="w-full lg:w-1/4 flex space-x-3 justify-center bg-white/60 p-3 rounded-xl shadow-inner border border-gray-100">
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto drop-shadow-md" aria-label="Dessin Bourgeon">
+                                        <rect x="47" y="40" width="6" height="60" fill="#5c4033" />
+                                        <path d="M50 15 L58 40 L42 40 Z" fill="#4a3020" />
+                                        <path d="M47 45 L38 35 L35 45 Z" fill="#4a3020" />
+                                        <path d="M53 45 L62 35 L65 45 Z" fill="#4a3020" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Bourgeon</span>
+                                </div>
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto rounded-lg border border-gray-300 drop-shadow-md" aria-label="Dessin Écorce">
+                                        <rect width="100" height="100" fill="#504a45" />
+                                        <path d="M20 0 Q25 50 20 100 M40 0 Q35 50 40 100 M60 0 Q65 50 60 100 M80 0 Q75 50 80 100" stroke="#2a2520" stroke-width="5" fill="none" />
+                                        <path d="M22 10 Q28 30 22 50 M62 40 Q58 60 62 80" stroke="#1a1510" stroke-width="3" fill="none" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Écorce</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Érable Rouge -->
+                    <div class="bg-red-50/80 p-5 rounded-2xl border-l-4 border-red-600 shadow-sm transition hover:shadow-md">
+                        <h3 class="font-bold text-xl text-red-900 mb-3">Érable rouge (Plaine)</h3>
+                        <div class="flex flex-col lg:flex-row gap-4 items-center">
+                            <div class="w-full lg:w-1/4">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Acer_rubrum_leaves.jpg/320px-Acer_rubrum_leaves.jpg" alt="[Image de Érable rouge]" onerror="this.onerror=null; this.src='https://placehold.co/320x160/fee2e2/991b1b?text=Photo+Internet+Bloquee';" class="w-full h-40 object-cover rounded-xl border-2 border-red-300 shadow-sm">
+                            </div>
+                            <div class="w-full lg:w-2/4 text-gray-700 leading-relaxed">
+                                <p><strong>Bourgeons :</strong> Rouges, ronds, souvent en petites grappes (agglomérés).<br>
+                                <strong>Écorce :</strong> Gris pâle, ressemble un peu au hêtre quand il est jeune. En vieillissant, ça fait des plaques écailleuses.</p>
+                                <p class="mt-3 text-sm bg-white p-2 rounded-lg inline-block shadow-sm border border-gray-100"><strong class="text-red-700">Concentration en sucre :</strong> ~1.5% à 2.0% (Ratio approx. 50:1). <em class="text-gray-500">T'as besoin d'un peu plus de bois d'allumage!</em></p>
+                            </div>
+                            <div class="w-full lg:w-1/4 flex space-x-3 justify-center bg-white/60 p-3 rounded-xl shadow-inner border border-gray-100">
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto drop-shadow-md" aria-label="Dessin Bourgeon">
+                                        <rect x="47" y="50" width="6" height="50" fill="#8b5a2b" />
+                                        <circle cx="50" cy="40" r="10" fill="#8b0000" />
+                                        <circle cx="42" cy="48" r="7" fill="#8b0000" />
+                                        <circle cx="58" cy="48" r="7" fill="#8b0000" />
+                                        <circle cx="47" cy="37" r="4" fill="#a52a2a" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Bourgeon</span>
+                                </div>
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto rounded-lg border border-gray-300 drop-shadow-md" aria-label="Dessin Écorce">
+                                        <rect width="100" height="100" fill="#8c8c8c" />
+                                        <path d="M10 20 Q20 15 30 25 Q20 35 10 20 Z" fill="#696969" />
+                                        <path d="M50 40 Q65 35 70 50 Q55 60 50 40 Z" fill="#696969" />
+                                        <path d="M20 70 Q35 60 40 80 Q25 90 20 70 Z" fill="#696969" />
+                                        <path d="M70 80 Q80 75 90 85 Q80 95 70 80 Z" fill="#696969" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Écorce</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Érable Argenté -->
+                    <div class="bg-slate-50/80 p-5 rounded-2xl border-l-4 border-slate-500 shadow-sm transition hover:shadow-md">
+                        <h3 class="font-bold text-xl text-slate-800 mb-3">Érable argenté (Silver Maple)</h3>
+                        <div class="flex flex-col lg:flex-row gap-4 items-center">
+                            <div class="w-full lg:w-1/4">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Acer_saccharinum_1.jpg/320px-Acer_saccharinum_1.jpg" alt="[Image de Érable argenté]" onerror="this.onerror=null; this.src='https://placehold.co/320x160/f1f5f9/1e293b?text=Photo+Internet+Bloquee';" class="w-full h-40 object-cover rounded-xl border-2 border-slate-300 shadow-sm">
+                            </div>
+                            <div class="w-full lg:w-2/4 text-gray-700 leading-relaxed">
+                                <p><strong>Bourgeons :</strong> Rouges à bruns, agglomérés. Ressemble à l'érable rouge, mais l'arbre pousse souvent dans des zones plus humides.<br>
+                                <strong>Écorce :</strong> Grise, elle se détache en longues bandes verticales étroites qui pendent souvent du tronc (écorce effilochée).</p>
+                                <p class="mt-3 text-sm bg-white p-2 rounded-lg inline-block shadow-sm border border-gray-100"><strong class="text-slate-700">Concentration en sucre :</strong> ~1.5% à 2.0% (Ratio approx. 50:1). <em class="text-gray-500">Fait du très bon sirop clair si bouilli rapidement!</em></p>
+                            </div>
+                            <div class="w-full lg:w-1/4 flex space-x-3 justify-center bg-white/60 p-3 rounded-xl shadow-inner border border-gray-100">
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto drop-shadow-md" aria-label="Dessin Bourgeon">
+                                        <rect x="47" y="50" width="6" height="50" fill="#5c4033" />
+                                        <circle cx="50" cy="40" r="11" fill="#8a3324" />
+                                        <circle cx="41" cy="46" r="8" fill="#8a3324" />
+                                        <circle cx="59" cy="46" r="8" fill="#8a3324" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Bourgeon</span>
+                                </div>
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto rounded-lg border border-gray-300 drop-shadow-md" aria-label="Dessin Écorce">
+                                        <rect width="100" height="100" fill="#9ca3af" />
+                                        <path d="M25 10 L25 90 M50 0 L50 80 M75 20 L75 100" stroke="#4b5563" stroke-width="4" fill="none" />
+                                        <path d="M25 30 Q15 45 20 60" stroke="#374151" stroke-width="3" fill="none" />
+                                        <path d="M50 50 Q60 65 55 80" stroke="#374151" stroke-width="3" fill="none" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Écorce</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Érable à Giguère -->
+                    <div class="bg-stone-50/80 p-5 rounded-2xl border-l-4 border-stone-600 shadow-sm transition hover:shadow-md">
+                        <h3 class="font-bold text-xl text-stone-800 mb-3">Érable à Giguère (Manitoba Maple / Boxelder)</h3>
+                        <div class="flex flex-col lg:flex-row gap-4 items-center">
+                            <div class="w-full lg:w-1/4">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Acer_negundo_leaf.jpg/320px-Acer_negundo_leaf.jpg" alt="[Image de Érable à Giguère]" onerror="this.onerror=null; this.src='https://placehold.co/320x160/f5f5f4/44403c?text=Photo+Internet+Bloquee';" class="w-full h-40 object-cover rounded-xl border-2 border-stone-300 shadow-sm">
+                            </div>
+                            <div class="w-full lg:w-2/4 text-gray-700 leading-relaxed">
+                                <p><strong>Bourgeons :</strong> Recouverts d'un petit duvet blanc/argenté soyeux. L'arbre ressemble presque à un frêne ou un sureau.<br>
+                                <strong>Écorce :</strong> Gris-brun, avec des crêtes profondes et régulières qui s'entrecroisent. Branches souvent vert pâle quand elles sont jeunes.</p>
+                                <p class="mt-3 text-sm bg-white p-2 rounded-lg inline-block shadow-sm border border-gray-100"><strong class="text-red-700">Concentration en sucre :</strong> ~1.0% à 1.5% (Ratio approx. 60:1 ou plus). <em class="text-gray-500">Ça coule, mais prépare-toi à bûcher en maudit pour le faire bouillir!</em></p>
+                            </div>
+                            <div class="w-full lg:w-1/4 flex space-x-3 justify-center bg-white/60 p-3 rounded-xl shadow-inner border border-gray-100">
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto drop-shadow-md" aria-label="Dessin Bourgeon">
+                                        <rect x="46" y="40" width="8" height="60" fill="#5c4033" />
+                                        <path d="M40 45 Q50 25 60 45 Z" fill="#d1d5db" />
+                                        <circle cx="50" cy="35" r="10" fill="#f3f4f6" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Bourgeon</span>
+                                </div>
+                                <div class="text-center transition transform hover:scale-110">
+                                    <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto rounded-lg border border-gray-300 drop-shadow-md" aria-label="Dessin Écorce">
+                                        <rect width="100" height="100" fill="#78716c" />
+                                        <path d="M30 0 L20 50 L30 100 M60 0 L50 50 L60 100" stroke="#44403c" stroke-width="6" fill="none" />
+                                        <path d="M20 50 L50 50 M50 20 L80 20" stroke="#44403c" stroke-width="4" fill="none" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 font-bold mt-1 block">Écorce</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- English minimized -->
+                <div class="mt-8 pt-5 border-t border-amber-200 text-sm text-gray-600 bg-amber-50/50 p-5 rounded-xl">
+                    <p class="font-extrabold mb-2 text-amber-900 flex items-center gap-2"><span>🇬🇧</span> Quick English Guide: Winter ID & Sugar Specs</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Sugar Maple:</strong> Pointy/brown buds. ~2-3% sugar (40:1). The absolute best.</li>
+                        <li><strong>Red Maple:</strong> Round/red clustered buds. ~1.5-2% sugar (50:1). Takes more wood!</li>
+                        <li><strong>Silver Maple:</strong> Shaggy, peeling bark. ~1.5-2% sugar (50:1). Good light syrup.</li>
+                        <li><strong>Boxelder (Manitoba Maple):</strong> Fuzzy/white buds. ~1% sugar (60:1+). Prepare for a long boil buddy!</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 2: Fabrication -->
+            <div id="fabrication" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-amber-800 mb-6 border-b-2 border-amber-200 pb-3">🔥 Faire son Sirop (Méthode DIY)</h2>
+                
+                <ol class="list-decimal pl-6 space-y-5 text-gray-700 text-lg leading-relaxed marker:text-amber-600 marker:font-bold">
+                    <li class="pl-2">
+                        <strong class="text-amber-900">L'Entaillage :</strong> Attends que ça gèle la nuit pis que ça dégèle le jour (autour de février/mars). Prends une mèche 5/16 (idéal pour pas trop blesser l'arbre). Perce à une hauteur confortable, <strong>entre 3 pis 4 pieds (90 à 120 cm)</strong> à partir du sol ou d'la croûte de neige. Perce à environ 2 pouces de profond, avec un léger angle vers le haut pour que l'eau coule bien. <em class="bg-amber-100 px-1 rounded">Très important :</em> Éloigne-toi d'au moins 6 pouces de côté et 12 pouces en haut/bas d'une vieille cicatrice d'entaille. Frappe ton chalumeau doucement avec un marteau.
+                    </li>
+                    <li class="pl-2">
+                        <strong class="text-amber-900">La Collecte :</strong> Accroche une chaudière (un seau de plastique alimentaire fait la job, pas cher) ou installe de la tubulure si t'as une pente. L'eau d'érable se garde au froid, pas plus de 2-3 jours sinon ça gâte.
+                    </li>
+                    <li class="pl-2">
+                        <strong class="text-amber-900">L'Ébullition (Le DIY Évaporateur) :</strong> Ça prend environ 40 litres d'eau pour 1 litre de sirop. Fais pas ça dans la maison, ça va décoller ta tapisserie! Monte-toi un poêle avec des blocs de béton (cinder blocks) pis mets des pannes d'acier inoxydable sur le dessus (des bacs de buffet d'hôtel, c'est parfait pis pas cher). Chauffe au bois en malade.
+                    </li>
+                    <li class="pl-2">
+                        <strong class="text-amber-900">La Finition :</strong> Quand ça commence à épaissir, transfère sur un petit rond au propane pour contrôler la chaleur. Le sirop est prêt à <strong>104°C (219.2°F)</strong>, soit 4°C au-dessus du point d'ébullition de l'eau ce jour-là. Passe ça dans un filtre en orlon (filtre à sirop) tant que c'est ben chaud pis embouteille!
+                    </li>
+                </ol>
+
+                <!-- English minimized -->
+                <div class="mt-8 pt-5 border-t border-amber-200 text-sm text-gray-600 bg-amber-50/50 p-5 rounded-xl">
+                    <p class="font-extrabold mb-2 text-amber-900 flex items-center gap-2"><span>🇬🇧</span> Quick English Guide: DIY Syrup</p>
+                    <p>1. <strong>Tap:</strong> Drill 3-4 feet (90-120cm) from the ground/snow. Use 5/16 bit, drill 2" deep slightly upward when nights are freezing and days are warm. Stay away from old scars. <br>
+                    2. <strong>Collect:</strong> Food-grade buckets. Boil within 3 days. <br>
+                    3. <strong>Boil:</strong> 40:1 ratio. Build a cheap cinder-block arch outside with stainless steel catering pans. Boil hard with dry wood.<br>
+                    4. <strong>Finish:</strong> Finish on a propane stove. Syrup is done at exactly 104°C (219°F). Filter hot and bottle.</p>
+                </div>
+            </div>
+
+            <!-- Tab 3: Suggestions -->
+            <div id="suggestions" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-amber-800 mb-6 border-b-2 border-amber-200 pb-3">💡 Améliorations & Idées (Mr. Minutieux)</h2>
+                
+                <div class="space-y-4 text-gray-700 text-lg leading-relaxed">
+                    <p>Pour continuer d'améliorer nos *setups* (toujours plus fort, toujours moins cher), voici mes suggestions pour tes prochains projets :</p>
+                    <ul class="list-disc pl-6 space-y-3 marker:text-amber-500">
+                        <li><strong class="text-amber-900">Pré-chauffeur d'eau (Pre-heater) :</strong> Enrouler un tube de cuivre autour de la cheminée de ton évaporateur DIY pour pré-chauffer l'eau avant qu'elle tombe dans la panne. Ça sauve du bois en titi!</li>
+                        <li><strong class="text-amber-900">Extracteur au vacuum DIY :</strong> Utiliser une vieille pompe à vide de thermopompe modifiée sur ton système de tubulure pour augmenter le rendement de 30%.</li>
+                        <li><strong class="text-amber-900">Contrôleur de température Arduino :</strong> Fabriquer une sonde thermocouple qui déclenche une petite alarme quand ton sirop atteint exactement 103.5°C pour t'avertir de ralentir le feu.</li>
+                    </ul>
+                </div>
+
+                <div class="mt-8 pt-5 border-t border-amber-200 text-sm text-gray-600 bg-amber-50/50 p-5 rounded-xl">
+                    <p class="font-extrabold mb-2 text-amber-900 flex items-center gap-2"><span>🇬🇧</span> Ideas for improvements</p>
+                    <p>I suggest building a copper tube pre-heater around the exhaust stack, creating a DIY vacuum pump system for the tubing, or coding a cheap Arduino temperature alarm for the finishing pan.</p>
+                </div>
+            </div>
+
+            <!-- Tab 4: Assistant IA -->
+            <div id="assistant-ia" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-amber-800 mb-6 border-b-2 border-amber-200 pb-3 flex items-center gap-3"><span>🤖</span> Assistant Acéricole & Bricolage</h2>
+                <p class="mb-6 text-gray-700 text-lg">T'as un problème avec ton sirop ? Ton feu tire pas ? Ou tu veux savoir comment transformer un vieux frigidaire en équipement d'érablière ? Demande-le à l'assistant IA de Mr. Minutieux !</p>
+                
+                <div class="space-y-4">
+                    <textarea id="ai-prompt" rows="3" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-amber-500 focus:border-amber-500 text-lg shadow-inner bg-white/80" placeholder="Ex: Mon sirop est plein de sable, qu'est-ce que j'ai mal fait ? / How can I use a broken fridge for my syrup setup?"></textarea>
+                    
+                    <button onclick="askGemini()" id="ai-btn" class="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-[1.02] shadow-lg flex justify-center items-center text-lg">
+                        Demander des conseils ✨
+                    </button>
+
+                    <div id="ai-response-container" class="hidden mt-6 p-6 bg-white/80 border-l-4 border-amber-500 rounded-xl shadow-md">
+                        <h3 class="font-extrabold text-amber-900 mb-3 text-lg">Réponse de Mr. Minutieux :</h3>
+                        <div id="ai-response" class="text-gray-800 whitespace-pre-wrap leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Inventeur DIY (New Gemini Feature) -->
+            <div id="inventeur-diy" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-green-800 mb-6 border-b-2 border-green-200 pb-3 flex items-center gap-3"><span>🛠️</span> Le Générateur de Patentes</h2>
+                <p class="mb-6 text-gray-700 text-lg">T'as un tas de cochonneries qui traînent dans le fond de ton garage ? Dis-moi ce que t'as, pis je vais t'inventer une machine pour ton érablière avec ça !</p>
+                
+                <div class="space-y-5">
+                    <div class="bg-gray-50/80 p-5 rounded-2xl border border-gray-200 shadow-inner">
+                        <label class="block text-base font-bold text-gray-700 mb-3">Qu'est-ce qui traîne dans ton garage ?</label>
+                        <textarea id="inventory-prompt" rows="2" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 text-lg bg-white" placeholder="Ex: Une vieille balayeuse, un tuyau de sécheuse, deux chaises de patio en plastique, et du duct tape."></textarea>
+                    </div>
+                    
+                    <button onclick="inventDIY()" id="invent-btn" class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-[1.02] shadow-lg flex justify-center items-center text-lg">
+                        Créer une invention acéricole ✨
+                    </button>
+
+                    <div id="invention-container" class="hidden mt-6 p-6 bg-green-50/90 border-2 border-dashed border-green-400 rounded-2xl shadow-md">
+                        <div class="flex items-center space-x-3 mb-4 border-b border-green-200 pb-3">
+                            <span class="text-4xl">💡</span>
+                            <h3 class="text-2xl font-extrabold text-green-900">Nouvelle Invention Débloquée !</h3>
+                        </div>
+                        <div id="invention-response" class="text-gray-800 space-y-3 leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 6: Analyseur de Coulée (New Gemini Feature) -->
+            <div id="analyseur-coulee" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-blue-800 mb-6 border-b-2 border-blue-200 pb-3 flex items-center gap-3"><span>📊</span> L'Analyseur de Coulée (IA)</h2>
+                <p class="mb-6 text-gray-700 text-lg">Rentre tes chiffres de la journée dans mon petit registre intelligent. Je vais analyser ton rendement, calculer ton sirop potentiel pis te dire si t'as eu une bonne "run" !</p>
+                
+                <div class="space-y-5">
+                    <div class="grid grid-cols-2 gap-5">
+                        <div class="bg-gray-50/80 p-4 rounded-2xl border border-gray-200 shadow-inner">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Nb. d'entailles</label>
+                            <input type="number" id="stats-taps" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-blue-500 bg-white" placeholder="Ex: 40" min="1">
+                        </div>
+                        <div class="bg-gray-50/80 p-4 rounded-2xl border border-gray-200 shadow-inner">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Eau d'érable (Litres)</label>
+                            <input type="number" id="stats-sap" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-blue-500 bg-white" placeholder="Ex: 120" min="0">
+                        </div>
+                    </div>
+                    <div class="bg-gray-50/80 p-4 rounded-2xl border border-gray-200 shadow-inner">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Météo / Déroulement de la journée</label>
+                        <textarea id="stats-notes" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-blue-500 bg-white" placeholder="Ex: Grosse gelée cette nuit, gros soleil à midi. J'ai renversé une chaudière."></textarea>
+                    </div>
+                    
+                    <button onclick="analyzeYield()" id="analyze-btn" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-[1.02] shadow-lg flex justify-center items-center text-lg">
+                        Faire mon bilan de la journée ✨
+                    </button>
+
+                    <div id="analyze-container" class="hidden mt-6 p-6 bg-blue-50/90 border-l-4 border-blue-500 rounded-2xl shadow-md">
+                        <h3 class="font-extrabold text-blue-900 mb-4 border-b border-blue-200 pb-2 text-xl">Le Verdict de Mr. Minutieux :</h3>
+                        <div id="analyze-response" class="text-gray-800 space-y-3 leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 7: Calibrateur de cuisson -->
+            <div id="calibrateur" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-red-800 mb-6 border-b-2 border-red-200 pb-3 flex items-center gap-3"><span>🌡️</span> Le Calibrateur de Cuisson</h2>
+                <p class="mb-6 text-gray-700 text-lg">Le point d'ébullition change à tous les jours avec la pression atmosphérique ! Fais bouillir de l'eau claire, prends la température, pis je te dis à combien sortir ton sirop pour qu'il soit parfait (66 Brix).</p>
+                
+                <div class="space-y-6">
+                    <div class="bg-gray-50/80 p-5 rounded-2xl border border-gray-200 shadow-inner">
+                        <label class="block text-base font-bold text-gray-700 mb-3">Température de l'eau bouillante AUJOURD'HUI :</label>
+                        <div class="flex space-x-3">
+                            <input type="number" id="water-boil-temp" step="0.1" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-red-500 text-lg bg-white" placeholder="Ex: 99.5">
+                            <select id="temp-unit" class="p-4 border-2 border-gray-200 rounded-xl focus:ring-red-500 bg-white font-bold text-lg cursor-pointer">
+                                <option value="C">°C</option>
+                                <option value="F">°F</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button onclick="calculateSyrupTemp()" class="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-[1.02] shadow-lg text-lg">
+                        Calculer mon point de coulée 🎯
+                    </button>
+
+                    <div id="calibrateur-result" class="hidden mt-6 p-6 bg-red-50/90 border-2 border-red-200 rounded-2xl text-center shadow-md">
+                        <p class="text-base text-red-800 font-bold mb-2">Ton sirop sera prêt à exactement :</p>
+                        <p id="syrup-target-temp" class="text-5xl font-black text-red-600 my-4 drop-shadow-sm"></p>
+                        <p class="text-sm text-gray-600 mt-3 font-medium">N'oublie pas de vérifier avec ton densimètre pour être sûr à 100% !</p>
+                    </div>
+                </div>
+
+                <!-- English minimized -->
+                <div class="mt-8 pt-5 border-t border-red-200 text-sm text-gray-600 bg-red-50/50 p-5 rounded-xl">
+                    <p class="font-extrabold mb-2 text-red-900 flex items-center gap-2"><span>🇬🇧</span> Quick English Guide: Calibration</p>
+                    <p>Boil plain water and measure its temp today. Add 4°C (or 7.2°F) to find your exact syrup finishing temperature. Don't rely blindly on 104°C/219°F!</p>
+                </div>
+            </div>
+
+            <!-- Tab 8: Docteur Sirop (New Gemini Feature) -->
+            <div id="docteur-sirop" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-purple-800 mb-6 border-b-2 border-purple-200 pb-3 flex items-center gap-3"><span>🩺</span> Le Docteur Sirop</h2>
+                <p class="mb-6 text-gray-700 text-lg">Ton sirop a une drôle de couleur ? Y goûte le bois vert ou y'a du sable dans l'fond ? Décris-moi ton problème pis j'te dis ce qui cloche pis comment le sauver !</p>
+                
+                <div class="space-y-5">
+                    <div class="bg-gray-50/80 p-5 rounded-2xl border border-gray-200 shadow-inner">
+                        <label class="block text-base font-bold text-gray-700 mb-3">Symptômes de ton sirop :</label>
+                        <textarea id="symptoms-prompt" rows="3" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-purple-500 bg-white text-lg" placeholder="Ex: Mon sirop a plein de sable fin gris au fond de la bouteille pis il est un peu brouillé."></textarea>
+                    </div>
+                    
+                    <button onclick="diagnoseSyrup()" id="diagnose-btn" class="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-[1.02] shadow-lg flex justify-center items-center text-lg">
+                        Diagnostiquer mon sirop ✨
+                    </button>
+
+                    <div id="diagnose-container" class="hidden mt-6 p-6 bg-purple-50/90 border-l-4 border-purple-500 rounded-2xl shadow-md">
+                        <h3 class="font-extrabold text-purple-900 mb-4 border-b border-purple-200 pb-2 text-xl">Diagnostic de Mr. Minutieux :</h3>
+                        <div id="diagnose-response" class="text-gray-800 space-y-3 leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 9: Bois de Chauffage (New Proactive Feature) -->
+            <div id="bois-chauffage" class="tab-content glass-panel p-8 rounded-3xl">
+                <h2 class="text-3xl font-extrabold text-orange-900 mb-6 border-b-2 border-orange-200 pb-3 flex items-center gap-3"><span>🪵</span> Estimateur de Bois de Chauffage</h2>
+                <p class="mb-6 text-gray-700 text-lg">Rien de pire que de manquer de bois sec en pleine saison des sucres ! Rentre tes entailles pis je vais te dire combien de cordes ça te prend pour ton évaporateur DIY.</p>
+                
+                <div class="space-y-6">
+                    <div class="bg-gray-50/80 p-5 rounded-2xl border border-gray-200 shadow-inner">
+                        <label class="block text-base font-bold text-gray-700 mb-3">Nombre d'entailles (Taps) :</label>
+                        <input type="number" id="wood-taps-input" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-orange-500 bg-white text-lg" placeholder="Ex: 50" min="1">
+                    </div>
+                    
+                    <button onclick="calculateWood()" class="w-full bg-gradient-to-r from-orange-800 to-orange-700 hover:from-orange-900 hover:to-orange-800 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-[1.02] shadow-lg text-lg">
+                        Calculer mon bois 🪓
+                    </button>
+
+                    <div id="wood-result" class="hidden mt-6 p-6 bg-orange-50/90 border-2 border-orange-200 rounded-2xl text-center shadow-md">
+                        <p class="text-base text-orange-800 font-bold mb-2">Il va te falloir environ :</p>
+                        <p id="wood-target" class="text-5xl font-black text-orange-900 my-4 drop-shadow-sm"></p>
+                        <p class="text-sm text-gray-600 mt-3">Basé sur une moyenne d'une corde aux 100 entailles (pour un p'tit évaporateur pas hyper performant). Prépare ta hache !</p>
+                    </div>
+                </div>
+
+                <!-- English minimized -->
+                <div class="mt-8 pt-5 border-t border-orange-200 text-sm text-gray-600 bg-orange-50/50 p-5 rounded-xl">
+                    <p class="font-extrabold mb-2 text-orange-900 flex items-center gap-2"><span>🇬🇧</span> Quick English Guide: Firewood</p>
+                    <p>Enter your tap count. A basic DIY setup burns roughly 1 full cord of dry hardwood per 100 taps for the season. Chop chop!</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: 3D Canvas & Database -->
+        <div class="space-y-6">
+            
+            <!-- 3D Viewer -->
+            <div class="glass-panel p-5 rounded-3xl">
+                <div class="flex items-center gap-3 mb-4 border-b border-gray-200 pb-3">
+                    <span class="text-3xl drop-shadow-md">🌲</span>
+                    <div>
+                        <h3 class="font-extrabold text-xl text-gray-800">Maquette 3D Interactive</h3>
+                        <p class="text-sm text-amber-600 font-bold">Maintenant avec neige et boucane !</p>
+                    </div>
+                </div>
+                <div id="canvas-container" class="border-4 border-white/50"></div>
+            </div>
+
+            <!-- Materials Database -->
+            <div class="glass-panel p-5 rounded-3xl">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-4">
+                    <h3 class="font-extrabold text-xl text-gray-800 flex items-center gap-2">
+                        <span>📋</span> Matériel DIY
+                    </h3>
+                    <button onclick="exportCSV()" class="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white text-sm px-4 py-2 rounded-xl shadow-md transition transform hover:scale-105 font-bold">
+                        📥 Exporter CSV
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 font-medium mb-3">Sers-toi de cette liste comme checklist à la quincaillerie !</p>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="min-w-full text-sm text-left" id="materialsTable">
+                        <thead class="bg-gray-100/80 text-gray-700 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="px-3 py-3 rounded-tl-lg">✓</th>
+                                <th class="px-3 py-3">Catégorie</th>
+                                <th class="px-3 py-3">Item (FR)</th>
+                                <th class="px-3 py-3">Item (EN)</th>
+                                <th class="px-3 py-3 text-center rounded-tr-lg">Qté</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="text-center text-gray-600 font-medium text-sm py-10 mt-10 border-t border-amber-300/50 bg-white/30 backdrop-blur-sm">
+        &copy; 2026 Mr Minutieux (www.mrminutieux.ca). Conçu robuste, pas cher, pis pas mal beau !
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // --- UI Logic ---
+        function openTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-600', 'text-white', 'shadow-md');
+                btn.classList.add('text-amber-900');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.remove('text-amber-900');
+            event.currentTarget.classList.add('bg-amber-600', 'text-white', 'shadow-md');
+        }
+
+        // --- Database Logic avec Checkboxes ---
+        const materialsDB = [
+            { category: "Métal", fr: "Pannes Inox (Gastronorme)", en: "Stainless Hotel Pans", qty: 3 },
+            { category: "Structure", fr: "Blocs de béton (Cinder blocks)", en: "Cinder blocks", qty: 45 },
+            { category: "Structure", fr: "2x4x8 Bois traité", en: "2x4x8 Treated Wood", qty: 12 },
+            { category: "Structure", fr: "Tôle ondulée (Toit)", en: "Corrugated Tin Roof", qty: 4 },
+            { category: "Quincaillerie", fr: "Vis à bois 3 pouces", en: "3-inch Wood Screws", qty: 100 },
+            { category: "Outil", fr: "Mèche 5/16 pour bois", en: "5/16 Wood Drill Bit", qty: 1 },
+            { category: "Outil", fr: "Ruban à mesurer", en: "Measuring Tape", qty: 1 },
+            { category: "Outil", fr: "Thermomètre à bonbon", en: "Candy Thermometer", qty: 1 },
+            { category: "Outil", fr: "Densimètre (Hydromètre)", en: "Hydrometer", qty: 1 },
+            { category: "Outil", fr: "Réfractomètre Brix", en: "Brix Refractometer", qty: 1 },
+            { category: "Plomberie", fr: "Tuyau de cuivre flexible 3/8 (50 pi)", en: "3/8 Copper Tubing Coil", qty: 1 },
+            { category: "Plomberie", fr: "Valve de contrôle en laiton", en: "Brass Needle Valve", qty: 1 },
+            { category: "Plastique", fr: "Chalumeaux 5/16", en: "5/16 Spiles", qty: 50 },
+            { category: "Plastique", fr: "Chaudières 2 Gallons", en: "2 Gal Buckets", qty: 50 },
+            { category: "Divers", fr: "Filtre Orlon épais", en: "Heavy Orlon Filter", qty: 1 },
+            { category: "Métal", fr: "Grille en fonte (pour le feu)", en: "Cast iron grate", qty: 1 },
+            { category: "Combustible", fr: "Corde de bois franc", en: "Hardwood cord", qty: 3 }
+        ];
+
+        function loadTable() {
+            const tbody = document.querySelector('#materialsTable tbody');
+            materialsDB.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-amber-50/50 transition duration-150";
+                tr.innerHTML = `
+                    <td class="px-3 py-3"><input type="checkbox" class="w-5 h-5 text-amber-600 rounded border-gray-300 focus:ring-amber-500 cursor-pointer shadow-sm" id="check-${index}"></td>
+                    <td class="px-3 py-3 font-semibold text-gray-600"><span class="bg-gray-200/80 border border-gray-300 px-2 py-1 rounded-md text-xs">${item.category}</span></td>
+                    <td class="px-3 py-3 font-bold text-gray-800 cursor-pointer" onclick="document.getElementById('check-${index}').click()">${item.fr}</td>
+                    <td class="px-3 py-3 text-gray-500 italic text-xs">${item.en}</td>
+                    <td class="px-3 py-3 text-center font-black text-amber-800 bg-amber-100/50 rounded-lg">${item.qty}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        loadTable();
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Categorie,Item_FR,Item_EN,Quantite\n";
+            materialsDB.forEach(row => {
+                csvContent += `${row.category},"${row.fr}","${row.en}",${row.qty}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Materiaux_Acericulture_Minutieux.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Custom App Logic ---
+        function calculateSyrupTemp() {
+            const temp = parseFloat(document.getElementById('water-boil-temp').value);
+            const unit = document.getElementById('temp-unit').value;
+            const resultBox = document.getElementById('calibrateur-result');
+            const targetDisplay = document.getElementById('syrup-target-temp');
+
+            if (isNaN(temp)) {
+                targetDisplay.innerHTML = "<span class='text-xl'>Mets un chiffre valide mon chum !</span>";
+                resultBox.classList.remove('hidden');
+                return;
+            }
+
+            let targetTemp;
+            if (unit === 'C') {
+                targetTemp = (temp + 4.0).toFixed(1) + " °C";
+            } else {
+                targetTemp = (temp + 7.2).toFixed(1) + " °F";
+            }
+
+            targetDisplay.innerText = targetTemp;
+            resultBox.classList.remove('hidden');
+        }
+
+        function calculateWood() {
+            const taps = parseInt(document.getElementById('wood-taps-input').value);
+            const resultBox = document.getElementById('wood-result');
+            const targetDisplay = document.getElementById('wood-target');
+
+            if (isNaN(taps) || taps < 1) {
+                targetDisplay.innerHTML = "<span class='text-xl'>Rentres au moins 1 entaille !</span>";
+                resultBox.classList.remove('hidden');
+                return;
+            }
+
+            const cords = (taps / 100).toFixed(1);
+            let displayString = cords + " corde(s)";
+            
+            if (cords > 10) {
+                displayString += " <br><span class='text-base font-normal text-orange-700 mt-2 block'>Ouin, achète-toi une fendeuse !</span>";
+            } else if (cords < 0.5) {
+                displayString += " <br><span class='text-base font-normal text-orange-700 mt-2 block'>Tu vas passer ça en un weekend d'allumage !</span>";
+            }
+
+            targetDisplay.innerHTML = displayString;
+            resultBox.classList.remove('hidden');
+        }
+
+        // --- Gemini API Logic ---
+        const apiKey = ""; // La clé sera injectée automatiquement par l'environnement
+        
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            let retries = 0;
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) return response;
+                    if (response.status !== 429 && response.status < 500) {
+                        return response;
+                    }
+                } catch (error) { }
+                if (retries < maxRetries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, delays[retries]));
+                }
+                retries++;
+            }
+            throw new Error("Toutes les tentatives de connexion ont échoué.");
+        }
+
+        async function askGemini() {
+            const promptInput = document.getElementById('ai-prompt').value.trim();
+            const responseContainer = document.getElementById('ai-response-container');
+            const responseDiv = document.getElementById('ai-response');
+            const btn = document.getElementById('ai-btn');
+
+            if (!promptInput) return;
+
+            btn.disabled = true;
+            btn.innerHTML = 'Réflexion en cours... <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            responseContainer.classList.remove('hidden');
+            responseDiv.innerHTML = '<span class="text-gray-500 italic font-medium">Mr. Minutieux fouille dans son coffre à outils...</span>';
+
+            const systemInstruction = "Tu es Mr. Minutieux, un expert québécois en acériculture (sirop d'érable) DIY (fait maison). Tu réponds aux questions des utilisateurs avec un ton amical, rustique et ingénieux. Tu utilises des expressions québécoises. Tes solutions sont toujours axées sur le système D, le faible coût, et la réutilisation de matériel. Si l'utilisateur pose une question en anglais, réponds en anglais avec un accent canadien-français (ex: 'Listen buddy'). Garde les réponses concises et très pratiques.";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: promptInput }] }], systemInstruction: { parts: [{ text: systemInstruction }] } };
+
+            try {
+                const response = await fetchWithRetry(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error("Erreur de communication.");
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-amber-900">$1</strong>');
+                    responseDiv.innerHTML = formattedText;
+                } else {
+                    responseDiv.innerHTML = "Oups, j'ai échappé ma chaudière. Essaie de reformuler ta question !";
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<span class="text-red-600 font-bold">Erreur:</span> L'évaporateur fait trop de boucane ! (${error.message})`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Demander des conseils ✨';
+            }
+        }
+
+        async function inventDIY() {
+            const inventoryInput = document.getElementById('inventory-prompt').value.trim();
+            const responseContainer = document.getElementById('invention-container');
+            const responseDiv = document.getElementById('invention-response');
+            const btn = document.getElementById('invent-btn');
+
+            if (!inventoryInput) return;
+
+            btn.disabled = true;
+            btn.innerHTML = 'Conception en cours... <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            responseContainer.classList.remove('hidden');
+            responseDiv.innerHTML = '<span class="text-gray-500 italic font-medium">Mr. Minutieux dessine des plans sur une napkin...</span>';
+
+            const systemInstruction = "Tu es Mr. Minutieux, un patenteux et inventeur québécois excentrique spécialisé dans le sirop d'érable. L'utilisateur te fournit une liste d'objets inutiles trouvés dans son garage. Tu dois inventer une machine ou un outil pour l'acériculture en utilisant UNIQUEMENT ces objets (et un peu de duct tape ou de tie-wraps). Ta réponse DOIT inclure: 1. Le nom loufoque de la patente. 2. À quoi ça sert (ex: brasser le sirop, pomper l'eau). 3. Les étapes d'assemblage (très drôles et formatées en système D). 4. Une 'Cote de sécurité Mr. Minutieux' sur 10. Formate la réponse directement en HTML valide (utilise <strong>, <ul>, <li>, <p>, <h3>) sans markdown ni balises de code autour. Style les <strong> en couleur verte.";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: `Voici ce que j'ai dans mon garage : ${inventoryInput}` }] }], systemInstruction: { parts: [{ text: systemInstruction }] } };
+
+            try {
+                const response = await fetchWithRetry(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error("Erreur API.");
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    let cleanHTML = text.replace(/```html/g, '').replace(/```/g, '');
+                    responseDiv.innerHTML = cleanHTML;
+                } else {
+                    responseDiv.innerHTML = "<p>Oups, mon plan a pris en feu. Essaie d'autres objets !</p>";
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<p class="text-red-600 font-bold">Erreur de conception : L'inspecteur des assurances a bloqué l'idée. (${error.message})</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Créer une invention acéricole ✨';
+            }
+        }
+
+        async function analyzeYield() {
+            const taps = document.getElementById('stats-taps').value;
+            const sap = document.getElementById('stats-sap').value;
+            const notes = document.getElementById('stats-notes').value.trim();
+            const responseContainer = document.getElementById('analyze-container');
+            const responseDiv = document.getElementById('analyze-response');
+            const btn = document.getElementById('analyze-btn');
+
+            if (!taps || !sap) {
+                responseContainer.classList.remove('hidden');
+                responseDiv.innerHTML = "<p class='text-red-600 font-bold'>Wo minute papillon ! Remplis au moins tes entailles et ton eau ramassée !</p>";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Calcul mental en cours... <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            responseContainer.classList.remove('hidden');
+            responseDiv.innerHTML = '<span class="text-gray-500 italic font-medium">Mr. Minutieux pitonne sur sa calculatrice...</span>';
+
+            const systemInstruction = "Tu es Mr. Minutieux, un acériculteur québécois d'expérience. L'utilisateur te donne son bilan journalier: nombre d'entailles, litres d'eau d'érable récoltés, et ses notes/météo. Fais 3 choses : 1) Calcule combien de sirop ça va donner (règle du 40 pour 1). 2) Évalue son rendement (ex: un bon arbre donne de 1 à 2 litres d'eau par jour de bonne coulée). 3) Donne un conseil ou une prédiction amusante basée sur sa météo ou ses commentaires. Ton ton est amical, encourageant, avec des expressions du Québec. Réponds en HTML valide (utilise <strong>, <ul>, <li>, <p>) sans bloc de code markdown autour. Mets les éléments importants en gras et bleu.";
+            const userInput = `Entailles: ${taps}\nEau récoltée: ${sap} Litres\nMétéo/Notes: ${notes || "Pas de notes spécifiques"}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: userInput }] }], systemInstruction: { parts: [{ text: systemInstruction }] } };
+
+            try {
+                const response = await fetchWithRetry(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error("Erreur API.");
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    let cleanHTML = text.replace(/```html/g, '').replace(/```/g, '');
+                    responseDiv.innerHTML = cleanHTML;
+                } else {
+                    responseDiv.innerHTML = "<p>Oups, ma calculatrice a manqué de batteries. Essaie encore !</p>";
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<p class="text-red-600 font-bold">Erreur : Impossible de faire les calculs. L'évaporateur tire trop de jus. (${error.message})</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Faire mon bilan de la journée ✨';
+            }
+        }
+
+        async function diagnoseSyrup() {
+            const symptoms = document.getElementById('symptoms-prompt').value.trim();
+            const responseContainer = document.getElementById('diagnose-container');
+            const responseDiv = document.getElementById('diagnose-response');
+            const btn = document.getElementById('diagnose-btn');
+
+            if (!symptoms) {
+                responseContainer.classList.remove('hidden');
+                responseDiv.innerHTML = "<p class='text-red-600 font-bold'>Décris-moi ton sirop d'abord, j'suis pas devin !</p>";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Analyse en cours... <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            responseContainer.classList.remove('hidden');
+            responseDiv.innerHTML = '<span class="text-gray-500 italic font-medium">Mr. Minutieux goûte ton sirop avec une petite cuillère en bois...</span>';
+
+            const systemInstruction = "Tu es Mr. Minutieux, un expert acériculteur. L'utilisateur te décrit un problème avec son sirop d'érable (goût, texture, couleur, odeur). Tu dois : 1) Identifier le défaut le plus probable (ex: sable de sucre/nitre, sirop de bourgeon, surcuisson, fermentation, eau de lavage). 2) Expliquer pourquoi c'est arrivé en termes simples. 3) Donner une solution DIY pour le sauver (si possible) ou pour le prévenir l'an prochain. Ton ton est amical et de bon conseil, avec des expressions québécoises. Réponds en HTML valide (utilise <strong>, <ul>, <li>, <p>) sans bloc de code markdown autour. Mets les diagnostics en violet.";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: `Voici les symptômes de mon sirop : ${symptoms}` }] }], systemInstruction: { parts: [{ text: systemInstruction }] } };
+
+            try {
+                const response = await fetchWithRetry(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error("Erreur API.");
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    let cleanHTML = text.replace(/```html/g, '').replace(/```/g, '');
+                    responseDiv.innerHTML = cleanHTML;
+                } else {
+                    responseDiv.innerHTML = "<p>Oups, ça goûte tellement bizarre que j'en perds mes mots. Essaie d'être plus précis !</p>";
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<p class="text-red-600 font-bold">Erreur : Impossible de faire le diagnostic. (${error.message})</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Diagnostiquer mon sirop ✨';
+            }
+        }
+
+        // --- Three.js 3D Visualization (Pimped up with Snow and Smoke) ---
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            // Fond dégradé plus naturel géré par CSS, on laisse le fond Three.js transparent si possible, mais on garde le bleu hivernal
+            scene.background = null; 
+
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(18, 12, 22);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Alpha true pour voir le fond CSS
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Ombres plus douces
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 3, 0);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xfffaeb, 0.9);
+            dirLight.position.set(15, 25, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            scene.add(dirLight);
+
+            // Ground (Snow)
+            const groundGeo = new THREE.PlaneGeometry(60, 60);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.1 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Tree Trunk
+            const trunkGeo = new THREE.CylinderGeometry(1.5, 2, 18, 16);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 1.0 }); // Plus foncé
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.set(-6, 9, -2);
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            scene.add(trunk);
+
+            // Tap & Bucket
+            const tapGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.8, 8);
+            const tapMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.2 });
+            const tap = new THREE.Mesh(tapGeo, tapMat);
+            tap.rotation.z = Math.PI / 2;
+            tap.position.set(-4.2, 4, -2);
+            scene.add(tap);
+
+            const bucketGeo = new THREE.CylinderGeometry(0.6, 0.5, 1.2, 16);
+            bucketMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, metalness: 0.2, roughness: 0.5 });
+            const bucket = new THREE.Mesh(bucketGeo, bucketMat);
+            bucket.position.set(-3.6, 3, -2);
+            bucket.castShadow = true;
+            scene.add(bucket);
+
+            // DIY Evaporator (Cinder blocks - En forme de U pour voir le feu!)
+            const blockMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.9 }); 
+            
+            // Mur de gauche
+            const leftWallGeo = new THREE.BoxGeometry(0.6, 3, 6.2);
+            const leftWall = new THREE.Mesh(leftWallGeo, blockMat);
+            leftWall.position.set(2.2, 1.5, 2);
+            leftWall.castShadow = true; leftWall.receiveShadow = true;
+            scene.add(leftWall);
+
+            // Mur de droite
+            const rightWallGeo = new THREE.BoxGeometry(0.6, 3, 6.2);
+            const rightWall = new THREE.Mesh(rightWallGeo, blockMat);
+            rightWall.position.set(5.8, 1.5, 2);
+            rightWall.castShadow = true; rightWall.receiveShadow = true;
+            scene.add(rightWall);
+
+            // Mur du fond
+            const backWallGeo = new THREE.BoxGeometry(3.0, 3, 0.6);
+            const backWall = new THREE.Mesh(backWallGeo, blockMat);
+            backWall.position.set(4, 1.5, -0.8);
+            backWall.castShadow = true; backWall.receiveShadow = true;
+            scene.add(backWall);
+
+            // Bûches en feu dans la boîte à feu
+            const burningLogGeo = new THREE.CylinderGeometry(0.2, 0.2, 2, 8);
+            const burningLogMat = new THREE.MeshStandardMaterial({ 
+                color: 0x111111, 
+                emissive: 0xff4500, // Rougeoyant
+                emissiveIntensity: 0.8,
+                roughness: 0.9 
+            });
+            for(let i=0; i<4; i++) {
+                const fireLog = new THREE.Mesh(burningLogGeo, burningLogMat);
+                fireLog.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                fireLog.position.set(3.5 + Math.random(), 0.5 + Math.random()*0.5, 1 + Math.random()*2);
+                scene.add(fireLog);
+            }
+
+            // Evaporator Pan (Stainless)
+            const panGeo = new THREE.BoxGeometry(4.4, 0.5, 6.4);
+            const panMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.9, roughness: 0.1 });
+            const pan = new THREE.Mesh(panGeo, panMat);
+            pan.position.set(4, 3.25, 2);
+            pan.castShadow = true;
+            scene.add(pan);
+
+            // Liquid inside pan (Syrup)
+            const liquidGeo = new THREE.BoxGeometry(4.1, 0.4, 6.1);
+            const liquidMat = new THREE.MeshStandardMaterial({ color: 0x92400e, transparent: true, opacity: 0.85, roughness: 0.1 }); // Amber
+            const liquid = new THREE.Mesh(liquidGeo, liquidMat);
+            liquid.position.set(4, 3.35, 2);
+            scene.add(liquid);
+
+            // Cheminée (Exhaust Stack)
+            const chimneyGeo = new THREE.CylinderGeometry(0.4, 0.4, 6, 16);
+            const chimneyMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.6 });
+            const chimney = new THREE.Mesh(chimneyGeo, chimneyMat);
+            chimney.position.set(4, 6, -0.5);
+            chimney.castShadow = true;
+            scene.add(chimney);
+
+            // Pré-chauffeur (Copper Coil)
+            class SpiralCurve extends THREE.Curve {
+                constructor(radius, height, turns) { super(); this.radius = radius; this.height = height; this.turns = turns; }
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+                    const angle = t * Math.PI * 2 * this.turns;
+                    return optionalTarget.set(Math.cos(angle) * this.radius, t * this.height, Math.sin(angle) * this.radius);
+                }
+            }
+            const spiralPath = new SpiralCurve(0.5, 3.5, 8); 
+            const coilGeo = new THREE.TubeGeometry(spiralPath, 100, 0.05, 8, false);
+            const copperMat = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.9, roughness: 0.2 });
+            const coil = new THREE.Mesh(coilGeo, copperMat);
+            coil.position.set(4, 4, -0.5);
+            scene.add(coil);
+
+            // Cabane DIY (2x4 & Tôle)
+            const woodPostMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 1.0 }); 
+            const tinRoofMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.6, roughness: 0.4 }); 
+            const postGeo = new THREE.BoxGeometry(0.3, 8.5, 0.3);
+            const positions = [ [1.2, 4.25, -1.8], [6.8, 4.25, -1.8], [1.2, 4.25, 5.8], [6.8, 4.25, 5.8] ];
+            positions.forEach(pos => {
+                const post = new THREE.Mesh(postGeo, woodPostMat);
+                post.position.set(pos[0], pos[1], pos[2]);
+                post.castShadow = true;
+                scene.add(post);
+            });
+            const roofGeo = new THREE.BoxGeometry(6.6, 0.1, 8.6);
+            const roof = new THREE.Mesh(roofGeo, tinRoofMat);
+            roof.position.set(4, 8.5, 2);
+            roof.rotation.x = -Math.PI / 16; 
+            roof.castShadow = true;
+            scene.add(roof);
+
+            // Fire glow inside arch
+            const fireLight = new THREE.PointLight(0xf97316, 2.5, 12);
+            fireLight.position.set(4, 1, 2);
+            scene.add(fireLight);
+
+            // Wood Pile
+            const logGeo = new THREE.CylinderGeometry(0.3, 0.3, 2.5, 8);
+            for(let i=0; i<3; i++) {
+                for(let j=0; j<3-i; j++) {
+                    const log = new THREE.Mesh(logGeo, woodPostMat);
+                    log.rotation.z = Math.PI / 2;
+                    log.position.set(4, 0.3 + (i * 0.5), -2.5 + (j * 0.6) + (i * 0.3));
+                    log.castShadow = true;
+                    log.receiveShadow = true;
+                    scene.add(log);
+                }
+            }
+
+            // --- NOUVEAUTÉ : Système de Boucane (Smoke) ---
+            const smokeParticles = [];
+            const smokeGeo = new THREE.SphereGeometry(0.4, 8, 8);
+            for(let i=0; i<12; i++) {
+                // Créer un matériau unique par particule pour gérer l'opacité individuelle
+                const puffMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.5, roughness: 1.0 });
+                const puff = new THREE.Mesh(smokeGeo, puffMat);
+                puff.position.set(4 + (Math.random()-0.5)*0.2, 9 + Math.random()*5, -0.5 + (Math.random()-0.5)*0.2);
+                puff.scale.setScalar(1 + Math.random());
+                scene.add(puff);
+                smokeParticles.push({
+                    mesh: puff,
+                    speed: 0.03 + Math.random() * 0.04,
+                    wobble: Math.random() * Math.PI * 2
+                });
+            }
+
+            // --- NOUVEAUTÉ : Système de Neige (Snow) ---
+            const snowGeo = new THREE.BufferGeometry();
+            const snowCount = 600;
+            const snowPos = new Float32Array(snowCount * 3);
+            for(let i=0; i<snowCount*3; i+=3) {
+                snowPos[i] = (Math.random() - 0.5) * 40;     // x
+                snowPos[i+1] = Math.random() * 25;           // y
+                snowPos[i+2] = (Math.random() - 0.5) * 40;   // z
+            }
+            snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+            const snowMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.8 });
+            const snowSystem = new THREE.Points(snowGeo, snowMaterial);
+            scene.add(snowSystem);
+
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                
+                // Flicker the fire light slightly
+                fireLight.intensity = 2.0 + Math.random() * 0.8;
+
+                // Animer la boucane
+                smokeParticles.forEach(p => {
+                    p.mesh.position.y += p.speed;
+                    p.mesh.position.x += Math.sin(p.wobble) * 0.015;
+                    p.mesh.position.z += Math.cos(p.wobble) * 0.015;
+                    p.wobble += 0.02;
+                    p.mesh.scale.setScalar(p.mesh.scale.x + 0.01);
+                    
+                    // Fade out basé sur la hauteur
+                    p.mesh.material.opacity = Math.max(0, 0.6 - ((p.mesh.position.y - 9) / 6)); 
+                    
+                    // Reset
+                    if (p.mesh.position.y > 15) {
+                        p.mesh.position.set(4 + (Math.random()-0.5)*0.3, 9, -0.5 + (Math.random()-0.5)*0.3);
+                        p.mesh.scale.setScalar(1);
+                        p.mesh.material.opacity = 0.6;
+                    }
+                });
+
+                // Animer la neige
+                const positions = snowSystem.geometry.attributes.position.array;
+                for(let i=1; i<snowCount*3; i+=3) {
+                    positions[i] -= 0.04; // vitesse de chute
+                    // Dérive avec le vent (x)
+                    positions[i-1] -= 0.01; 
+                    if(positions[i] < 0) {
+                        positions[i] = 25; // reset hauteur
+                        positions[i-1] = (Math.random() - 0.5) * 40; // reset position X
+                    }
+                }
+                snowSystem.geometry.attributes.position.needsUpdate = true;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // Initialize 3D when window loads
+        window.onload = function() {
+            init3D();
+        };
+
+    </script>
+</body>
+</html>

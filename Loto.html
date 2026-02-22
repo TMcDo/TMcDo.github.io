@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variable Aléatoire & Base de Matériaux</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #canvas-container { width: 100%; height: 300px; cursor: grab; }
+        #canvas-container:active { cursor: grabbing; }
+        
+        /* Custom scrollbar for table */
+        .table-container::-webkit-scrollbar { height: 8px; width: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+
+    <nav class="bg-blue-800 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold">🛠️ M. Minutieux - Labo Aléatoire</h1>
+            <span class="hidden md:inline text-sm bg-blue-700 px-3 py-1 rounded-full">DIY Custom & Robust</span>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 max-w-4xl mt-4">
+        
+        <!-- Section 3D: Random Variable -->
+        <section class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
+            <h2 class="text-2xl font-bold mb-2">🎲 Le Labo de Tirage</h2>
+            <p class="text-sm text-gray-600 mb-4">Choisis ton mode de tirage : classique, loterie, bingo ou cartes !</p>
+            
+            <!-- NOUVEAUX CONTRÔLES SÉPARÉS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Mode Classique -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="font-bold text-blue-700 mb-2">🎲 Tirage Classique</h3>
+                    <div class="mb-4">
+                        <label for="numSides" class="block text-sm font-bold text-gray-700 mb-1">Nombre de côtés (2 à 100)</label>
+                        <input type="number" id="numSides" min="2" max="100" value="6" class="w-full p-2 border border-gray-300 rounded focus:ring-blue-500">
+                    </div>
+                    <button id="rollClassicBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition transform active:scale-95">Lancer Classique</button>
+                </div>
+
+                <!-- Mode Loterie -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="font-bold text-green-700 mb-2">🎰 Loterie</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="flex-1">
+                            <label for="lottoPool" class="block text-sm font-bold text-gray-700 mb-1">Boules (ex: 49)</label>
+                            <input type="number" id="lottoPool" min="2" max="100" value="49" class="w-full p-2 border border-gray-300 rounded focus:ring-green-500">
+                        </div>
+                        <div class="flex-1">
+                            <label for="lottoDraws" class="block text-sm font-bold text-gray-700 mb-1">Tirages (ex: 6)</label>
+                            <input type="number" id="lottoDraws" min="1" max="100" value="6" class="w-full p-2 border border-gray-300 rounded focus:ring-green-500">
+                        </div>
+                    </div>
+                    <button id="rollLottoBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition transform active:scale-95">Tirer Loterie</button>
+                </div>
+
+                <!-- Mode Bingo -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="font-bold text-red-700 mb-2">🎱 BINGO</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-sm text-gray-600">
+                            Boules restantes: <span id="bingoCount" class="font-bold text-red-600">75</span>
+                        </div>
+                        <button id="resetBingoBtn" class="text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded shadow">Reset</button>
+                    </div>
+                    <button id="rollBingoBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition transform active:scale-95">Tirer une boule</button>
+                </div>
+
+                <!-- Mode Cartes -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="font-bold text-purple-700 mb-2">🃏 Jeu de Cartes</h3>
+                    <div class="flex gap-2 mb-4 items-end">
+                        <div class="flex-1">
+                            <label for="numDecks" class="block text-sm font-bold text-gray-700 mb-1">Paquets (1-10)</label>
+                            <input type="number" id="numDecks" min="1" max="10" value="1" class="w-full p-2 border border-gray-300 rounded focus:ring-purple-500">
+                        </div>
+                        <div class="flex-1 pb-1 flex flex-col gap-1">
+                            <label class="flex items-center space-x-2 text-sm font-bold text-gray-700 cursor-pointer">
+                                <input type="checkbox" id="useJokers" class="form-checkbox h-4 w-4 text-purple-600">
+                                <span>+ Jokers</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm font-bold text-gray-700 cursor-pointer">
+                                <input type="checkbox" id="autoShuffle" class="form-checkbox h-4 w-4 text-purple-600" checked>
+                                <span>Auto-brasser (chaque pige)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-sm text-gray-600">
+                            Cartes restantes: <span id="cardsCount" class="font-bold text-purple-600">52</span>
+                        </div>
+                        <button id="resetCardsBtn" class="text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded shadow">Brasser</button>
+                    </div>
+                    <button id="rollCardBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow transition transform active:scale-95">Piger une carte</button>
+                </div>
+            </div>
+
+            <div id="canvas-container" class="bg-gray-900 rounded-lg overflow-hidden border border-gray-300 relative shadow-inner">
+                <!-- ThreeJS Canvas will be injected here -->
+            </div>
+
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Résultat du tirage</p>
+                <p id="resultText" class="text-3xl sm:text-4xl font-extrabold text-gray-800 break-words mt-2">?</p>
+            </div>
+
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-700">Historique des valeurs:</h3>
+                    <button id="clearHistoryBtn" class="text-xs bg-red-200 hover:bg-red-300 text-red-800 font-bold py-1 px-3 rounded shadow transition">Vider / Clear</button>
+                </div>
+                <div id="history" class="flex flex-wrap gap-2 text-sm font-mono">
+                    <span class="text-gray-400 italic">Aucun lancer pour l'instant...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Base de données (Conforme aux spécifications, mais compacte) -->
+        <details class="bg-white rounded-xl shadow-lg border-t-4 border-yellow-500 mt-6 mb-8">
+            <summary class="text-xl font-bold p-6 cursor-pointer hover:bg-gray-50 transition rounded-xl outline-none">
+                📦 Inventaire des Matériaux (DIY Custom)
+            </summary>
+            <div class="p-6 pt-0 border-t border-gray-100">
+                <p class="text-sm text-gray-600 mb-4">Base de données exportable de tes pièces de conception primaires.</p>
+                <div class="table-container overflow-x-auto border border-gray-200 rounded-lg mb-4">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr>
+                                <th class="p-3 border-b">ID</th>
+                                <th class="p-3 border-b">Catégorie</th>
+                                <th class="p-3 border-b">Nom de l'objet</th>
+                                <th class="p-3 border-b text-right">Qté</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-body" class="text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="exportCSV()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition">
+                    Exporter l'inventaire (CSV)
+                </button>
+            </div>
+        </details>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // THREE.JS LOGIC (Simulation de Dé 3D)
+        // ==========================================
+        let scene, camera, renderer;
+        let activeMeshes = [];
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let isRolling = false;
+        let historyArray = [];
+
+        // NOUVEAU: Cible pour l'animation de Zoom (Camera Push-in)
+        let cameraTargetZ = 5;
+
+        // État global pour Bingo et Cartes
+        let bingoPool = [];
+        let cardsPool = [];
+        const cardSuits = ['♠', '♥', '♦', '♣'];
+        const cardValues = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // Initialisation Bingo
+        function initBingo() {
+            bingoPool = [];
+            for(let i=1; i<=75; i++) bingoPool.push(i);
+            shuffleArray(bingoPool);
+            document.getElementById('bingoCount').innerText = bingoPool.length;
+        }
+
+        // Initialisation Cartes
+        function initCards() {
+            cardsPool = [];
+            let numDecks = parseInt(document.getElementById('numDecks').value) || 1;
+            
+            // Validation robuste (on garde ça entre 1 et 10 paquets)
+            if (numDecks < 1) { numDecks = 1; document.getElementById('numDecks').value = 1; }
+            if (numDecks > 10) { numDecks = 10; document.getElementById('numDecks').value = 10; }
+            
+            const useJokers = document.getElementById('useJokers').checked;
+
+            // On boucle pour rajouter le bon nombre de paquets
+            for (let d = 0; d < numDecks; d++) {
+                for(let s of cardSuits) {
+                    for(let v of cardValues) {
+                        cardsPool.push({ text: v + s, color: (s==='♥'||s==='♦') ? '#e74c3c' : '#2c3e50' });
+                    }
+                }
+                if(useJokers) {
+                    cardsPool.push({ text: 'JOKER', color: '#8e44ad' });
+                    cardsPool.push({ text: 'JOKER', color: '#e67e22' });
+                }
+            }
+            shuffleArray(cardsPool);
+            document.getElementById('cardsCount').innerText = cardsPool.length;
+        }
+
+        function shuffleArray(arr) {
+            for(let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        // ==========================================
+        // DATABASE LOGIC (Inventaire minimal caché)
+        // ==========================================
+        const materialsData = [
+            { id: 'TOOL-01', category: 'Tools', name: 'Marteau', qty: 4 },
+            { id: 'WOOD-01', category: 'Wood', name: 'Planche 2x4', qty: 45 },
+            { id: 'MET-01', category: 'Metal', name: 'Plaque d\'acier 1/8"', qty: 8 },
+            { id: 'PLA-01', category: 'Plastic', name: 'Acrylique (Plexiglass)', qty: 5 },
+            { id: 'SCR-01', category: 'Screws', name: 'Vis à bois 2"', qty: 100 },
+            { id: 'BOL-01', category: 'Bolts', name: 'Boulon hexagonal 1/4"', qty: 50 },
+            { id: 'NUT-01', category: 'Nuts', name: 'Écrou hexagonal 1/4"', qty: 50 },
+            { id: 'ANG-01', category: 'Angle irons', name: 'Fer cornière 1"x1"', qty: 15 },
+            { id: 'TUB-01', category: 'Tubes', name: 'Tube rond aluminium 1"', qty: 20 }
+        ];
+
+        function renderTable() {
+            const tbody = document.getElementById('db-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            materialsData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-gray-500">${item.id}</td>
+                    <td class="p-3"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">${item.category}</span></td>
+                    <td class="p-3 font-medium text-gray-800">${item.name}</td>
+                    <td class="p-3 text-right font-bold">${item.qty}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,ID,Category,Item Name,Quantity\n";
+            materialsData.forEach(row => {
+                csvContent += `${row.id},${row.category},"${row.name}",${row.qty}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "mrminutieux_materiaux.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ==========================================
+        // FONCTION POUR TEXTURES DYNAMIQUES
+        // ==========================================
+        function createTextTexture(text, bgColor, textColor, customSize = null) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+            
+            context.fillStyle = bgColor;
+            context.fillRect(0, 0, 256, 256);
+            
+            // Ajuster la taille si le texte est long ou si une taille sur mesure est fournie
+            let fontSize = customSize ? customSize : (text.length > 3 ? 50 : 80);
+            context.font = `bold ${fontSize}px Arial`;
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillStyle = textColor;
+            context.fillText(text, 128, 128);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function clearMeshes() {
+            activeMeshes.forEach(m => scene.remove(m));
+            activeMeshes = [];
+        }
+
+        function createDieGeometry(sides) {
+            clearMeshes();
+
+            let geometry;
+            let materials;
+
+            if (sides == 2) {
+                // Pièce de monnaie (Coin) avec textures 1/2 et 50%
+                geometry = new THREE.CylinderGeometry(1.2, 1.2, 0.2, 32);
+                const sideMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6 });
+                const topMat = new THREE.MeshStandardMaterial({ map: createTextTexture("1/2", "#e74c3c", "#ffffff") });
+                const bottomMat = new THREE.MeshStandardMaterial({ map: createTextTexture("50%", "#3498db", "#ffffff") });
+                materials = [sideMat, topMat, bottomMat];
+            } else if (sides == 6) {
+                // Dé classique (Cube)
+                geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                materials = [
+                    new THREE.MeshStandardMaterial({ color: 0xe74c3c }), new THREE.MeshStandardMaterial({ color: 0x3498db }),
+                    new THREE.MeshStandardMaterial({ color: 0x2ecc71 }), new THREE.MeshStandardMaterial({ color: 0xf1c40f }),
+                    new THREE.MeshStandardMaterial({ color: 0x9b59b6 }), new THREE.MeshStandardMaterial({ color: 0xe67e22 })
+                ];
+            } else {
+                // Forme complexe (Polyèdre)
+                geometry = new THREE.IcosahedronGeometry(1.2, 1);
+                materials = new THREE.MeshStandardMaterial({ color: 0x2ecc71 });
+            }
+
+            const mesh = new THREE.Mesh(geometry, materials);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 }));
+            mesh.add(line);
+            
+            mesh.rotation.set(Math.PI / 4, Math.PI / 4, 0);
+            scene.add(mesh);
+            activeMeshes.push(mesh);
+        }
+
+        function createLotteryBalls(numbers) {
+            clearMeshes();
+            const count = numbers.length;
+            const spacing = 0.9;
+            const startX = -((count - 1) * spacing) / 2;
+
+            numbers.forEach((num, index) => {
+                const geometry = new THREE.SphereGeometry(0.4, 32, 32);
+                const material = new THREE.MeshStandardMaterial({ 
+                    map: createTextTexture(num.toString(), "#f1c40f", "#000000") // Boules jaunes
+                });
+                const sphere = new THREE.Mesh(geometry, material);
+                
+                sphere.position.x = startX + (index * spacing);
+                // Position aléatoire initiale pour l'animation
+                sphere.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                sphere.userData.noIdleSpin = true; // Empêcher la rotation au repos
+                
+                scene.add(sphere);
+                activeMeshes.push(sphere);
+            });
+        }
+
+        function createBingoBall3D(text) {
+            clearMeshes();
+            const geometry = new THREE.SphereGeometry(1.0, 32, 32); // Boule légèrement plus petite (1.0 au lieu de 1.2)
+            // Boule blanche avec le texte rouge ou noir
+            const material = new THREE.MeshStandardMaterial({ 
+                map: createTextTexture(text, "#ffffff", "#e74c3c", 55) // Police plus petite (55) pour bien voir les numéros
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.rotation.set(Math.PI / 4, Math.PI / 4, 0);
+            sphere.userData.noIdleSpin = true; // Empêcher la rotation au repos pour lire la valeur
+            scene.add(sphere);
+            activeMeshes.push(sphere);
+        }
+
+        function createCard3D(cardObj) {
+            clearMeshes();
+            // Forme mince pour simuler une carte
+            const geometry = new THREE.BoxGeometry(1.6, 2.3, 0.05); 
+            
+            const backMat = new THREE.MeshStandardMaterial({ color: 0x2980b9 }); // Dos bleu
+            const edgeMat = new THREE.MeshStandardMaterial({ color: 0xffffff }); // Tranche blanche
+            const frontMat = new THREE.MeshStandardMaterial({ 
+                map: createTextTexture(cardObj.text, "#ffffff", cardObj.color) 
+            });
+
+            // Ordre des faces: droite, gauche, haut, bas, avant, arrière
+            const materials = [edgeMat, edgeMat, edgeMat, edgeMat, frontMat, backMat];
+
+            const card = new THREE.Mesh(geometry, materials);
+            
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 }));
+            card.add(line);
+            
+            card.rotation.set(Math.PI / 4, Math.PI / 4, 0);
+            card.userData.noIdleSpin = true; // Empêcher la rotation au repos pour lire la carte
+            scene.add(card);
+            activeMeshes.push(card);
+        }
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111827); // Tailwind gray-900
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 5, 5);
+            scene.add(dirLight);
+
+            // Initialiser la forme de départ
+            const initialSides = parseInt(document.getElementById('numSides').value) || 6;
+            createDieGeometry(initialSides);
+
+            // Écouter les changements de côtés
+            document.getElementById('numSides').addEventListener('change', (e) => {
+                let s = parseInt(e.target.value);
+                if(s < 2) { s = 2; e.target.value = 2; }
+                if(s > 100) { s = 100; e.target.value = 100; }
+                createDieGeometry(s);
+            });
+
+            // Mouse Events for camera rotation
+            container.addEventListener('mousedown', (e) => { isDragging = true; });
+            document.addEventListener('mouseup', () => { isDragging = false; });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isRolling) {
+                    const deltaMove = {
+                        x: e.offsetX - previousMousePosition.x,
+                        y: e.offsetY - previousMousePosition.y
+                    };
+                    activeMeshes.forEach(m => {
+                        m.rotation.y += deltaMove.x * 0.01;
+                        m.rotation.x += deltaMove.y * 0.01;
+                    });
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+            // Touch events for mobile
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }, {passive: false});
+            
+            document.addEventListener('touchend', () => { isDragging = false; });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging && !isRolling) {
+                    const deltaMove = {
+                        x: e.touches[0].clientX - previousMousePosition.x,
+                        y: e.touches[0].clientY - previousMousePosition.y
+                    };
+                    activeMeshes.forEach(m => {
+                        m.rotation.y += deltaMove.x * 0.01;
+                        m.rotation.x += deltaMove.y * 0.01;
+                    });
+                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            }, {passive: false});
+
+            // Responsive resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            });
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animation fluide de la caméra (Zoom dynamique)
+            camera.position.z += (cameraTargetZ - camera.position.z) * 0.08;
+
+            activeMeshes.forEach(m => {
+                if(isRolling) {
+                    // Spin fast
+                    m.rotation.x += 0.2;
+                    m.rotation.y += 0.3;
+                } else if(!isDragging && !m.userData.noIdleSpin) {
+                    // Gentle idle float if not interacting (seulement pour les objets sans noIdleSpin)
+                    m.rotation.x += 0.005;
+                    m.rotation.y += 0.005;
+                }
+            });
+            renderer.render(scene, camera);
+        }
+
+        function setRollingState(state) {
+            isRolling = state;
+            if (state) cameraTargetZ = 5; // On dé-zoome quand on brasse pour bien voir l'action
+            
+            document.getElementById('rollClassicBtn').disabled = state;
+            document.getElementById('rollLottoBtn').disabled = state;
+            document.getElementById('rollBingoBtn').disabled = state;
+            document.getElementById('rollCardBtn').disabled = state;
+            if(state) {
+                document.getElementById('resultText').innerText = 'Brassage...';
+                document.getElementById('resultText').className = "text-3xl sm:text-4xl font-extrabold text-gray-500 break-words mt-2";
+            }
+        }
+
+        document.getElementById('rollClassicBtn').addEventListener('click', () => {
+            if(isRolling) return;
+            setRollingState(true);
+
+            const sides = parseInt(document.getElementById('numSides').value) || 6;
+            createDieGeometry(sides); // S'assurer d'avoir la forme classique
+
+            // Stop rolling after 1.5s
+            setTimeout(() => {
+                setRollingState(false);
+                
+                const val = Math.floor(Math.random() * sides) + 1;
+                let displayVal = val;
+                
+                activeMeshes.forEach(m => {
+                    m.rotation.set(0, 0, 0);
+                    if(sides == 2) {
+                        displayVal = val === 1 ? "1/2" : "50%";
+                        m.rotation.x = val === 1 ? Math.PI / 2 : -Math.PI / 2;
+                    } else if (sides == 6) {
+                        // Tourner le dé pour montrer une face différente selon le chiffre
+                        switch(val) {
+                            case 1: m.rotation.y = Math.PI / 2; break; // Droite
+                            case 2: m.rotation.y = -Math.PI / 2; break; // Gauche
+                            case 3: m.rotation.x = Math.PI / 2; break; // Haut
+                            case 4: m.rotation.x = -Math.PI / 2; break; // Bas
+                            case 5: m.rotation.set(0, 0, 0); break; // Face
+                            case 6: m.rotation.y = Math.PI; break; // Dos
+                        }
+                    } else {
+                        m.rotation.set(0, -Math.PI / 2, 0);
+                    }
+                });
+                
+                cameraTargetZ = 2.5; // Zoom focus sur le résultat
+
+                document.getElementById('resultText').innerText = displayVal;
+                document.getElementById('resultText').className = "text-3xl sm:text-4xl font-extrabold text-blue-600 break-words mt-2";
+                
+                historyArray.push(displayVal);
+                updateHistoryUI();
+            }, 1500);
+        });
+
+        document.getElementById('rollLottoBtn').addEventListener('click', () => {
+            if(isRolling) return;
+            
+            const pool = parseInt(document.getElementById('lottoPool').value) || 49;
+            let draws = parseInt(document.getElementById('lottoDraws').value) || 6;
+            
+            // Validation robuste
+            if(draws > pool) {
+                draws = pool;
+                document.getElementById('lottoDraws').value = draws;
+            }
+
+            setRollingState(true);
+            
+            // Boules temporaires pendant l'animation
+            const tempArray = Array(draws).fill("?");
+            createLotteryBalls(tempArray);
+
+            setTimeout(() => {
+                setRollingState(false);
+                
+                // Algorithme de Fisher-Yates (Tirage Sans Remise)
+                let arr = [];
+                for(let i=1; i<=pool; i++) arr.push(i);
+                for(let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                const results = arr.slice(0, draws).sort((a,b) => a-b);
+                
+                // Mettre à jour avec les vrais numéros
+                createLotteryBalls(results);
+                activeMeshes.forEach(m => m.rotation.set(0, -Math.PI / 2, 0)); 
+                
+                // Ajuster le zoom selon le nombre de boules pour centrer la valeur parfaitement
+                cameraTargetZ = Math.max(2.5, draws * 0.65);
+                
+                const resultStr = results.join(' - ');
+                document.getElementById('resultText').innerText = resultStr;
+                document.getElementById('resultText').className = "text-3xl sm:text-4xl font-extrabold text-green-600 break-words mt-2";
+                
+                historyArray.push(`[${resultStr}]`);
+                updateHistoryUI();
+            }, 1500);
+        });
+
+        // Logique BINGO
+        document.getElementById('resetBingoBtn').addEventListener('click', () => {
+            initBingo();
+            document.getElementById('resultText').innerText = 'Bingo réinitialisé!';
+            document.getElementById('resultText').className = "text-xl font-bold text-gray-500 mt-2";
+        });
+
+        document.getElementById('rollBingoBtn').addEventListener('click', () => {
+            if(isRolling) return;
+            if(bingoPool.length === 0) {
+                document.getElementById('resultText').innerText = 'Partie terminée! Reset le Bingo.';
+                document.getElementById('resultText').className = "text-xl font-bold text-red-600 mt-2";
+                return;
+            }
+
+            setRollingState(true);
+            // On pige la boule (dernier élément du array)
+            const number = bingoPool.pop();
+            
+            let letter = '';
+            if(number <= 15) letter = 'B';
+            else if(number <= 30) letter = 'I';
+            else if(number <= 45) letter = 'N';
+            else if(number <= 60) letter = 'G';
+            else letter = 'O';
+            const bingoText = `${letter}-${number}`;
+
+            createBingoBall3D(bingoText);
+
+            setTimeout(() => {
+                setRollingState(false);
+                activeMeshes.forEach(m => m.rotation.set(0, -Math.PI / 2, 0)); // Rotation parfaite pour lire la boule
+                
+                cameraTargetZ = 2.8; // Zoom reculé (moins gigantesque qu'avant, 2.8 au lieu de 2.0)
+                
+                document.getElementById('resultText').innerText = bingoText;
+                document.getElementById('resultText').className = "text-3xl sm:text-4xl font-extrabold text-red-600 break-words mt-2";
+                document.getElementById('bingoCount').innerText = bingoPool.length;
+                
+                historyArray.push(bingoText);
+                updateHistoryUI();
+            }, 1500);
+        });
+
+        // Logique CARTES
+        document.getElementById('numDecks').addEventListener('change', () => initCards());
+        document.getElementById('useJokers').addEventListener('change', () => initCards());
+        document.getElementById('resetCardsBtn').addEventListener('click', () => {
+            initCards();
+            document.getElementById('resultText').innerText = 'Cartes brassées!';
+            document.getElementById('resultText').className = "text-xl font-bold text-gray-500 mt-2";
+        });
+
+        document.getElementById('rollCardBtn').addEventListener('click', () => {
+            if(isRolling) return;
+
+            // NOUVEAU : Rebrassage automatique (avec remise) AVANT chaque pige si coché
+            if (document.getElementById('autoShuffle').checked) {
+                initCards(); 
+            }
+
+            if(cardsPool.length === 0) {
+                document.getElementById('resultText').innerText = 'Paquet vide! Brasse les cartes.';
+                document.getElementById('resultText').className = "text-xl font-bold text-purple-600 mt-2";
+                return;
+            }
+
+            setRollingState(true);
+            const cardObj = cardsPool.pop();
+
+            createCard3D(cardObj);
+
+            setTimeout(() => {
+                setRollingState(false);
+                // On s'assure que la face de la carte regarde la caméra (rotation 0)
+                activeMeshes.forEach(m => m.rotation.set(0, 0, 0)); 
+                
+                cameraTargetZ = 2.5; // Zoom centré sur la carte pigée
+                
+                document.getElementById('resultText').innerText = cardObj.text;
+                document.getElementById('resultText').className = "text-3xl sm:text-4xl font-extrabold text-purple-600 break-words mt-2";
+                document.getElementById('cardsCount').innerText = cardsPool.length;
+                
+                historyArray.push(cardObj.text);
+                updateHistoryUI();
+            }, 1500);
+        });
+
+        document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+            historyArray = [];
+            updateHistoryUI();
+        });
+
+        function updateHistoryUI() {
+            const histDiv = document.getElementById('history');
+            histDiv.innerHTML = '';
+            
+            if (historyArray.length === 0) {
+                histDiv.innerHTML = '<span class="text-gray-400 italic">Aucun lancer pour l\'instant...</span>';
+                return;
+            }
+
+            historyArray.slice(-15).forEach((val, index) => {
+                const span = document.createElement('span');
+                span.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200";
+                span.innerText = val;
+                histDiv.appendChild(span);
+            });
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            renderTable();
+            initBingo();
+            initCards();
+            init3D();
+        };
+
+    </script>
+</body>
+</html>
