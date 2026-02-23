@@ -1,7 +1,7 @@
 # Monsieur Minutieux - Site Web Personnel
 
 Quelques unes des application que je n'ai pas codé. 
-Tout le mérite và à la version de Gemennuie qui fait tout mon travail en un claquement de cuillères en bois virtuelles.
+Tout le mérite và à la version de Gemennuie(Gemini AI) qui fait tout mon travail en un claquement de cuillères en bois virtuelles.
 
 https://TMcDo.github.io/index.html    
 https://TMcDo.github.io/Erable.html   
