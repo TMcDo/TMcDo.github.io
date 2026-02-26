@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M. Minutieux - Extracteur Audio Autonome</title>
+    <title>M. Minutieux - Extracteur 100% Gratuit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -27,8 +27,11 @@
         <div class="flex items-center gap-3">
             <i class="ph-fill ph-wrench text-4xl text-orange-500"></i>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight uppercase text-orange-500">M. Minutieux</h1>
-                <p class="text-sm text-gray-400 font-mono">Extracteur DIY v2.4 // Édition Web Publique (Miroir Dirpy)</p>
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold tracking-tight uppercase text-orange-500">M. Minutieux</h1>
+                    <span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded ml-3 uppercase tracking-wider shadow-md border border-green-400">100% Gratuit</span>
+                </div>
+                <p class="text-sm text-gray-400 font-mono">Extracteur DIY v2.5 // Free Only Edition</p>
             </div>
         </div>
         <div class="flex gap-2">
@@ -45,7 +48,7 @@
     <main class="w-full max-w-6xl flex flex-col lg:flex-row gap-8">
         
         <!-- Left Panel: Controls -->
-        <div class="glass-panel w-full lg:w-1/2 p-6 rounded-2xl flex flex-col gap-6 shadow-2xl relative">
+        <div class="glass-panel w-full lg:w-1/2 p-6 rounded-2xl flex flex-col gap-6 shadow-2xl relative border-t-4 border-t-green-500">
             <div>
                 <label id="lblUrl" class="block text-sm font-medium text-gray-300 mb-2">Lien de la vidéo (URL)</label>
                 <div class="flex items-center bg-gray-900 border border-gray-600 rounded-lg overflow-hidden focus-within:border-orange-500 transition">
@@ -58,25 +61,25 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label id="lblFormat" class="block text-sm font-medium text-gray-300 mb-2">Format</label>
+                    <label id="lblFormat" class="block text-sm font-medium text-gray-300 mb-2">Format (Gratuit)</label>
                     <select id="formatSelect" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:outline-none focus:border-orange-500">
-                        <option value="mp3">Audio (MP3)</option>
-                        <option value="wav">Audio (WAV Haute Qualité)</option>
-                        <option value="opus">Audio (OPUS Rapide)</option>
-                        <option value="mp4">Vidéo (MP4 1080p)</option>
+                        <option value="mp3">Audio MP3 (Standard Free)</option>
+                        <option value="wav">Audio WAV (Uncompressed)</option>
+                        <option value="opus">Audio OPUS (Open-Source)</option>
+                        <option value="mp4">Vidéo MP4 (Max Free Res)</option>
                     </select>
                 </div>
                 <div>
-                    <label id="lblQuality" class="block text-sm font-medium text-gray-300 mb-2">Moteur (Cloud)</label>
+                    <label id="lblQuality" class="block text-sm font-medium text-gray-300 mb-2">Moteur (Réseau)</label>
                     <select class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:outline-none focus:border-orange-500 cursor-not-allowed" disabled>
-                        <option value="cobalt">Réseau Cobalt (Multi-Serveurs)</option>
+                        <option value="cobalt">Réseau Public (0$)</option>
                     </select>
                 </div>
             </div>
 
             <button id="extractBtn" class="mt-4 w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-lg uppercase tracking-wider shadow-[0_0_15px_rgba(234,88,12,0.4)] transition flex justify-center items-center gap-2">
                 <i class="ph-bold ph-download-simple text-xl"></i>
-                <span id="lblBtn">Lancer l'extraction</span>
+                <span id="lblBtn">Lancer l'extraction (Gratuit)</span>
             </button>
 
             <!-- Progress Area -->
@@ -96,14 +99,14 @@
                     <i class="ph-fill ph-shield-warning text-xl text-red-400"></i>
                     <span id="lblCorsTitle">Blocage Réseau / Sécurité</span>
                 </div>
-                <p id="lblCorsDesc" class="font-mono text-xs">Tous les serveurs ont été bloqués. Si tu utilises un bloqueur de pubs (AdBlock, uBlock, Brave), essaie de le désactiver pour cette page. Sinon, l'API publique est temporairement hors ligne.</p>
+                <p id="lblCorsDesc" class="font-mono text-xs">Tous les serveurs gratuits ont été bloqués par ton fureteur ou AdBlock. Activation automatique du miroir de secours.</p>
             </div>
         </div>
 
         <!-- Right Panel: 3D Visualization -->
         <div class="glass-panel w-full lg:w-1/2 rounded-2xl overflow-hidden relative border border-gray-700 flex flex-col shadow-2xl min-h-[400px]">
-            <div class="absolute top-4 left-4 z-10 bg-black/50 px-3 py-1 rounded text-xs font-mono text-orange-400 border border-orange-500/30">
-                <i class="ph-fill ph-record mr-1 animate-pulse inline-block"></i> <span id="lbl3D">Moniteur de données 3D</span>
+            <div class="absolute top-4 left-4 z-10 bg-black/50 px-3 py-1 rounded text-xs font-mono text-green-400 border border-green-500/30">
+                <i class="ph-fill ph-record mr-1 animate-pulse inline-block"></i> <span id="lbl3D">Moniteur 100% Free</span>
             </div>
             <!-- Canvas container for Three.js -->
             <div id="canvas-container" class="w-full h-full flex-grow touch-none"></div>
@@ -112,7 +115,7 @@
 
     <!-- History Panel -->
     <section class="w-full max-w-6xl mt-8 glass-panel p-6 rounded-2xl mb-12">
-        <h2 id="lblHistory" class="text-xl font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2"><i class="ph ph-clock-counter-clockwise"></i> Historique des extractions</h2>
+        <h2 id="lblHistory" class="text-xl font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2"><i class="ph ph-clock-counter-clockwise"></i> Historique (Local Seulement)</h2>
         <ul id="historyList" class="flex flex-col gap-2 text-sm text-gray-400">
             <li class="italic" id="lblNoHistory">Aucune extraction pour le moment. T'es prêt à clancher !</li>
         </ul>
@@ -129,39 +132,39 @@
         const translations = {
             fr: {
                 url: "Lien de la vidéo (URL)",
-                format: "Format",
-                quality: "Moteur (Cloud)",
-                btn: "Lancer l'extraction",
+                format: "Format (Gratuit)",
+                quality: "Moteur (Réseau)",
+                btn: "Lancer l'extraction (Gratuit)",
                 status: "Recherche du meilleur serveur...",
-                statusDone: "Extraction complétée ! Fichier reçu.",
-                monitor: "Moniteur de données 3D",
-                history: "Historique des extractions",
+                statusDone: "Extraction complétée ! Fichier gratuit reçu.",
+                monitor: "Moniteur 100% Free",
+                history: "Historique (Local Seulement)",
                 noHistory: "Aucune extraction pour le moment. T'es prêt à clancher !",
                 btnError: "Entrez un lien YouTube valide",
-                waitingLink: "En attente d'un lien YouTube valide...",
+                waitingLink: "En attente d'un lien valide...",
                 validLink: "Lien valide (Prêt à extraire)",
-                apiError: "Impossible de joindre les serveurs (NetworkError).",
+                apiError: "Impossible de joindre les serveurs.",
                 corsTitle: "Blocage Réseau / Sécurité",
-                corsDesc: "Tous les serveurs ont été bloqués. Si tu utilises un bloqueur de pubs (AdBlock, uBlock, Brave), essaie de le désactiver pour cette page. Sinon, l'API publique est temporairement hors ligne.",
+                corsDesc: "Tous les serveurs gratuits ont été bloqués par ton fureteur ou AdBlock. Activation automatique du miroir de secours.",
                 share: "Partager",
                 toast: "Lien copié dans le presse-papier !"
             },
             en: {
                 url: "Video Link (URL)",
-                format: "Format",
-                quality: "Engine (Cloud)",
-                btn: "Start Extraction",
+                format: "Format (Free Only)",
+                quality: "Engine (Network)",
+                btn: "Start Free Extraction",
                 status: "Finding the best server...",
-                statusDone: "Extraction Complete! File received.",
-                monitor: "3D Data Monitor",
-                history: "Extraction History",
+                statusDone: "Extraction Complete! Free file received.",
+                monitor: "100% Free Monitor",
+                history: "History (Local Only)",
                 noHistory: "No extractions yet. Ready to rip!",
                 btnError: "Enter a valid YouTube link",
-                waitingLink: "Waiting for a valid YouTube link...",
+                waitingLink: "Waiting for a valid link...",
                 validLink: "Valid link (Ready to rip)",
-                apiError: "Could not reach servers (NetworkError).",
+                apiError: "Could not reach free servers.",
                 corsTitle: "Network / Security Block",
-                corsDesc: "All servers were blocked. If you use an adblocker (AdBlock, uBlock, Brave), try disabling it for this page. Otherwise, the public API is temporarily offline.",
+                corsDesc: "All free servers were blocked by your browser or AdBlock. Engaging fallback mirror automatically.",
                 share: "Share",
                 toast: "Link copied to clipboard!"
             }
@@ -223,7 +226,7 @@
 
         window.isExtracting = false;
         window.targetRotationSpeed = 0.01;
-        window.currentVideoTitle = "Fichier Multimédia";
+        window.currentVideoTitle = "Fichier Multimédia (Gratuit)";
 
         urlInput.addEventListener('input', async (e) => {
             const url = e.target.value.trim();
@@ -239,7 +242,7 @@
                         window.currentVideoTitle = data.title;
                     } else {
                         titleDisplay.innerHTML = `<i class="ph-fill ph-check-circle text-green-500 mr-1"></i> <span class="text-green-400 font-bold">${t.validLink}</span>`;
-                        window.currentVideoTitle = "Extraction YouTube";
+                        window.currentVideoTitle = "Extraction Youtube (Free)";
                     }
                 } catch (err) {
                     titleDisplay.innerHTML = `<i class="ph-fill ph-check-circle text-green-500 mr-1"></i> <span class="text-green-400 font-bold">${t.validLink}</span>`;
@@ -251,7 +254,7 @@
             }
         });
 
-        // LOGIQUE D'EXTRACTION AUTONOME (API COBALT) - M. MINUTIEUX REDONDANCE
+        // LOGIQUE D'EXTRACTION AUTONOME - FREE ONLY
         extractBtn.addEventListener('click', async () => {
             const t = getT();
             const url = urlInput.value.trim();
@@ -285,14 +288,15 @@
                 const format = document.getElementById('formatSelect').value;
                 const isAudio = format === 'mp3' || format === 'wav' || format === 'opus';
 
+                // Config "Free Tier" pour s'assurer que Cobalt ne bloque pas
                 const requestBody = {
                     url: url,
                     isAudioOnly: isAudio,
                     aFormat: isAudio ? format : "mp3",
-                    vQuality: "1080",
+                    vQuality: "720", // Gardé raisonnable pour garantir que ça passe gratuit partout
                     downloadMode: isAudio ? "audio" : "auto",
                     audioFormat: isAudio ? format : "mp3",
-                    videoQuality: "1080"
+                    videoQuality: "720"
                 };
 
                 const reqOptions = {
@@ -304,48 +308,44 @@
                     body: JSON.stringify(requestBody)
                 };
 
-                // Liste de survie M. Minutieux V3 (Serveurs permissifs CORS)
                 const apiInstances = [
-                    'https://cobalt-api.kwiatekm.dev/', // Serveur commu très permissif
-                    'https://api.cobalt.vxstats.com/', // Serveur commu 2
-                    'https://api.cobalt.tools/', // Officiel (souvent strict sur le CORS)
-                    'https://corsproxy.io/?' + encodeURIComponent('https://api.cobalt.tools/') // Proxy
+                    'https://cobalt-api.kwiatekm.dev/', 
+                    'https://api.cobalt.vxstats.com/', 
+                    'https://api.cobalt.tools/', 
+                    'https://corsproxy.io/?' + encodeURIComponent('https://api.cobalt.tools/') 
                 ];
 
                 let data = null;
 
-                // Boucle de survie
                 for (const apiUrl of apiInstances) {
                     try {
-                        console.log("Tentative M. Minutieux sur :", apiUrl);
+                        console.log("Tentative Free Network sur :", apiUrl);
                         const response = await fetch(apiUrl, reqOptions);
                         if (response.ok) {
                             const temp = await response.json();
                             if (temp.status !== "error" && (temp.url || temp.picker)) {
                                 data = temp;
-                                break; // Ça marche !
+                                break; 
                             }
                         }
                     } catch (e) {
-                        console.warn(`Échec avec ${apiUrl}, on lâche pas, on essaie le prochain...`);
+                        console.warn(`Échec avec ${apiUrl}, on lâche pas...`);
                     }
                 }
 
                 if (!data) {
-                    // PLAN B DE SURVIE : Le fureteur bloque tout. On ouvre un miroir garanti (Dirpy).
-                    console.warn("Toutes les APIs sont bloquées par le fureteur. Activation du Plan B Dirpy.");
-                    lblStatus.innerText = isFrench ? "Sécurité stricte ! Activation du Plan B..." : "Strict security! Engaging Plan B...";
-                    progressBar.classList.replace('bg-orange-500', 'bg-yellow-500');
+                    // PLAN B: Dirpy (Free Mode)
+                    console.warn("API bloquées. Activation du miroir gratuit Dirpy.");
+                    lblStatus.innerText = isFrench ? "Sécurité stricte ! Plan B Gratuit..." : "Strict security! Free Plan B...";
+                    progressBar.classList.replace('bg-orange-500', 'bg-green-500');
                     
                     setTimeout(() => {
-                        // Redirection vers Dirpy.com avec le lien pré-rempli (hyper robuste et DIY)
                         window.open(`https://dirpy.com/studio?url=${encodeURIComponent(url)}`, '_blank');
                         completeExtractionUI(format, true);
                     }, 2000);
                     return;
                 }
 
-                // Boom! On a le fichier
                 progressBar.style.transition = "width 0.5s ease-in";
                 progressBar.style.width = "100%";
                 percentText.innerText = "100%";
@@ -381,8 +381,8 @@
             const t = getT();
             window.isExtracting = false;
             window.targetRotationSpeed = 0.01; 
-            lblStatus.innerText = isFallback ? (isFrench ? "Miroir Dirpy ouvert !" : "Dirpy mirror opened!") : t.statusDone;
-            progressBar.classList.replace('bg-orange-500', isFallback ? 'bg-yellow-500' : 'bg-green-500');
+            lblStatus.innerText = isFallback ? (isFrench ? "Miroir gratuit ouvert !" : "Free mirror opened!") : t.statusDone;
+            progressBar.classList.replace('bg-orange-500', 'bg-green-500');
             
             setTimeout(() => {
                 resetUI();
@@ -391,16 +391,16 @@
                     historyList.innerHTML = '';
                 }
                 const now = new Date().toLocaleTimeString();
-                const displayFormat = format.toUpperCase() + (isFallback ? " (Plan B)" : "");
+                const displayFormat = format.toUpperCase() + (isFallback ? " (Plan B Free)" : " (Free)");
                 
                 const li = document.createElement('li');
-                li.className = "bg-gray-800 p-3 rounded-md border border-gray-700 flex justify-between items-center shadow-inner";
+                li.className = "bg-gray-800 p-3 rounded-md border border-green-700/50 flex justify-between items-center shadow-inner";
                 li.innerHTML = `
                     <span class="truncate pr-4 text-gray-200 font-medium">
-                        <i class="ph-fill ph-file-audio text-green-400 mr-2"></i> ${window.currentVideoTitle}
+                        <i class="ph-fill ph-check-circle text-green-400 mr-2"></i> ${window.currentVideoTitle}
                     </span>
                     <div class="flex gap-3 text-xs items-center">
-                        <span class="bg-gray-700 px-2 py-1 rounded text-orange-400 font-bold">${displayFormat}</span>
+                        <span class="bg-gray-700 px-2 py-1 rounded text-green-400 font-bold">${displayFormat}</span>
                         <span class="text-gray-500 py-1">${now}</span>
                     </div>
                 `;
@@ -408,7 +408,7 @@
                 
                 urlInput.value = '';
                 titleDisplay.innerHTML = '';
-                window.currentVideoTitle = "Fichier Multimédia";
+                window.currentVideoTitle = "Fichier Multimédia (Gratuit)";
             }, 2500);
         }
 
@@ -421,12 +421,10 @@
             progressBar.style.width = '0%';
             progressBar.classList.replace('bg-green-500', 'bg-orange-500');
             progressBar.classList.replace('bg-red-500', 'bg-orange-500');
-            progressBar.classList.replace('bg-yellow-500', 'bg-orange-500');
             percentText.innerText = '0%';
             window.isExtracting = false;
             window.targetRotationSpeed = 0.01;
         }
-
 
         // --- THREE.JS 3D VISUALIZATION LOGIC ---
         window.onload = function() {
@@ -447,7 +445,7 @@
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(5, 10, 5);
             scene.add(directionalLight);
-            const spotLight = new THREE.SpotLight(0xea580c, 2); 
+            const spotLight = new THREE.SpotLight(0x22c55e, 2); // Passé de orange à vert pour le "Free"
             spotLight.position.set(-5, 5, 0);
             spotLight.lookAt(0,0,0);
             scene.add(spotLight);
@@ -468,7 +466,7 @@
             }
 
             const labelGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.12, 32);
-            const labelMat = new THREE.MeshPhongMaterial({ color: 0xea580c });
+            const labelMat = new THREE.MeshPhongMaterial({ color: 0x22c55e }); // Label vert "Gratuit"
             const label = new THREE.Mesh(labelGeo, labelMat);
             
             const holeGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.2, 16);
@@ -489,15 +487,11 @@
                 posArray[i] = (Math.random() - 0.5) * 10;
             }
             particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const particlesMat = new THREE.PointsMaterial({ size: 0.05, color: 0xea580c, transparent: true, opacity: 0 });
+            const particlesMat = new THREE.PointsMaterial({ size: 0.05, color: 0x22c55e, transparent: true, opacity: 0 });
             const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
             scene.add(particlesMesh);
 
-            let mouseX = 0;
-            let mouseY = 0;
-            let targetX = 0;
-            let targetY = 0;
-            let currentRotationSpeed = 0.01;
+            let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0, currentRotationSpeed = 0.01;
 
             function onPointerMove(event) {
                 const rect = container.getBoundingClientRect();
